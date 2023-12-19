@@ -1,0 +1,166 @@
+/*
+ * Copyright 2023 Greptime Team
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.greptime;
+
+import io.greptime.common.util.Ensures;
+import io.greptime.errors.PojoException;
+import io.greptime.models.Column;
+import io.greptime.models.DataType;
+import io.greptime.models.Database;
+import io.greptime.models.Metric;
+import io.greptime.models.SemanticType;
+import io.greptime.models.TableName;
+import io.greptime.models.TableRows;
+import io.greptime.models.TableSchema;
+import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+/**
+ * This utility class converts POJO classes into {@link io.greptime.models.TableRows} objects,
+ * inspired by <a href="https://github.com/influxdata/influxdb-client-java/blob/master/client/src/main/java/com/influxdb/client/internal/MeasurementMapper.java">InfluxDB client-java</a>.
+ *
+ * @author jiachun.fjc
+ */
+public class PojoMapper {
+
+    private final ConcurrentMap<String, Map<String, Field>> classFieldCache = new ConcurrentHashMap<>();
+
+    public <M> TableRows toTableRows(List<M> pojos) {
+        Ensures.ensureNonNull(pojos, "pojos");
+        Ensures.ensure(!pojos.isEmpty(), "pojos can not be empty");
+
+        M pojo = pojos.get(0);
+        Class<?> metricType = pojo.getClass();
+        cacheMetricClass(metricType);
+
+        for (M row : pojos) {
+            Class<?> rowType = row.getClass();
+            if (!rowType.equals(metricType)) {
+                throw new PojoException("All POJOs must be of the same type");
+            }
+        }
+
+        String database = getDatabase(metricType);
+        String metricName = getMetricName(metricType);
+        Map<String, Field> fieldMap = this.classFieldCache.get(metricType.getName());
+
+        TableName tableName = TableName.with(database, metricName);
+        TableSchema.Builder schemaBuilder = TableSchema.newBuilder(tableName);
+
+        String[] columnNames = new String[fieldMap.size()];
+        DataType[] dataTypes = new DataType[fieldMap.size()];
+        SemanticType[] semanticTypes = new SemanticType[fieldMap.size()];
+        int i = 0;
+        for (Map.Entry<String, Field> entry : fieldMap.entrySet()) {
+            String name = entry.getKey();
+            Field field = entry.getValue();
+            Column column = field.getAnnotation(Column.class);
+            DataType dataType = column.dataType();
+            SemanticType semanticType = SemanticType.Field;
+            if (column.tag()) {
+                semanticType = SemanticType.Tag;
+            } else if (column.timestamp()) {
+                semanticType = SemanticType.Timestamp;
+            }
+
+            columnNames[i] = name;
+            dataTypes[i] = dataType;
+            semanticTypes[i] = semanticType;
+
+            i++;
+        }
+
+        TableSchema schema = schemaBuilder.columnNames(columnNames) //
+                .semanticTypes(semanticTypes) //
+                .dataTypes(dataTypes).build();
+
+        TableRows tableRows = TableRows.newBuilder(schema).build();
+        for (M row : pojos) {
+            Object[] values = new Object[fieldMap.size()];
+            int j = 0;
+            for (Map.Entry<String, Field> entry : fieldMap.entrySet()) {
+                Field field = entry.getValue();
+                Object value = getObject(row, field);
+                values[j] = value;
+
+                j++;
+            }
+            tableRows.insert(values);
+        }
+
+        return tableRows;
+    }
+
+    private <M> String getDatabase(Class<M> metricType) {
+        Database databaseAnnotation = metricType.getAnnotation(Database.class);
+        if (databaseAnnotation != null) {
+            return databaseAnnotation.name();
+        }
+
+        String err =
+                String.format("Unable to determine Database for '%s'." + " Does it have a @Database annotation?",
+                        metricType);
+        throw new PojoException(err);
+    }
+
+    private String getMetricName(Class<?> metricType) {
+        // From @Metirc annotation
+        Metric metricAnnotation = metricType.getAnnotation(Metric.class);
+        if (metricAnnotation != null) {
+            return metricAnnotation.name();
+        } else {
+            String err =
+                    String.format("Unable to determine Metric for '%s'." + " Does it have a @Metric annotation?",
+                            metricType);
+            throw new PojoException(err);
+        }
+    }
+
+    private <M> Object getObject(M metric, Field field) {
+        Object value;
+        try {
+            field.setAccessible(true);
+            value = field.get(metric);
+        } catch (IllegalAccessException e) {
+            throw new PojoException(e);
+        }
+        return value;
+    }
+
+    private void cacheMetricClass(Class<?>... metricTypes) {
+        for (Class<?> metricType : metricTypes) {
+            this.classFieldCache.computeIfAbsent(metricType.getName(), k -> {
+                Map<String, Field> fieldMap = new HashMap<>();
+                Class<?> currentType = metricType;
+                while (currentType != null) {
+                    for (Field field : currentType.getDeclaredFields()) {
+                        Column colAnnotation = field.getAnnotation(Column.class);
+                        if (colAnnotation == null) {
+                            continue;
+                        }
+                        fieldMap.put(colAnnotation.name(), field);
+                    }
+                    currentType = currentType.getSuperclass();
+                }
+                return fieldMap;
+            });
+        }
+    }
+}
