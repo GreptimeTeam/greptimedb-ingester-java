@@ -17,7 +17,6 @@ package io.greptime;
 
 import io.greptime.models.Err;
 import io.greptime.models.Result;
-import io.greptime.models.TableRows;
 import io.greptime.models.WriteOk;
 import io.greptime.rpc.Context;
 
@@ -30,7 +29,7 @@ import java.util.concurrent.CompletableFuture;
  *
  * @author jiachun.fjc
  */
-public interface WritePOJO extends Write {
+public interface WritePOJO {
     /**
      * @see #writePOJOs(Collection, Context)
      */

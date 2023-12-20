@@ -179,5 +179,9 @@ public interface TableRows {
                     .setRows(rows) //
                     .build();
         }
+
+        public List<RowData.Row> rows() {
+            return rows;
+        }
     }
 }
