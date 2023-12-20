@@ -61,7 +61,7 @@ public interface Write {
     }
 
     /**
-     * Create a streaming for write.
+     * Create a `Stream` to write `TableRows` data.
      *
      * @param maxPointsPerSecond The max number of points that can be written per second,
      *                           exceeding which may cause blockage.
