@@ -38,7 +38,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -66,7 +65,7 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
     private final int id;
     private final AtomicBoolean started = new AtomicBoolean(false);
 
-    private final PojoMapper pojoMapper = new PojoMapper();
+    private final PojoMapper pojoMapper = new PojoMapper(65536);
 
     private GreptimeOptions opts;
     private RouterClient routerClient;

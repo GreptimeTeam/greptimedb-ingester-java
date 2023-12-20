@@ -41,28 +41,26 @@ import java.util.concurrent.ConcurrentMap;
 public class PojoMapper {
 
     private final ConcurrentMap<String, Map<String, Field>> classFieldCache = new ConcurrentHashMap<>();
+    private final int maxCachedPOJOs;
+
+    public PojoMapper(int maxCachedPOJOs) {
+        this.maxCachedPOJOs = maxCachedPOJOs;
+    }
 
     public <M> TableRows toTableRows(List<M> pojos) {
         Ensures.ensureNonNull(pojos, "pojos");
         Ensures.ensure(!pojos.isEmpty(), "pojos can not be empty");
 
-        M pojo = pojos.get(0);
-        Class<?> metricType = pojo.getClass();
-        cacheMetricClass(metricType);
+        M first = pojos.get(0);
 
-        for (M row : pojos) {
-            Class<?> rowType = row.getClass();
-            if (!rowType.equals(metricType)) {
-                throw new PojoException("All POJOs must be of the same type");
-            }
-        }
+        Class<?> metricType = first.getClass();
+
+        Map<String, Field> fieldMap = getAndCacheMetricClass(metricType);
 
         String database = getDatabase(metricType);
         String metricName = getMetricName(metricType);
-        Map<String, Field> fieldMap = this.classFieldCache.get(metricType.getName());
 
         TableName tableName = TableName.with(database, metricName);
-        TableSchema.Builder schemaBuilder = TableSchema.newBuilder(tableName);
 
         String[] columnNames = new String[fieldMap.size()];
         DataType[] dataTypes = new DataType[fieldMap.size()];
@@ -87,17 +85,24 @@ public class PojoMapper {
             i++;
         }
 
-        TableSchema schema = schemaBuilder.columnNames(columnNames) //
+        TableSchema schema = TableSchema.newBuilder(tableName) //
+                .columnNames(columnNames) //
                 .semanticTypes(semanticTypes) //
-                .dataTypes(dataTypes).build();
+                .dataTypes(dataTypes) //
+                .build();
 
         TableRows tableRows = TableRows.newBuilder(schema).build();
-        for (M row : pojos) {
+        for (M pojo : pojos) {
+            Class<?> type = pojo.getClass();
+            if (!type.equals(metricType)) {
+                throw new PojoException("All POJOs must be of the same type");
+            }
+
             Object[] values = new Object[fieldMap.size()];
             int j = 0;
             for (Map.Entry<String, Field> entry : fieldMap.entrySet()) {
                 Field field = entry.getValue();
-                Object value = getObject(row, field);
+                Object value = getObject(pojo, field);
                 values[j] = value;
 
                 j++;
@@ -144,23 +149,25 @@ public class PojoMapper {
         return value;
     }
 
-    private void cacheMetricClass(Class<?>... metricTypes) {
-        for (Class<?> metricType : metricTypes) {
-            this.classFieldCache.computeIfAbsent(metricType.getName(), k -> {
-                Map<String, Field> fieldMap = new HashMap<>();
-                Class<?> currentType = metricType;
-                while (currentType != null) {
-                    for (Field field : currentType.getDeclaredFields()) {
-                        Column colAnnotation = field.getAnnotation(Column.class);
-                        if (colAnnotation == null) {
-                            continue;
-                        }
-                        fieldMap.put(colAnnotation.name(), field);
-                    }
-                    currentType = currentType.getSuperclass();
-                }
-                return fieldMap;
-            });
+    private Map<String, Field> getAndCacheMetricClass(Class<?> metricType) {
+        if (this.classFieldCache.size() >= this.maxCachedPOJOs) {
+            this.classFieldCache.clear();
         }
+
+        return this.classFieldCache.computeIfAbsent(metricType.getName(), k -> {
+            Map<String, Field> fieldMap = new HashMap<>();
+            Class<?> currentType = metricType;
+            while (currentType != null) {
+                for (Field field : currentType.getDeclaredFields()) {
+                    Column colAnnotation = field.getAnnotation(Column.class);
+                    if (colAnnotation == null) {
+                        continue;
+                    }
+                    fieldMap.put(colAnnotation.name(), field);
+                }
+                currentType = currentType.getSuperclass();
+            }
+            return fieldMap;
+        });
     }
 }

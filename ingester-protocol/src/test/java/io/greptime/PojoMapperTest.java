@@ -38,7 +38,7 @@ public class PojoMapperTest {
             Pojo1Test pojo1 = createNewPojo1Test();
             pojos1.add(pojo1);
         }
-        TableRows tp1 = new PojoMapper().toTableRows(pojos1);
+        TableRows tp1 = new PojoMapper(65536).toTableRows(pojos1);
         Assert.assertEquals("public", tp1.tableName().getDatabaseName());
         Assert.assertEquals("pojo1", tp1.tableName().getTableName());
         Assert.assertEquals(50, tp1.pointCount());
@@ -49,7 +49,7 @@ public class PojoMapperTest {
             Pojo2Test pojo2 = createNewPojo2Test();
             pojos2.add(pojo2);
         }
-        TableRows tp2 = new PojoMapper().toTableRows(pojos2);
+        TableRows tp2 = new PojoMapper(65536).toTableRows(pojos2);
         Assert.assertEquals("public", tp2.tableName().getDatabaseName());
         Assert.assertEquals("pojo2", tp2.tableName().getTableName());
         Assert.assertEquals(30, tp2.pointCount());
