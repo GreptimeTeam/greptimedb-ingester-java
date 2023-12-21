@@ -68,7 +68,7 @@ public interface TableRows {
     Database.RowInsertRequest intoRowInsertRequest();
 
     /**
-     * Convert to {@link Database.RowInsertRequest}.
+     * Convert to {@link Database.RowDeleteRequest}.
      *
      * @return {@link Database.RowDeleteRequest}
      */
