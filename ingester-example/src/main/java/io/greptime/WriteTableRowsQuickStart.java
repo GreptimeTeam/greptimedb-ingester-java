@@ -51,11 +51,7 @@ public class WriteTableRowsQuickStart {
         GreptimeOptions opts = GreptimeOptions.newBuilder(endpoints, database) //
                 .build();
 
-        GreptimeDB greptimeDB = new GreptimeDB();
-
-        if (!greptimeDB.init(opts)) {
-            throw new RuntimeException("Failed to start GreptimeDB client");
-        }
+        GreptimeDB greptimeDB = GreptimeDB.create(opts);
 
         TableSchema myMetric3Schema = TableSchema.newBuilder("my_metric3") //
                 .addColumn("tag1", SemanticType.Tag, DataType.String) //
