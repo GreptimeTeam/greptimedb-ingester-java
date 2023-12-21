@@ -15,6 +15,7 @@
  */
 package io.greptime.models;
 
+import io.greptime.v1.RowData;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -37,9 +38,10 @@ public class TableRowsTest {
                 .insert("3", "33", 333);
 
         Assert.assertEquals(3, rows.rowCount());
-        Assert.assertEquals(111, rows.rows().get(0).getValues(2).getI32Value());
-        Assert.assertEquals(222, rows.rows().get(1).getValues(2).getI32Value());
-        Assert.assertEquals(333, rows.rows().get(2).getValues(2).getI32Value());
+        RowData.Rows rawRows = rows.into();
+        Assert.assertEquals(111, rawRows.getRows(0).getValues(2).getI32Value());
+        Assert.assertEquals(222, rawRows.getRows(1).getValues(2).getI32Value());
+        Assert.assertEquals(333, rawRows.getRows(2).getValues(2).getI32Value());
     }
 
     @Test
@@ -56,9 +58,10 @@ public class TableRowsTest {
                 .insert("3", "33", null);
 
         Assert.assertEquals(3, rows.rowCount());
-        Assert.assertEquals(111, rows.rows().get(0).getValues(2).getI32Value());
-        Assert.assertEquals(222, rows.rows().get(1).getValues(2).getI32Value());
-        Assert.assertFalse(rows.rows().get(2).getValues(2).hasI32Value());
-        Assert.assertFalse(rows.rows().get(1).getValues(1).hasStringValue());
+        RowData.Rows rawRows = rows.into();
+        Assert.assertEquals(111, rawRows.getRows(0).getValues(2).getI32Value());
+        Assert.assertEquals(222, rawRows.getRows(1).getValues(2).getI32Value());
+        Assert.assertFalse(rawRows.getRows(2).getValues(2).hasI32Value());
+        Assert.assertFalse(rawRows.getRows(1).getValues(1).hasStringValue());
     }
 }

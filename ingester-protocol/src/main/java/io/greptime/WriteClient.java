@@ -37,6 +37,7 @@ import io.greptime.models.TableName;
 import io.greptime.models.WriteOk;
 import io.greptime.models.TableRows;
 import io.greptime.models.TableRowsHelper;
+import io.greptime.models.WriteTable;
 import io.greptime.options.WriteOptions;
 import io.greptime.rpc.Context;
 import io.greptime.rpc.Observer;
@@ -79,26 +80,27 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
     }
 
     @Override
-    public CompletableFuture<Result<WriteOk, Err>> write(Collection<TableRows> rows, Context ctx) {
+    public CompletableFuture<Result<WriteOk, Err>> write(Collection<TableRows> rows, WriteOp writeOp, Context ctx) {
         Ensures.ensureNonNull(rows, "null `rows`");
         Ensures.ensure(!rows.isEmpty(), "empty `rows`");
 
         long startCall = Clock.defaultClock().getTick();
 
-        return this.writeLimiter.acquireAndDo(rows, () -> write0(rows, ctx, 0).whenCompleteAsync((r, e) -> {
+        return this.writeLimiter.acquireAndDo(rows, () -> write0(rows, writeOp, ctx, 0).whenCompleteAsync((r, e) -> {
             InnerMetricHelper.writeQps().mark();
             if (r != null) {
                 if (Util.isRwLogging()) {
-                    LOG.info("Write to {}, duration={} ms, result={}.",
+                    LOG.info("Write to {} with operation {}, duration={} ms, result={}.",
                             Keys.DB_NAME,
+                            writeOp,
                             Clock.defaultClock().duration(startCall),
                             r
                     );
                 }
                 if (r.isOk()) {
                     WriteOk ok = r.getOk();
-                    InnerMetricHelper.writeRowsSuccessNum().update(ok.getSuccess());
-                    InnerMetricHelper.writeRowsFailureNum().update(ok.getFailure());
+                    InnerMetricHelper.writeRowsSuccessNum(writeOp).update(ok.getSuccess());
+                    InnerMetricHelper.writeRowsFailureNum(writeOp).update(ok.getFailure());
                     return;
                 }
             }
@@ -117,11 +119,11 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
                 .thenApply(reqObserver -> new RateLimitingStreamWriter(reqObserver, permitsPerSecond) {
 
                     @Override
-                    public StreamWriter<TableRows, WriteOk> write(TableRows rows) {
+                    public StreamWriter<TableRows, WriteOk> write(TableRows rows, WriteOp writeOp) {
                         if (respFuture.isCompletedExceptionally()) {
                             respFuture.getNow(null); // throw the exception now
                         }
-                        return super.write(rows); // may wait
+                        return super.write(rows, writeOp); // may wait
                     }
 
                     @Override
@@ -132,11 +134,11 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
                 }).join();
     }
 
-    private CompletableFuture<Result<WriteOk, Err>> write0(Collection<TableRows> rows, Context ctx, int retries) {
+    private CompletableFuture<Result<WriteOk, Err>> write0(Collection<TableRows> rows, WriteOp writeOp, Context ctx, int retries) {
         InnerMetricHelper.writeByRetries(retries).mark();
 
         return this.routerClient.route()
-            .thenComposeAsync(endpoint -> writeTo(endpoint, rows, ctx, retries), this.asyncPool)
+            .thenComposeAsync(endpoint -> writeTo(endpoint, rows, writeOp, ctx, retries), this.asyncPool)
             .thenComposeAsync(r -> {
                 if (r.isOk()) {
                     LOG.debug("Success to write to {}, ok={}.", Keys.DB_NAME, r.getOk());
@@ -154,13 +156,15 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
                     return Util.completedCf(r);
                 }
 
-                return write0(rows, ctx, retries + 1);
+                return write0(rows, writeOp, ctx, retries + 1);
             }, this.asyncPool);
     }
 
-    private CompletableFuture<Result<WriteOk, Err>> writeTo(Endpoint endpoint, Collection<TableRows> rows, Context ctx, int retries) {
-        Collection<TableName> tableNames = rows.stream().map(TableRows::tableName).collect(Collectors.toList());
-        Database.GreptimeRequest req = TableRowsHelper.toGreptimeRequest(tableNames, rows, this.opts.getAuthInfo());
+    private CompletableFuture<Result<WriteOk, Err>> writeTo(Endpoint endpoint, Collection<TableRows> rows, WriteOp writeOp,  Context ctx, int retries) {
+        Collection<TableName> tableNames = rows.stream() //
+                .map(TableRows::tableName) //
+                .collect(Collectors.toList());
+        Database.GreptimeRequest req = TableRowsHelper.toGreptimeRequest(tableNames, rows, writeOp, this.opts.getAuthInfo());
         ctx.with("retries", retries);
 
         CompletableFuture<Database.GreptimeResponse> future = this.routerClient.invoke(endpoint, req, ctx);
@@ -178,7 +182,7 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
         }, this.asyncPool);
     }
 
-    private Observer<TableRows> streamWriteTo(Endpoint endpoint, Context ctx, Observer<WriteOk> respObserver) {
+    private Observer<WriteTable> streamWriteTo(Endpoint endpoint, Context ctx, Observer<WriteOk> respObserver) {
         Observer<Database.GreptimeRequest> rpcObserver =
                 this.routerClient.invokeClientStreaming(endpoint, Database.GreptimeRequest.getDefaultInstance(), ctx,
                         new Observer<Database.GreptimeResponse>() {
@@ -205,12 +209,14 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
                             }
                         });
 
-        return new Observer<TableRows>() {
+        return new Observer<WriteTable>() {
 
             @Override
-            public void onNext(TableRows rows) {
+            public void onNext(WriteTable writeTable) {
+                TableRows rows = writeTable.getRows();
+                WriteOp writeOp = writeTable.getWriteOp();
                 Database.GreptimeRequest req =
-                        TableRowsHelper.toGreptimeRequest(rows, WriteClient.this.opts.getAuthInfo());
+                        TableRowsHelper.toGreptimeRequest(rows, writeOp, WriteClient.this.opts.getAuthInfo());
                 rpcObserver.onNext(req);
             }
 
@@ -245,19 +251,35 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
     }
 
     static final class InnerMetricHelper {
-        static final Histogram WRITE_ROWS_SUCCESS_NUM = MetricsUtil.histogram("write_rows_success_num");
-        static final Histogram WRITE_ROWS_FAILURE_NUM = MetricsUtil.histogram("write_rows_failure_num");
+        static final Histogram INSERT_ROWS_SUCCESS_NUM = MetricsUtil.histogram("insert_rows_success_num");
+        static final Histogram DELETE_ROWS_SUCCESS_NUM = MetricsUtil.histogram("delete_rows_success_num");
+        static final Histogram INSERT_ROWS_FAILURE_NUM = MetricsUtil.histogram("insert_rows_failure_num");
+        static final Histogram DELETE_ROWS_FAILURE_NUM = MetricsUtil.histogram("delete_rows_failure_num");
         static final Histogram WRITE_STREAM_LIMITER_TIME_SPENT = MetricsUtil
                 .histogram("write_stream_limiter_time_spent");
         static final Meter WRITE_FAILURE_NUM = MetricsUtil.meter("write_failure_num");
         static final Meter WRITE_QPS = MetricsUtil.meter("write_qps");
 
-        static Histogram writeRowsSuccessNum() {
-            return WRITE_ROWS_SUCCESS_NUM;
+        static Histogram writeRowsSuccessNum(WriteOp writeOp) {
+            switch (writeOp) {
+                case Insert:
+                    return INSERT_ROWS_SUCCESS_NUM;
+                case Delete:
+                    return DELETE_ROWS_SUCCESS_NUM;
+                default:
+                    throw new IllegalArgumentException("Unsupported write operation: " + writeOp);
+            }
         }
 
-        static Histogram writeRowsFailureNum() {
-            return WRITE_ROWS_FAILURE_NUM;
+        static Histogram writeRowsFailureNum(WriteOp writeOp) {
+            switch (writeOp) {
+                case Insert:
+                    return INSERT_ROWS_FAILURE_NUM;
+                case Delete:
+                    return DELETE_ROWS_FAILURE_NUM;
+                default:
+                    throw new IllegalArgumentException("Unsupported write operation: " + writeOp);
+            }
         }
 
         static Histogram writeStreamLimiterTimeSpent() {
@@ -303,10 +325,10 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
     @SuppressWarnings("UnstableApiUsage")
     static abstract class RateLimitingStreamWriter implements StreamWriter<TableRows, WriteOk> {
 
-        private final Observer<TableRows> observer;
+        private final Observer<WriteTable> observer;
         private final RateLimiter rateLimiter;
 
-        RateLimitingStreamWriter(Observer<TableRows> observer, double permitsPerSecond) {
+        RateLimitingStreamWriter(Observer<WriteTable> observer, double permitsPerSecond) {
             this.observer = observer;
             if (permitsPerSecond > 0) {
                 this.rateLimiter = RateLimiter.create(permitsPerSecond);
@@ -316,14 +338,14 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
         }
 
         @Override
-        public StreamWriter<TableRows, WriteOk> write(TableRows rows) {
+        public StreamWriter<TableRows, WriteOk> write(TableRows rows, WriteOp writeOp) {
             Ensures.ensureNonNull(rows, "null `rows`");
 
             if (this.rateLimiter != null) {
                 double timeSpent = this.rateLimiter.acquire(rows.pointCount());
                 InnerMetricHelper.writeStreamLimiterTimeSpent().update((long) timeSpent);
             }
-            this.observer.onNext(rows);
+            this.observer.onNext(new WriteTable(rows, writeOp));
             return this;
         }
     }

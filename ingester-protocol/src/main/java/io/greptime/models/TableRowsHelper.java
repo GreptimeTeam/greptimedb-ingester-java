@@ -15,6 +15,7 @@
  */
 package io.greptime.models;
 
+import io.greptime.WriteOp;
 import io.greptime.v1.Common;
 import io.greptime.v1.Database;
 import java.util.Collection;
@@ -25,12 +26,15 @@ import java.util.Collections;
  */
 public class TableRowsHelper {
 
-    public static Database.GreptimeRequest toGreptimeRequest(TableRows rows, AuthInfo authInfo) {
-        return toGreptimeRequest(Collections.singleton(rows.tableName()), Collections.singleton(rows), authInfo);
+    public static Database.GreptimeRequest toGreptimeRequest(TableRows rows, WriteOp writeOp, AuthInfo authInfo) {
+        return toGreptimeRequest(Collections.singleton(rows.tableName()), Collections.singleton(rows), writeOp,
+                authInfo);
     }
 
-    public static Database.GreptimeRequest toGreptimeRequest(Collection<TableName> tableNames,
-            Collection<TableRows> rows, AuthInfo authInfo) {
+    public static Database.GreptimeRequest toGreptimeRequest(Collection<TableName> tableNames, //
+            Collection<TableRows> rows, //
+            WriteOp writeOp, //
+            AuthInfo authInfo) {
         String dbName = null;
         for (TableName t : tableNames) {
             if (dbName == null) {
@@ -51,15 +55,29 @@ public class TableRowsHelper {
             headerBuilder.setAuthorization(authInfo.into());
         }
 
-        Database.RowInsertRequests.Builder insertRequestsBuilder = Database.RowInsertRequests.newBuilder();
-        for (TableRows r : rows) {
-            insertRequestsBuilder.addInserts(r.intoRowInsertRequest());
-        }
 
-        return Database.GreptimeRequest.newBuilder() //
-                .setHeader(headerBuilder.build()) //
-                .setRowInserts(insertRequestsBuilder.build()) //
-                .build();
+        switch (writeOp) {
+            case Insert:
+                Database.RowInsertRequests.Builder insertBuilder = Database.RowInsertRequests.newBuilder();
+                for (TableRows r : rows) {
+                    insertBuilder.addInserts(r.intoRowInsertRequest());
+                }
+                return Database.GreptimeRequest.newBuilder() //
+                        .setHeader(headerBuilder.build()) //
+                        .setRowInserts(insertBuilder.build()) //
+                        .build();
+            case Delete:
+                Database.RowDeleteRequests.Builder deleteBuilder = Database.RowDeleteRequests.newBuilder();
+                for (TableRows r : rows) {
+                    deleteBuilder.addDeletes(r.intoRowDeleteRequest());
+                }
+                return Database.GreptimeRequest.newBuilder() //
+                        .setHeader(headerBuilder.build()) //
+                        .setRowDeletes(deleteBuilder.build()) //
+                        .build();
+            default:
+                throw new IllegalArgumentException("Unsupported write operation: " + writeOp);
+        }
     }
 
     private TableRowsHelper() {}

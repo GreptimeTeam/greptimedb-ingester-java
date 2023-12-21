@@ -31,20 +31,28 @@ import java.util.concurrent.CompletableFuture;
  */
 public interface WritePOJO {
     /**
-     * @see #writePOJOs(Collection, Context)
+     * @see #writePOJOs(Collection, WriteOp, Context)
      */
     default CompletableFuture<Result<WriteOk, Err>> writePOJOs(Collection<List<?>> pojos) {
-        return writePOJOs(pojos, Context.newDefault());
+        return writePOJOs(pojos, WriteOp.Insert, Context.newDefault());
+    }
+
+    /**
+     * @see #writePOJOs(Collection, WriteOp, Context)
+     */
+    default CompletableFuture<Result<WriteOk, Err>> writePOJOs(Collection<List<?>> pojos, WriteOp writeOp) {
+        return writePOJOs(pojos, writeOp, Context.newDefault());
     }
 
     /**
      * Write multi tables multi rows data to database.
      *
      * @param pojos rows with multi tables
+     * @param writeOp write operation(insert or delete)
      * @param ctx invoke context
      * @return write result
      */
-    CompletableFuture<Result<WriteOk, Err>> writePOJOs(Collection<List<?>> pojos, Context ctx);
+    CompletableFuture<Result<WriteOk, Err>> writePOJOs(Collection<List<?>> pojos, WriteOp writeOp, Context ctx);
 
     /**
      * @see #streamWriterPOJOs(int, Context)

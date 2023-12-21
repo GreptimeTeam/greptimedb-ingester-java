@@ -15,35 +15,9 @@
  */
 package io.greptime;
 
-import java.util.concurrent.CompletableFuture;
-
 /**
- * A stream-writer
- *
  * @author jiachun.fjc
  */
-public interface StreamWriter<V, R> {
-
-    /**
-     * @see #write(Object, WriteOp)
-     */
-    default StreamWriter<V, R> write(V val) {
-        return write(val, WriteOp.Insert);
-    }
-
-    /**
-     * Write data to this stream.
-     *
-     * @param val data value
-     * @param writeOp write operation(insert or delete)
-     * @return this
-     */
-    StreamWriter<V, R> write(V val, WriteOp writeOp);
-
-    /**
-     * Tell server that the stream-write has completed.
-     *
-     * @return the streaming-wrote future result
-     */
-    CompletableFuture<R> completed();
+public enum WriteOp {
+    Insert, Delete,
 }

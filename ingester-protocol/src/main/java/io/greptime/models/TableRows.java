@@ -65,6 +65,13 @@ public interface TableRows {
      */
     Database.RowInsertRequest intoRowInsertRequest();
 
+    /**
+     * Convert to {@link Database.RowInsertRequest}.
+     *
+     * @return {@link Database.RowDeleteRequest}
+     */
+    Database.RowDeleteRequest intoRowDeleteRequest();
+
     default void checkNumValues(int len) {
         int columnCount = columnCount();
         Ensures.ensure(columnCount == len, "Expected values num: %d, actual: %d", columnCount, len);
@@ -125,7 +132,7 @@ public interface TableRows {
         }
     }
 
-    class RowBasedTableRows implements TableRows, Into<Database.RowInsertRequest> {
+    class RowBasedTableRows implements TableRows, Into<RowData.Rows> {
 
         private TableName tableName;
 
@@ -164,24 +171,26 @@ public interface TableRows {
 
         @Override
         public Database.RowInsertRequest intoRowInsertRequest() {
-            return into();
+            return Database.RowInsertRequest.newBuilder() //
+                    .setTableName(this.tableName.getTableName()) //
+                    .setRows(into()) //
+                    .build();
         }
 
         @Override
-        public Database.RowInsertRequest into() {
-            TableName tableName = tableName();
-            RowData.Rows rows = RowData.Rows.newBuilder() //
-                    .addAllSchema(this.columnSchemas) //
-                    .addAllRows(this.rows) //
-                    .build();
-            return Database.RowInsertRequest.newBuilder() //
-                    .setTableName(tableName.getTableName()) //
-                    .setRows(rows) //
+        public Database.RowDeleteRequest intoRowDeleteRequest() {
+            return Database.RowDeleteRequest.newBuilder() //
+                    .setTableName(this.tableName.getTableName()) //
+                    .setRows(into()) //
                     .build();
         }
 
-        public List<RowData.Row> rows() {
-            return rows;
+        @Override
+        public RowData.Rows into() {
+            return RowData.Rows.newBuilder() //
+                    .addAllSchema(this.columnSchemas) //
+                    .addAllRows(this.rows) //
+                    .build();
         }
     }
 }
