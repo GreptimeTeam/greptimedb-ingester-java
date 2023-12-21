@@ -17,7 +17,6 @@ package io.greptime;
 
 import io.greptime.models.Column;
 import io.greptime.models.DataType;
-import io.greptime.models.Database;
 import io.greptime.models.Metric;
 import io.greptime.models.TableRows;
 import org.junit.Assert;
@@ -39,8 +38,7 @@ public class PojoMapperTest {
             pojos1.add(pojo1);
         }
         TableRows tp1 = new PojoMapper(65536).toTableRows(pojos1);
-        Assert.assertEquals("public", tp1.tableName().getDatabaseName());
-        Assert.assertEquals("pojo1", tp1.tableName().getTableName());
+        Assert.assertEquals("pojo1", tp1.tableName());
         Assert.assertEquals(50, tp1.pointCount());
 
 
@@ -50,8 +48,7 @@ public class PojoMapperTest {
             pojos2.add(pojo2);
         }
         TableRows tp2 = new PojoMapper(65536).toTableRows(pojos2);
-        Assert.assertEquals("public", tp2.tableName().getDatabaseName());
-        Assert.assertEquals("pojo2", tp2.tableName().getTableName());
+        Assert.assertEquals("pojo2", tp2.tableName());
         Assert.assertEquals(30, tp2.pointCount());
     }
 
@@ -76,7 +73,6 @@ public class PojoMapperTest {
 }
 
 
-@Database(name = "public")
 @Metric(name = "pojo1")
 class Pojo1Test {
     @Column(name = "a", dataType = DataType.String, tag = true)
@@ -92,7 +88,6 @@ class Pojo1Test {
 }
 
 
-@Database(name = "public")
 @Metric(name = "pojo2")
 class Pojo2Test {
     @Column(name = "pojo2", dataType = DataType.String, tag = true)

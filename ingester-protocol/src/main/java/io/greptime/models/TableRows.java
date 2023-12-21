@@ -34,7 +34,7 @@ public interface TableRows {
     /**
      * The table name to write.
      */
-    TableName tableName();
+    String tableName();
 
     /**
      * The rows count to write.
@@ -89,7 +89,7 @@ public interface TableRows {
         }
 
         public TableRows build() {
-            TableName tableName = this.tableSchema.getTableName();
+            String tableName = this.tableSchema.getTableName();
             List<String> columnNames = this.tableSchema.getColumnNames();
             List<Common.SemanticType> semanticTypes = this.tableSchema.getSemanticTypes();
             List<Common.ColumnDataType> dataTypes = this.tableSchema.getDataTypes();
@@ -110,7 +110,7 @@ public interface TableRows {
             return buildRow(tableName, columnCount, columnNames, semanticTypes, dataTypes, dataTypeExtensions);
         }
 
-        private static TableRows buildRow(TableName tableName, //
+        private static TableRows buildRow(String tableName, //
                                           int columnCount, //
                                           List<String> columnNames, //
                                           List<Common.SemanticType> semanticTypes, //
@@ -134,13 +134,13 @@ public interface TableRows {
 
     class RowBasedTableRows implements TableRows, Into<RowData.Rows> {
 
-        private TableName tableName;
+        private String tableName;
 
         private List<RowData.ColumnSchema> columnSchemas;
         private final List<RowData.Row> rows = new ArrayList<>();
 
         @Override
-        public TableName tableName() {
+        public String tableName() {
             return tableName;
         }
 
@@ -172,7 +172,7 @@ public interface TableRows {
         @Override
         public Database.RowInsertRequest intoRowInsertRequest() {
             return Database.RowInsertRequest.newBuilder() //
-                    .setTableName(this.tableName.getTableName()) //
+                    .setTableName(this.tableName) //
                     .setRows(into()) //
                     .build();
         }
@@ -180,7 +180,7 @@ public interface TableRows {
         @Override
         public Database.RowDeleteRequest intoRowDeleteRequest() {
             return Database.RowDeleteRequest.newBuilder() //
-                    .setTableName(this.tableName.getTableName()) //
+                    .setTableName(this.tableName) //
                     .setRows(into()) //
                     .build();
         }

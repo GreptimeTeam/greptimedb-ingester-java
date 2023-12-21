@@ -17,7 +17,6 @@ package io.greptime;
 
 import io.greptime.models.Column;
 import io.greptime.models.DataType;
-import io.greptime.models.Database;
 import io.greptime.models.Err;
 import io.greptime.models.Metric;
 import io.greptime.models.Result;
@@ -39,7 +38,7 @@ public class QuickStart {
 
     public static void main(String[] args) throws Exception {
         String endpoint = "127.0.0.1:4001";
-        GreptimeOptions opts = GreptimeOptions.newBuilder(endpoint) //
+        GreptimeOptions opts = GreptimeOptions.newBuilder("public", endpoint) //
                 .writeMaxRetries(1) //
                 .routeTableRefreshPeriodSeconds(-1) //
                 .build();
@@ -60,8 +59,7 @@ public class QuickStart {
         runInsertWithStream(greptimeDB, now);
     }
 
-    @Database(name = "public")
-    @Metric(name = "monitor")
+    @Metric(name = "monitor1")
     static class Monitor {
         @Column(name = "host", tag = true, dataType = DataType.String)
         String host;
@@ -75,8 +73,7 @@ public class QuickStart {
         BigDecimal decimalValue;
     }
 
-    @Database(name = "public")
-    @Metric(name = "monitor_cpu")
+    @Metric(name = "monitor_cpu1")
     static class MonitorCpu {
         @Column(name = "host", tag = true, dataType = DataType.String)
         String host;

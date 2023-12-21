@@ -26,7 +26,7 @@ public class TableRowsTest {
 
     @Test
     public void testWriteRowsNonNull() {
-        TableSchema schema = TableSchema.newBuilder(TableName.with("", "test_table")) //
+        TableSchema schema = TableSchema.newBuilder("test_table") //
                 .columnNames("col1", "col2", "col3") //
                 .semanticTypes(SemanticType.Tag, SemanticType.Tag, SemanticType.Field) //
                 .dataTypes(DataType.String, DataType.String, DataType.Int32) //
@@ -46,7 +46,7 @@ public class TableRowsTest {
 
     @Test
     public void testWriteRowsSomeNull() {
-        TableSchema schema = TableSchema.newBuilder(TableName.with("", "test_table")) //
+        TableSchema schema = TableSchema.newBuilder("test_table") //
                 .columnNames("col1", "col2", "col3") //
                 .semanticTypes(SemanticType.Tag, SemanticType.Tag, SemanticType.Field) //
                 .dataTypes(DataType.String, DataType.String, DataType.Int32) //

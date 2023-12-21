@@ -17,7 +17,6 @@ package io.greptime;
 
 import io.greptime.models.DataType;
 import io.greptime.models.SemanticType;
-import io.greptime.models.TableName;
 import io.greptime.models.TableRows;
 import io.greptime.models.TableSchema;
 import java.util.Collection;
@@ -30,7 +29,7 @@ public class TestUtil {
 
     public static Collection<TableRows> testTableRows(String tableName, int rowCount) {
         TableSchema tableSchema =
-                TableSchema.newBuilder(TableName.with("public", tableName))
+                TableSchema.newBuilder(tableName)
                         .semanticTypes(SemanticType.Tag, SemanticType.Timestamp, SemanticType.Field)
                         .dataTypes(DataType.String, DataType.TimestampMillisecond, DataType.Float64) //
                         .columnNames("host", "ts", "cpu") //

@@ -30,9 +30,9 @@ import java.util.stream.Collectors;
  */
 public class TableSchema {
 
-    private static final Map<TableName, TableSchema> TABLE_SCHEMA_CACHE = new ConcurrentHashMap<>();
+    private static final Map<String, TableSchema> TABLE_SCHEMA_CACHE = new ConcurrentHashMap<>();
 
-    private TableName tableName;
+    private String tableName;
     private List<String> columnNames;
     private List<Common.SemanticType> semanticTypes;
     private List<Common.ColumnDataType> dataTypes;
@@ -40,7 +40,7 @@ public class TableSchema {
 
     private TableSchema() {}
 
-    public TableName getTableName() {
+    public String getTableName() {
         return tableName;
     }
 
@@ -60,11 +60,11 @@ public class TableSchema {
         return dataTypeExtensions;
     }
 
-    public static TableSchema findSchema(TableName tableName) {
+    public static TableSchema findSchema(String tableName) {
         return TABLE_SCHEMA_CACHE.get(tableName);
     }
 
-    public static TableSchema removeSchema(TableName tableName) {
+    public static TableSchema removeSchema(String tableName) {
         return TABLE_SCHEMA_CACHE.remove(tableName);
     }
 
@@ -72,18 +72,18 @@ public class TableSchema {
         TABLE_SCHEMA_CACHE.clear();
     }
 
-    public static Builder newBuilder(TableName tableName) {
+    public static Builder newBuilder(String tableName) {
         return new Builder(tableName);
     }
 
     public static class Builder {
-        private final TableName tableName;
+        private final String tableName;
         private List<String> columnNames;
         private List<Common.SemanticType> semanticTypes;
         private List<Common.ColumnDataType> dataTypes;
         private List<Common.ColumnDataTypeExtension> dataTypeExtensions;
 
-        public Builder(TableName tableName) {
+        public Builder(String tableName) {
             this.tableName = tableName;
         }
 

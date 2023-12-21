@@ -20,7 +20,6 @@ import io.greptime.models.DataType;
 import io.greptime.models.Err;
 import io.greptime.models.Result;
 import io.greptime.models.SemanticType;
-import io.greptime.models.TableName;
 import io.greptime.models.TableRows;
 import io.greptime.models.TableSchema;
 import io.greptime.models.WriteOk;
@@ -35,9 +34,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import static io.greptime.models.DataType.Binary;
@@ -100,7 +97,7 @@ public class WriteClientTest {
                         Float32, Float64, Bool, Binary, Date, DateTime, TimestampSecond, TimestampMillisecond,
                         TimestampNanosecond};
 
-        TableSchema schema = TableSchema.newBuilder(TableName.with("", "test_table")) //
+        TableSchema schema = TableSchema.newBuilder("test_table") //
                 .columnNames(columnNames) //
                 .semanticTypes(semanticTypes) //
                 .dataTypes(dataTypes) //

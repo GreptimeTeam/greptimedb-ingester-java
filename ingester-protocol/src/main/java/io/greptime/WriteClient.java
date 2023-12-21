@@ -31,9 +31,9 @@ import io.greptime.errors.ServerException;
 import io.greptime.errors.StreamException;
 import io.greptime.limit.LimitedPolicy;
 import io.greptime.limit.WriteLimiter;
+import io.greptime.models.AuthInfo;
 import io.greptime.models.Err;
 import io.greptime.models.Result;
-import io.greptime.models.TableName;
 import io.greptime.models.WriteOk;
 import io.greptime.models.TableRows;
 import io.greptime.models.TableRowsHelper;
@@ -48,7 +48,6 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.stream.Collectors;
 
 /**
  * Default Write API impl.
@@ -161,10 +160,9 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
     }
 
     private CompletableFuture<Result<WriteOk, Err>> writeTo(Endpoint endpoint, Collection<TableRows> rows, WriteOp writeOp,  Context ctx, int retries) {
-        Collection<TableName> tableNames = rows.stream() //
-                .map(TableRows::tableName) //
-                .collect(Collectors.toList());
-        Database.GreptimeRequest req = TableRowsHelper.toGreptimeRequest(tableNames, rows, writeOp, this.opts.getAuthInfo());
+        String database = this.opts.getDatabase();
+        AuthInfo authInfo = this.opts.getAuthInfo();
+        Database.GreptimeRequest req = TableRowsHelper.toGreptimeRequest(rows, writeOp, database, authInfo);
         ctx.with("retries", retries);
 
         CompletableFuture<Database.GreptimeResponse> future = this.routerClient.invoke(endpoint, req, ctx);
@@ -175,7 +173,7 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
             int statusCode = status.getStatusCode();
             if (Status.isSuccess(statusCode)) {
                 int affectedRows = resp.getAffectedRows().getValue();
-                return WriteOk.ok(affectedRows, 0, tableNames).mapToResult();
+                return WriteOk.ok(affectedRows, 0).mapToResult();
             } else {
                 return Err.writeErr(statusCode, new ServerException(status.getErrMsg()), endpoint, rows).mapToResult();
             }
@@ -190,7 +188,7 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
                             @Override
                             public void onNext(Database.GreptimeResponse resp) {
                                 int affectedRows = resp.getAffectedRows().getValue();
-                                Result<WriteOk, Err> ret = WriteOk.ok(affectedRows, 0, null).mapToResult();
+                                Result<WriteOk, Err> ret = WriteOk.ok(affectedRows, 0).mapToResult();
                                 if (ret.isOk()) {
                                     respObserver.onNext(ret.getOk());
                                 } else {
@@ -215,8 +213,9 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
             public void onNext(WriteTable writeTable) {
                 TableRows rows = writeTable.getRows();
                 WriteOp writeOp = writeTable.getWriteOp();
-                Database.GreptimeRequest req =
-                        TableRowsHelper.toGreptimeRequest(rows, writeOp, WriteClient.this.opts.getAuthInfo());
+                String database = WriteClient.this.opts.getDatabase();
+                AuthInfo authInfo = WriteClient.this.opts.getAuthInfo();
+                Database.GreptimeRequest req = TableRowsHelper.toGreptimeRequest(rows, writeOp, database, authInfo);
                 rpcObserver.onNext(req);
             }
 

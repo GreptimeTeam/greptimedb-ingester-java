@@ -19,10 +19,8 @@ import io.greptime.common.util.Ensures;
 import io.greptime.errors.PojoException;
 import io.greptime.models.Column;
 import io.greptime.models.DataType;
-import io.greptime.models.Database;
 import io.greptime.models.Metric;
 import io.greptime.models.SemanticType;
-import io.greptime.models.TableName;
 import io.greptime.models.TableRows;
 import io.greptime.models.TableSchema;
 import java.lang.reflect.Field;
@@ -57,10 +55,7 @@ public class PojoMapper {
 
         Map<String, Field> fieldMap = getAndCacheMetricClass(metricType);
 
-        String database = getDatabase(metricType);
         String metricName = getMetricName(metricType);
-
-        TableName tableName = TableName.with(database, metricName);
 
         String[] columnNames = new String[fieldMap.size()];
         DataType[] dataTypes = new DataType[fieldMap.size()];
@@ -85,7 +80,7 @@ public class PojoMapper {
             i++;
         }
 
-        TableSchema schema = TableSchema.newBuilder(tableName) //
+        TableSchema schema = TableSchema.newBuilder(metricName) //
                 .columnNames(columnNames) //
                 .semanticTypes(semanticTypes) //
                 .dataTypes(dataTypes) //
@@ -111,18 +106,6 @@ public class PojoMapper {
         }
 
         return tableRows;
-    }
-
-    private <M> String getDatabase(Class<M> metricType) {
-        Database databaseAnnotation = metricType.getAnnotation(Database.class);
-        if (databaseAnnotation != null) {
-            return databaseAnnotation.name();
-        }
-
-        String err =
-                String.format("Unable to determine Database for '%s'." + " Does it have a @Database annotation?",
-                        metricType);
-        throw new PojoException(err);
     }
 
     private String getMetricName(Class<?> metricType) {

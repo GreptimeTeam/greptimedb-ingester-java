@@ -26,7 +26,6 @@ public class WriteOk {
 
     private int success;
     private int failure;
-    private Collection<TableName> tableNames;
 
     /**
      * Returns the number of successful writes.
@@ -43,13 +42,6 @@ public class WriteOk {
     }
 
     /**
-     * Returns the table names.
-     */
-    public Collection<TableName> getTableNames() {
-        return tableNames;
-    }
-
-    /**
      * Map the {@link WriteOk} to {@link Result}.
      */
     public Result<WriteOk, Err> mapToResult() {
@@ -61,7 +53,6 @@ public class WriteOk {
         return "WriteOk{" + //
                 "success=" + success + //
                 ", failure=" + failure + //
-                ", tableNames=" + tableNames + //
                 '}';
     }
 
@@ -69,17 +60,16 @@ public class WriteOk {
      * Returns an empty {@link WriteOk}.
      */
     public static WriteOk emptyOk() {
-        return ok(0, 0, null);
+        return ok(0, 0);
     }
 
     /**
      * Creates a new {@link WriteOk} from the given value.
      */
-    public static WriteOk ok(int success, int failure, Collection<TableName> tableNames) {
+    public static WriteOk ok(int success, int failure) {
         WriteOk ok = new WriteOk();
         ok.success = success;
         ok.failure = failure;
-        ok.tableNames = tableNames;
         return ok;
     }
 }
