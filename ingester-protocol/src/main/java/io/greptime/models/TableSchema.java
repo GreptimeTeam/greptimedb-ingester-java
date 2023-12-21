@@ -17,11 +17,10 @@ package io.greptime.models;
 
 import io.greptime.common.util.Ensures;
 import io.greptime.v1.Common;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 /**
  * Table schema for write.
@@ -78,49 +77,31 @@ public class TableSchema {
 
     public static class Builder {
         private final String tableName;
-        private List<String> columnNames;
-        private List<Common.SemanticType> semanticTypes;
-        private List<Common.ColumnDataType> dataTypes;
-        private List<Common.ColumnDataTypeExtension> dataTypeExtensions;
+        private final List<String> columnNames = new ArrayList<>();
+        private final List<Common.SemanticType> semanticTypes = new ArrayList<>();
+        private final List<Common.ColumnDataType> dataTypes = new ArrayList<>();
+        private final List<Common.ColumnDataTypeExtension> dataTypeExtensions = new ArrayList<>();
 
         public Builder(String tableName) {
             this.tableName = tableName;
         }
 
-        public Builder columnNames(String... names) {
-            this.columnNames = Arrays.stream(names).collect(Collectors.toList());
-            return this;
+        public Builder addColumn(String name, SemanticType semanticType, DataType dataType) {
+            return addColumn(name, semanticType, dataType, null);
         }
 
-        public Builder semanticTypes(SemanticType... semanticTypes) {
-            this.semanticTypes = Arrays.stream(semanticTypes) //
-                    .map(SemanticType::toProtoValue) //
-                    .collect(Collectors.toList());
-            return this;
-        }
+        public Builder addColumn(String name, SemanticType semanticType, DataType dataType,
+                DataType.DecimalTypeExtension decimalTypeExtension) {
+            Ensures.ensureNonNull(name, "Null column name");
+            Ensures.ensureNonNull(semanticType, "Null semantic type");
+            Ensures.ensureNonNull(dataType, "Null data type");
 
-        public Builder dataTypes(DataType... dataTypes) {
-            DataTypeWithExtension[] columnDataTypeWithExtensions = Arrays.stream(dataTypes)
-                    .map(DataTypeWithExtension::of)
-                    .toArray(DataTypeWithExtension[]::new);
-            return dataTypes(columnDataTypeWithExtensions);
-        }
-
-        public Builder dataTypes(DataTypeWithExtension... dataTypes) {
-            this.dataTypes = Arrays.stream(dataTypes) //
-                    .map((dataType) -> dataType.getColumnDataType().toProtoValue()) //
-                    .collect(Collectors.toList());
-            this.dataTypeExtensions = Arrays.stream(dataTypes) //
-                    .map((dataType) -> {
-                        DataType.DecimalTypeExtension decimalTypeExtension = dataType.getDecimalTypeExtension();
-                        if (decimalTypeExtension == null) {
-                            return Common.ColumnDataTypeExtension.getDefaultInstance();
-                        }
-                        return Common.ColumnDataTypeExtension.newBuilder() //
-                                .setDecimalType(decimalTypeExtension.into())
-                                .build();
-                    })
-                    .collect(Collectors.toList());
+            this.columnNames.add(name);
+            this.semanticTypes.add(semanticType.toProtoValue());
+            this.dataTypes.add(dataType.toProtoValue());
+            this.dataTypeExtensions.add(decimalTypeExtension == null ? Common.ColumnDataTypeExtension
+                    .getDefaultInstance() : Common.ColumnDataTypeExtension.newBuilder()
+                    .setDecimalType(decimalTypeExtension.into()).build());
             return this;
         }
 
