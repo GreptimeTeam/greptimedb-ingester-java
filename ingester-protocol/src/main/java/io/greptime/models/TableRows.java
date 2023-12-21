@@ -184,7 +184,7 @@ public interface TableRows {
         @Override
         public TableRows subRange(int fromIndex, int toIndex) {
             List<RowData.Row> rows = this.rows.subList(fromIndex, toIndex);
-            return new RowBasedTableRows(this.tableName, this.columnSchemas, rows);
+            return new SubRangeTableRows(this.tableName, this.columnSchemas, rows);
         }
 
         @Override
@@ -209,6 +209,18 @@ public interface TableRows {
                     .addAllSchema(this.columnSchemas) //
                     .addAllRows(this.rows) //
                     .build();
+        }
+    }
+
+    class SubRangeTableRows extends RowBasedTableRows {
+
+        SubRangeTableRows(String tableName, List<RowData.ColumnSchema> columnSchemas, List<RowData.Row> rows) {
+            super(tableName, columnSchemas, rows);
+        }
+
+        @Override
+        public TableRows insert(Object... values) {
+            throw new UnsupportedOperationException("SubRangeTableRows can not insert");
         }
     }
 }
