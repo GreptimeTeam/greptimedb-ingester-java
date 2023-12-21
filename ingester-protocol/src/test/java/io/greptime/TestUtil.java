@@ -28,14 +28,13 @@ import java.util.Collections;
 public class TestUtil {
 
     public static Collection<TableRows> testTableRows(String tableName, int rowCount) {
-        TableSchema tableSchema =
-                TableSchema.newBuilder(tableName)
-                        .semanticTypes(SemanticType.Tag, SemanticType.Timestamp, SemanticType.Field)
-                        .dataTypes(DataType.String, DataType.TimestampMillisecond, DataType.Float64) //
-                        .columnNames("host", "ts", "cpu") //
-                        .build();
+        TableSchema tableSchema = TableSchema.newBuilder(tableName) //
+                .addColumn("host", SemanticType.Tag, DataType.String) //
+                .addColumn("ts", SemanticType.Timestamp, DataType.TimestampMillisecond) //
+                .addColumn("cpu", SemanticType.Field, DataType.Float64) //
+                .build();
 
-        TableRows rows = TableRows.newBuilder(tableSchema).build();
+        TableRows rows = TableRows.from(tableSchema);
         for (int i = 0; i < rowCount; i++) {
             rows.insert("127.0.0.1", System.currentTimeMillis(), i);
         }

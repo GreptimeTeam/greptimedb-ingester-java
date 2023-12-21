@@ -23,6 +23,7 @@ import io.greptime.models.AuthInfo;
 import io.greptime.rpc.RpcOptions;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
@@ -139,21 +140,25 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         return opts;
     }
 
-    public static Builder newBuilder(String database, List<Endpoint> endpoints) {
-        return new Builder(database, endpoints);
+    public static Builder newBuilder(String endpoint, String database) {
+        return newBuilder(Endpoint.parse(endpoint), database);
     }
 
-    public static Builder newBuilder(String database, Endpoint... endpoints) {
-        return new Builder(database, Arrays.stream(endpoints).collect(Collectors.toList()));
+    public static Builder newBuilder(Endpoint endpoint, String database) {
+        return new Builder(Collections.singletonList(endpoint), database);
     }
 
-    public static Builder newBuilder(String database, String... endpoints) {
-        return new Builder(database, Arrays.stream(endpoints).map(Endpoint::parse).collect(Collectors.toList()));
+    public static Builder newBuilder(String[] endpoints, String database) {
+        return new Builder(Arrays.stream(endpoints).map(Endpoint::parse).collect(Collectors.toList()), database);
+    }
+
+    public static Builder newBuilder(Endpoint[] endpoints, String database) {
+        return new Builder(Arrays.asList(endpoints), database);
     }
 
     public static final class Builder {
-        private final String database;
         private final List<Endpoint> endpoints = new ArrayList<>();
+        private final String database;
 
         // Asynchronous thread pool, which is used to handle various asynchronous tasks in the SDK.
         private Executor asyncPool;
@@ -164,15 +169,15 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         private int maxInFlightWriteRows = 65536;
         private LimitedPolicy writeLimitedPolicy = LimitedPolicy.defaultWriteLimitedPolicy();
         private int defaultStreamMaxWritePointsPerSecond = 10 * 65536;
-        // Refresh frequency of route tables. The background refreshes all route tables periodically. By default,
-        // all route tables are refreshed every 30 seconds.
-        private long routeTableRefreshPeriodSeconds = 30;
+        // Refresh frequency of route tables. The background refreshes all route tables periodically.
+        // If the value is less than or equal to 0, the route tables will not be refreshed.
+        private long routeTableRefreshPeriodSeconds = -1;
         // Authentication information
         private AuthInfo authInfo;
 
-        public Builder(String database, List<Endpoint> endpoints) {
-            this.database = database;
+        public Builder(List<Endpoint> endpoints, String database) {
             this.endpoints.addAll(endpoints);
+            this.database = database;
         }
 
         /**

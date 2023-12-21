@@ -27,12 +27,12 @@ public class TableRowsTest {
     @Test
     public void testWriteRowsNonNull() {
         TableSchema schema = TableSchema.newBuilder("test_table") //
-                .columnNames("col1", "col2", "col3") //
-                .semanticTypes(SemanticType.Tag, SemanticType.Tag, SemanticType.Field) //
-                .dataTypes(DataType.String, DataType.String, DataType.Int32) //
+                .addColumn("col1", SemanticType.Tag, DataType.String) //
+                .addColumn("col2", SemanticType.Tag, DataType.String) //
+                .addColumn("col3", SemanticType.Field, DataType.Int32) //
                 .build();
 
-        TableRows.RowBasedTableRows rows = (TableRows.RowBasedTableRows) TableRows.newBuilder(schema).build();
+        TableRows.RowBasedTableRows rows = (TableRows.RowBasedTableRows) TableRows.from(schema);
         rows.insert("1", "11", 111) //
                 .insert("2", "22", 222) //
                 .insert("3", "33", 333);
@@ -47,12 +47,12 @@ public class TableRowsTest {
     @Test
     public void testWriteRowsSomeNull() {
         TableSchema schema = TableSchema.newBuilder("test_table") //
-                .columnNames("col1", "col2", "col3") //
-                .semanticTypes(SemanticType.Tag, SemanticType.Tag, SemanticType.Field) //
-                .dataTypes(DataType.String, DataType.String, DataType.Int32) //
+                .addColumn("col1", SemanticType.Tag, DataType.String) //
+                .addColumn("col2", SemanticType.Tag, DataType.String) //
+                .addColumn("col3", SemanticType.Field, DataType.Int32) //
                 .build();
 
-        TableRows.RowBasedTableRows rows = (TableRows.RowBasedTableRows) TableRows.newBuilder(schema).build();
+        TableRows.RowBasedTableRows rows = (TableRows.RowBasedTableRows) TableRows.from(schema);
         rows.insert("1", "11", 111) //
                 .insert("2", null, 222) //
                 .insert("3", "33", null);

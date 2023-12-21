@@ -58,6 +58,8 @@ public interface TableRows {
      */
     TableRows insert(Object... values);
 
+    TableRows subRange(int fromIndex, int toIndex);
+
     /**
      * Convert to {@link Database.RowInsertRequest}.
      *
@@ -77,8 +79,8 @@ public interface TableRows {
         Ensures.ensure(columnCount == len, "Expected values num: %d, actual: %d", columnCount, len);
     }
 
-    static Builder newBuilder(TableSchema tableSchema) {
-        return new Builder(tableSchema);
+    static TableRows from(TableSchema tableSchema) {
+        return new Builder(tableSchema).build();
     }
 
     class Builder {
@@ -137,7 +139,17 @@ public interface TableRows {
         private String tableName;
 
         private List<RowData.ColumnSchema> columnSchemas;
-        private final List<RowData.Row> rows = new ArrayList<>();
+        private final List<RowData.Row> rows;
+
+        public RowBasedTableRows() {
+            this.rows = new ArrayList<>();
+        }
+
+        private RowBasedTableRows(String tableName, List<RowData.ColumnSchema> columnSchemas, List<RowData.Row> rows) {
+            this.tableName = tableName;
+            this.columnSchemas = columnSchemas;
+            this.rows = rows;
+        }
 
         @Override
         public String tableName() {
@@ -167,6 +179,12 @@ public interface TableRows {
             this.rows.add(rowBuilder.build());
 
             return this;
+        }
+
+        @Override
+        public TableRows subRange(int fromIndex, int toIndex) {
+            List<RowData.Row> rows = this.rows.subList(fromIndex, toIndex);
+            return new RowBasedTableRows(this.tableName, this.columnSchemas, rows);
         }
 
         @Override

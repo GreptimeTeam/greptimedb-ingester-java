@@ -57,10 +57,7 @@ public class PojoMapper {
 
         String metricName = getMetricName(metricType);
 
-        String[] columnNames = new String[fieldMap.size()];
-        DataType[] dataTypes = new DataType[fieldMap.size()];
-        SemanticType[] semanticTypes = new SemanticType[fieldMap.size()];
-        int i = 0;
+        TableSchema.Builder schemaBuilder = TableSchema.newBuilder(metricName);
         for (Map.Entry<String, Field> entry : fieldMap.entrySet()) {
             String name = entry.getKey();
             Field field = entry.getValue();
@@ -72,21 +69,10 @@ public class PojoMapper {
             } else if (column.timestamp()) {
                 semanticType = SemanticType.Timestamp;
             }
-
-            columnNames[i] = name;
-            dataTypes[i] = dataType;
-            semanticTypes[i] = semanticType;
-
-            i++;
+            schemaBuilder.addColumn(name, semanticType, dataType);
         }
 
-        TableSchema schema = TableSchema.newBuilder(metricName) //
-                .columnNames(columnNames) //
-                .semanticTypes(semanticTypes) //
-                .dataTypes(dataTypes) //
-                .build();
-
-        TableRows tableRows = TableRows.newBuilder(schema).build();
+        TableRows tableRows = TableRows.from(schemaBuilder.build());
         for (M pojo : pojos) {
             Class<?> type = pojo.getClass();
             if (!type.equals(metricType)) {
@@ -109,7 +95,7 @@ public class PojoMapper {
     }
 
     private String getMetricName(Class<?> metricType) {
-        // From @Metirc annotation
+        // From @Metric annotation
         Metric metricAnnotation = metricType.getAnnotation(Metric.class);
         if (metricAnnotation != null) {
             return metricAnnotation.name();

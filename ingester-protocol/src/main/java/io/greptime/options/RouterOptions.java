@@ -31,9 +31,9 @@ public class RouterOptions implements Copiable<RouterOptions> {
     private List<Endpoint> endpoints;
 
     // Refresh frequency of route tables. The background refreshes
-    // all route tables periodically. By default, all route tables are
-    // refreshed every 30 seconds.
-    private long refreshPeriodSeconds = 30;
+    // all route tables periodically. If the value is less than or
+    // equal to 0, the route tables will not be refreshed.
+    private long refreshPeriodSeconds = -1;
 
     public RpcClient getRpcClient() {
         return rpcClient;

@@ -85,24 +85,28 @@ public class WriteClientTest {
 
     @Test
     public void testWriteSuccess() throws ExecutionException, InterruptedException {
-        String[] columnNames =
-                new String[] {"test_tag", "test_ts", "field1", "field2", "field3", "field4", "field5", "field6",
-                        "field7", "field8", "field9", "field10", "field11", "field12", "field13", "field14", "field15",
-                        "field16", "field17"};
-        SemanticType[] semanticTypes =
-                new SemanticType[] {Tag, Timestamp, Field, Field, Field, Field, Field, Field, Field, Field, Field,
-                        Field, Field, Field, Field, Field, Field, Field, Field};
-        DataType[] dataTypes =
-                new DataType[] {DataType.String, Int64, Int8, Int16, Int32, Int64, UInt8, UInt16, UInt32, UInt64,
-                        Float32, Float64, Bool, Binary, Date, DateTime, TimestampSecond, TimestampMillisecond,
-                        TimestampNanosecond};
-
         TableSchema schema = TableSchema.newBuilder("test_table") //
-                .columnNames(columnNames) //
-                .semanticTypes(semanticTypes) //
-                .dataTypes(dataTypes) //
+                .addColumn("test_tag", Tag, DataType.String) //
+                .addColumn("test_ts", Timestamp, DataType.Int64) //
+                .addColumn("field1", Field, DataType.Int8) //
+                .addColumn("field2", Field, DataType.Int16) //
+                .addColumn("field3", Field, DataType.Int32) //
+                .addColumn("field4", Field, DataType.Int64) //
+                .addColumn("field5", Field, DataType.UInt8) //
+                .addColumn("field6", Field, DataType.UInt16) //
+                .addColumn("field7", Field, DataType.UInt32) //
+                .addColumn("field8", Field, DataType.UInt64) //
+                .addColumn("field9", Field, DataType.Float32) //
+                .addColumn("field10", Field, DataType.Float64) //
+                .addColumn("field11", Field, DataType.Bool) //
+                .addColumn("field12", Field, DataType.Binary) //
+                .addColumn("field13", Field, DataType.Date) //
+                .addColumn("field14", Field, DataType.DateTime) //
+                .addColumn("field15", Field, DataType.TimestampSecond) //
+                .addColumn("field16", Field, DataType.TimestampMillisecond) //
+                .addColumn("field17", Field, DataType.TimestampNanosecond) //
                 .build();
-        TableRows rows = TableRows.newBuilder(schema).build();
+        TableRows rows = TableRows.from(schema);
         long ts = System.currentTimeMillis();
 
         rows.insert("tag1", ts, 1, 2, 3, 4L, 5, 6, 7, 8L, 0.9F, 0.10D, true, new byte[0], 11, 12L, 13L, 14L, 15L);
