@@ -43,11 +43,7 @@ public class StreamWritePOJOsQuickStart {
         GreptimeOptions opts = GreptimeOptions.newBuilder(endpoints, database) //
                 .build();
 
-        GreptimeDB greptimeDB = new GreptimeDB();
-
-        if (!greptimeDB.init(opts)) {
-            throw new RuntimeException("Failed to start GreptimeDB client");
-        }
+        GreptimeDB greptimeDB = GreptimeDB.create(opts);
 
         List<MyMetric1> myMetric1s = new ArrayList<>();
         for (int i = 0; i < 10; i++) {

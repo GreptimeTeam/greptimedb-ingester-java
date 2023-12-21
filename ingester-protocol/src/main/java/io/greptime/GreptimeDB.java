@@ -79,7 +79,15 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
         return new ArrayList<>(INSTANCES.values());
     }
 
-    public GreptimeDB() {
+    public static GreptimeDB create(GreptimeOptions opts) {
+        GreptimeDB greptimeDB = new GreptimeDB();
+        if (!greptimeDB.init(opts)) {
+            throw new RuntimeException("Failed to start GreptimeDB client");
+        }
+        return greptimeDB;
+    }
+
+    private GreptimeDB() {
         this.id = ID.incrementAndGet();
     }
 
