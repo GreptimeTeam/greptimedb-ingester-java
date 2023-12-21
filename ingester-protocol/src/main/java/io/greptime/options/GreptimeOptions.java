@@ -38,6 +38,7 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
     private RpcOptions rpcOptions;
     private RouterOptions routerOptions;
     private WriteOptions writeOptions;
+    private String database;
     private AuthInfo authInfo;
 
     public List<Endpoint> getEndpoints() {
@@ -80,6 +81,14 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         this.writeOptions = writeOptions;
     }
 
+    public String getDatabase() {
+        return database;
+    }
+
+    public void setDatabase(String database) {
+        this.database = database;
+    }
+
     public AuthInfo getAuthInfo() {
         return authInfo;
     }
@@ -93,6 +102,7 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         GreptimeOptions opts = new GreptimeOptions();
         opts.endpoints = new ArrayList<>(this.endpoints);
         opts.asyncPool = this.asyncPool;
+        opts.database = this.database;
         opts.authInfo = this.authInfo;
         if (this.rpcOptions != null) {
             opts.rpcOptions = this.rpcOptions.copy();
@@ -114,6 +124,7 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
                 ", rpcOptions=" + rpcOptions + //
                 ", routerOptions=" + routerOptions + //
                 ", writeOptions=" + writeOptions + //
+                ", database='" + database + '\'' + //
                 ", authInfo=" + authInfo + //
                 '}';
     }
@@ -128,19 +139,20 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         return opts;
     }
 
-    public static Builder newBuilder(List<Endpoint> endpoints) {
-        return new Builder(endpoints);
+    public static Builder newBuilder(String database, List<Endpoint> endpoints) {
+        return new Builder(database, endpoints);
     }
 
-    public static Builder newBuilder(Endpoint... endpoints) {
-        return new Builder(Arrays.stream(endpoints).collect(Collectors.toList()));
+    public static Builder newBuilder(String database, Endpoint... endpoints) {
+        return new Builder(database, Arrays.stream(endpoints).collect(Collectors.toList()));
     }
 
-    public static Builder newBuilder(String... endpoints) {
-        return new Builder(Arrays.stream(endpoints).map(Endpoint::parse).collect(Collectors.toList()));
+    public static Builder newBuilder(String database, String... endpoints) {
+        return new Builder(database, Arrays.stream(endpoints).map(Endpoint::parse).collect(Collectors.toList()));
     }
 
     public static final class Builder {
+        private final String database;
         private final List<Endpoint> endpoints = new ArrayList<>();
 
         // Asynchronous thread pool, which is used to handle various asynchronous tasks in the SDK.
@@ -158,7 +170,8 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         // Authentication information
         private AuthInfo authInfo;
 
-        public Builder(List<Endpoint> endpoints) {
+        public Builder(String database, List<Endpoint> endpoints) {
+            this.database = database;
             this.endpoints.addAll(endpoints);
         }
 
@@ -245,7 +258,7 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         }
 
         /**
-         * Set authentication information.
+         * Sets authentication information.
          *
          * @param authInfo the authentication information
          * @return this builder
@@ -265,22 +278,30 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
             opts.setEndpoints(this.endpoints);
             opts.setAsyncPool(this.asyncPool);
             opts.setRpcOptions(this.rpcOptions);
+            opts.setDatabase(this.database);
             opts.setAuthInfo(this.authInfo);
+            opts.setRouterOptions(createRouterOptions());
+            opts.setWriteOptions(createWriteOptions());
+            return GreptimeOptions.checkSelf(opts);
+        }
 
+        private RouterOptions createRouterOptions() {
             RouterOptions routerOpts = new RouterOptions();
             routerOpts.setEndpoints(this.endpoints);
             routerOpts.setRefreshPeriodSeconds(this.routeTableRefreshPeriodSeconds);
-            opts.setRouterOptions(routerOpts);
+            return routerOpts;
+        }
 
+        private WriteOptions createWriteOptions() {
             WriteOptions writeOpts = new WriteOptions();
+            writeOpts.setDatabase(this.database);
+            writeOpts.setAuthInfo(this.authInfo);
             writeOpts.setAsyncPool(this.asyncPool);
             writeOpts.setMaxRetries(this.writeMaxRetries);
             writeOpts.setMaxInFlightWriteRows(this.maxInFlightWriteRows);
             writeOpts.setLimitedPolicy(this.writeLimitedPolicy);
             writeOpts.setDefaultStreamMaxWritePointsPerSecond(this.defaultStreamMaxWritePointsPerSecond);
-            opts.setWriteOptions(writeOpts);
-
-            return GreptimeOptions.checkSelf(opts);
+            return writeOpts;
         }
     }
 }

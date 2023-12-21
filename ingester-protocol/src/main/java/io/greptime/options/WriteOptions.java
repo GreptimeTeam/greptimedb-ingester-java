@@ -27,16 +27,32 @@ import java.util.concurrent.Executor;
  * @author jiachun.fjc
  */
 public class WriteOptions implements Copiable<WriteOptions> {
+    private String database;
+    private AuthInfo authInfo;
     private RouterClient routerClient;
     private Executor asyncPool;
     private int maxRetries = 1;
-    private AuthInfo authInfo;
-
     // Write flow limit: maximum number of data rows in-flight.
     private int maxInFlightWriteRows = 65536;
     private LimitedPolicy limitedPolicy = LimitedPolicy.defaultWriteLimitedPolicy();
     // Default rate limit for stream writer
     private int defaultStreamMaxWritePointsPerSecond = 10 * 65536;
+
+    public String getDatabase() {
+        return database;
+    }
+
+    public void setDatabase(String database) {
+        this.database = database;
+    }
+
+    public AuthInfo getAuthInfo() {
+        return authInfo;
+    }
+
+    public void setAuthInfo(AuthInfo authInfo) {
+        this.authInfo = authInfo;
+    }
 
     public RouterClient getRouterClient() {
         return routerClient;
@@ -86,37 +102,31 @@ public class WriteOptions implements Copiable<WriteOptions> {
         this.defaultStreamMaxWritePointsPerSecond = defaultStreamMaxWritePointsPerSecond;
     }
 
-    public AuthInfo getAuthInfo() {
-        return this.authInfo;
-    }
-
-    public void setAuthInfo(AuthInfo authInfo) {
-        this.authInfo = authInfo;
-    }
-
     @Override
     public WriteOptions copy() {
         WriteOptions opts = new WriteOptions();
+        opts.database = this.database;
+        opts.authInfo = this.authInfo;
         opts.routerClient = this.routerClient;
         opts.asyncPool = this.asyncPool;
         opts.maxRetries = this.maxRetries;
         opts.maxInFlightWriteRows = this.maxInFlightWriteRows;
         opts.limitedPolicy = this.limitedPolicy;
         opts.defaultStreamMaxWritePointsPerSecond = this.defaultStreamMaxWritePointsPerSecond;
-        opts.authInfo = this.authInfo;
         return opts;
     }
 
     @Override
     public String toString() {
         return "WriteOptions{" + //
+                "database='" + database + '\'' + //
+                ", authInfo=" + authInfo + //
                 ", routerClient=" + routerClient + //
                 ", asyncPool=" + asyncPool + //
                 ", maxRetries=" + maxRetries + //
                 ", maxInFlightWriteRows=" + maxInFlightWriteRows + //
                 ", limitedPolicy=" + limitedPolicy + //
                 ", defaultStreamMaxWritePointsPerSecond=" + defaultStreamMaxWritePointsPerSecond + //
-                ", authInfo=" + authInfo + //
                 '}';
     }
 }

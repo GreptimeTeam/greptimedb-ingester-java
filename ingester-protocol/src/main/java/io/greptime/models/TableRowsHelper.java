@@ -26,35 +26,24 @@ import java.util.Collections;
  */
 public class TableRowsHelper {
 
-    public static Database.GreptimeRequest toGreptimeRequest(TableRows rows, WriteOp writeOp, AuthInfo authInfo) {
-        return toGreptimeRequest(Collections.singleton(rows.tableName()), Collections.singleton(rows), writeOp,
-                authInfo);
+    public static Database.GreptimeRequest toGreptimeRequest(TableRows rows, //
+            WriteOp writeOp, //
+            String database, //
+            AuthInfo authInfo) {
+        return toGreptimeRequest(Collections.singleton(rows), writeOp, database, authInfo);
     }
 
-    public static Database.GreptimeRequest toGreptimeRequest(Collection<TableName> tableNames, //
-            Collection<TableRows> rows, //
+    public static Database.GreptimeRequest toGreptimeRequest(Collection<TableRows> rows, //
             WriteOp writeOp, //
+            String database, //
             AuthInfo authInfo) {
-        String dbName = null;
-        for (TableName t : tableNames) {
-            if (dbName == null) {
-                dbName = t.getDatabaseName();
-            } else if (!dbName.equals(t.getDatabaseName())) {
-                String errMsg =
-                        String.format("Write to multiple databases is not supported: %s, %s", dbName,
-                                t.getDatabaseName());
-                throw new IllegalArgumentException(errMsg);
-            }
-        }
-
         Common.RequestHeader.Builder headerBuilder = Common.RequestHeader.newBuilder();
-        if (dbName != null) {
-            headerBuilder.setDbname(dbName);
+        if (database != null) {
+            headerBuilder.setDbname(database);
         }
         if (authInfo != null) {
             headerBuilder.setAuthorization(authInfo.into());
         }
-
 
         switch (writeOp) {
             case Insert:
