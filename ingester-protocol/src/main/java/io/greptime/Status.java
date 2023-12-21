@@ -62,7 +62,7 @@ public enum Status {
     //
     TableColumnNotFound(4002), //
     TableColumnExists(4003), //
-    DatabaseNotFound(4004),
+    DatabaseNotFound(4004), RegionNotFound(4005), RegionAlreadyExists(4006), RegionReadonly(4007),
     // ====== End of catalog related status code =======
 
     // ====== Begin of storage related status code =====
@@ -73,23 +73,25 @@ public enum Status {
     // ====== Begin of server related status code =====
     // Runtime resources exhausted, like creating threads failed.
     RuntimeResourcesExhausted(6000, true),
-    // / Rate limit exceeded
+    // Rate limit exceeded
     RateLimited(6001),
     // ====== End of server related status code =======
 
     // ====== Begin of auth related status code =====
-    // / User not exist
+    // User not exist
     UserNotFound(7000),
-    // / Unsupported password type
+    // Unsupported password type
     UnsupportedPasswordType(7001),
-    // / Username and password does not match
+    // Username and password does not match
     UserPasswordMismatch(7002),
-    // / Not found http authorization header
+    // Not found http authorization header
     AuthHeaderNotFound(7003),
-    // / Invalid http authorization header
+    // Invalid http authorization header
     InvalidAuthHeader(7004),
-    // / Illegal request to connect catalog-schema
+    // Illegal request to connect catalog-schema
     AccessDenied(7005),
+    // User is not authorized to perform the operation
+    PermissionDenied(7006),
     // ====== End of auth related status code =====
     ;
 

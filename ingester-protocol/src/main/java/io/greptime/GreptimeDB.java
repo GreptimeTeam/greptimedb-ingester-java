@@ -130,12 +130,12 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
     }
 
     @Override
-    public CompletableFuture<Result<WriteOk, Err>> writePOJOs(Collection<List<?>> pojos, Context ctx) {
+    public CompletableFuture<Result<WriteOk, Err>> writePOJOs(Collection<List<?>> pojos, WriteOp writeOp, Context ctx) {
         List<TableRows> rows = new ArrayList<>(pojos.size());
         for (List<?> pojo : pojos) {
             rows.add(this.pojoMapper.toTableRows(pojo));
         }
-        return write(rows, ctx);
+        return write(rows, writeOp, ctx);
     }
 
     @Override
@@ -143,9 +143,9 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
         StreamWriter<TableRows, WriteOk> delegate = streamWriter(maxPointsPerSecond, ctx);
         return new StreamWriter<List<?>, WriteOk>() {
             @Override
-            public StreamWriter<List<?>, WriteOk> write(List<?> val) {
+            public StreamWriter<List<?>, WriteOk> write(List<?> val, WriteOp writeOp) {
                 TableRows rows = pojoMapper.toTableRows(val);
-                delegate.write(rows);
+                delegate.write(rows, writeOp);
                 return this;
             }
 
@@ -157,9 +157,9 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
     }
 
     @Override
-    public CompletableFuture<Result<WriteOk, Err>> write(Collection<TableRows> rows, Context ctx) {
+    public CompletableFuture<Result<WriteOk, Err>> write(Collection<TableRows> rows, WriteOp writeOp, Context ctx) {
         ensureInitialized();
-        return this.writeClient.write(rows, attachCtx(ctx));
+        return this.writeClient.write(rows, writeOp, attachCtx(ctx));
     }
 
     @Override

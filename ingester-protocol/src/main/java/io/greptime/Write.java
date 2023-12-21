@@ -30,21 +30,30 @@ import java.util.concurrent.CompletableFuture;
  * @author jiachun.fjc
  */
 public interface Write {
+
     /**
-     * @see #write(Collection, Context)
+     * @see #write(Collection, WriteOp, Context)
      */
     default CompletableFuture<Result<WriteOk, Err>> write(Collection<TableRows> rows) {
-        return write(rows, Context.newDefault());
+        return write(rows, WriteOp.Insert, Context.newDefault());
+    }
+
+    /**
+     * @see #write(Collection, WriteOp, Context)
+     */
+    default CompletableFuture<Result<WriteOk, Err>> write(Collection<TableRows> rows, WriteOp writeOp) {
+        return write(rows, writeOp, Context.newDefault());
     }
 
     /**
      * Write multi tables multi rows data to database.
      *
      * @param rows rows with multi tables
+     * @param writeOp write operation(insert or delete)
      * @param ctx invoke context
      * @return write result
      */
-    CompletableFuture<Result<WriteOk, Err>> write(Collection<TableRows> rows, Context ctx);
+    CompletableFuture<Result<WriteOk, Err>> write(Collection<TableRows> rows, WriteOp writeOp, Context ctx);
 
     /**
      * @see #streamWriter(int, Context)
