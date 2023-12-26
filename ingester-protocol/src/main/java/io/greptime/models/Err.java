@@ -16,7 +16,6 @@
 package io.greptime.models;
 
 import io.greptime.common.Endpoint;
-import java.util.Collection;
 
 /**
  * Contains the write/query error value.
