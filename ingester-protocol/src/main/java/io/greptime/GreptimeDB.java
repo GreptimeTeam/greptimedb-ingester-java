@@ -152,8 +152,8 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
         return new StreamWriter<List<?>, WriteOk>() {
             @Override
             public StreamWriter<List<?>, WriteOk> write(List<?> val, WriteOp writeOp) {
-                Table rows = pojoMapper.toTableData(val);
-                delegate.write(rows, writeOp);
+                Table table = pojoMapper.toTableData(val);
+                delegate.write(table, writeOp);
                 return this;
             }
 
@@ -165,9 +165,9 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
     }
 
     @Override
-    public CompletableFuture<Result<WriteOk, Err>> write(Collection<Table> rows, WriteOp writeOp, Context ctx) {
+    public CompletableFuture<Result<WriteOk, Err>> write(Collection<Table> tables, WriteOp writeOp, Context ctx) {
         ensureInitialized();
-        return this.writeClient.write(rows, writeOp, attachCtx(ctx));
+        return this.writeClient.write(tables, writeOp, attachCtx(ctx));
     }
 
     @Override

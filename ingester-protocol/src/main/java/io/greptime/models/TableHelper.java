@@ -26,17 +26,7 @@ import java.util.Collections;
  */
 public class TableHelper {
 
-    public static Database.GreptimeRequest toGreptimeRequest(Table rows, //
-            WriteOp writeOp, //
-            String database, //
-            AuthInfo authInfo) {
-        return toGreptimeRequest(Collections.singleton(rows), writeOp, database, authInfo);
-    }
-
-    public static Database.GreptimeRequest toGreptimeRequest(Collection<Table> rows, //
-            WriteOp writeOp, //
-            String database, //
-            AuthInfo authInfo) {
+    public static Database.GreptimeRequest toGreptimeRequest(WriteTables writeTables, String database, AuthInfo authInfo) {
         Common.RequestHeader.Builder headerBuilder = Common.RequestHeader.newBuilder();
         if (database != null) {
             headerBuilder.setDbname(database);
@@ -45,11 +35,14 @@ public class TableHelper {
             headerBuilder.setAuthorization(authInfo.into());
         }
 
+        Collection<Table> tables = writeTables.getTables();
+        WriteOp writeOp = writeTables.getWriteOp();
+
         switch (writeOp) {
             case Insert:
                 Database.RowInsertRequests.Builder insertBuilder = Database.RowInsertRequests.newBuilder();
-                for (Table r : rows) {
-                    insertBuilder.addInserts(r.intoRowInsertRequest());
+                for (Table t : tables) {
+                    insertBuilder.addInserts(t.intoRowInsertRequest());
                 }
                 return Database.GreptimeRequest.newBuilder() //
                         .setHeader(headerBuilder.build()) //
@@ -57,8 +50,8 @@ public class TableHelper {
                         .build();
             case Delete:
                 Database.RowDeleteRequests.Builder deleteBuilder = Database.RowDeleteRequests.newBuilder();
-                for (Table r : rows) {
-                    deleteBuilder.addDeletes(r.intoRowDeleteRequest());
+                for (Table t : tables) {
+                    deleteBuilder.addDeletes(t.intoRowDeleteRequest());
                 }
                 return Database.GreptimeRequest.newBuilder() //
                         .setHeader(headerBuilder.build()) //

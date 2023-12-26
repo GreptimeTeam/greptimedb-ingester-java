@@ -34,10 +34,10 @@ public class TestUtil {
                 .addColumn("cpu", SemanticType.Field, DataType.Float64) //
                 .build();
 
-        Table rows = Table.from(tableSchema);
+        Table table = Table.from(tableSchema);
         for (int i = 0; i < rowCount; i++) {
-            rows.addRow("127.0.0.1", System.currentTimeMillis(), i);
+            table.addRow("127.0.0.1", System.currentTimeMillis(), i);
         }
-        return Collections.singleton(rows);
+        return Collections.singleton(table);
     }
 }

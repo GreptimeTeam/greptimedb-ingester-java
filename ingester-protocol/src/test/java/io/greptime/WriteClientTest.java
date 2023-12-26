@@ -88,12 +88,12 @@ public class WriteClientTest {
                 .addColumn("field16", Field, DataType.TimestampMillisecond) //
                 .addColumn("field17", Field, DataType.TimestampNanosecond) //
                 .build();
-        Table rows = Table.from(schema);
+        Table table = Table.from(schema);
         long ts = System.currentTimeMillis();
 
-        rows.addRow("tag1", ts, 1, 2, 3, 4L, 5, 6, 7, 8L, 0.9F, 0.10D, true, new byte[0], 11, 12L, 13L, 14L, 15L);
-        rows.addRow("tag1", ts, 1, 2, 3, 4, 5, 6, 7, 8, 0.9, 0.10, false, new byte[0], 11, 12, 13, 14, 15);
-        rows.addRow("tag1", ts, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, false, new byte[] {0, 1}, 11, 12, 13, 14, 15);
+        table.addRow("tag1", ts, 1, 2, 3, 4L, 5, 6, 7, 8L, 0.9F, 0.10D, true, new byte[0], 11, 12L, 13L, 14L, 15L);
+        table.addRow("tag1", ts, 1, 2, 3, 4, 5, 6, 7, 8, 0.9, 0.10, false, new byte[0], 11, 12, 13, 14, 15);
+        table.addRow("tag1", ts, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, false, new byte[] {0, 1}, 11, 12, 13, 14, 15);
 
         Endpoint addr = Endpoint.parse("127.0.0.1:8081");
         Database.GreptimeResponse response = Database.GreptimeResponse.newBuilder() //
@@ -105,7 +105,7 @@ public class WriteClientTest {
         Mockito.when(this.routerClient.invoke(Mockito.eq(addr), Mockito.any(), Mockito.any())) //
                 .thenReturn(Util.completedCf(response));
 
-        Result<WriteOk, Err> res = this.writeClient.write(Collections.singleton(rows)).get();
+        Result<WriteOk, Err> res = this.writeClient.write(Collections.singleton(table)).get();
 
         Assert.assertTrue(res.isOk());
         Assert.assertEquals(3, res.getOk().getSuccess());

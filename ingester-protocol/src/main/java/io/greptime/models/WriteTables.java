@@ -16,21 +16,27 @@
 package io.greptime.models;
 
 import io.greptime.WriteOp;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author jiachun.fjc
  */
-public class WriteTable {
-    private final Table rows;
+public class WriteTables {
+    private final Collection<Table> tables;
     private final WriteOp writeOp;
 
-    public WriteTable(Table rows, WriteOp writeOp) {
-        this.rows = rows;
+    public WriteTables(Table table, WriteOp writeOp) {
+        this(Collections.singleton(table), writeOp);
+    }
+
+    public WriteTables(Collection<Table> tables, WriteOp writeOp) {
+        this.tables = tables;
         this.writeOp = writeOp;
     }
 
-    public Table getRows() {
-        return rows;
+    public Collection<Table> getTables() {
+        return tables;
     }
 
     public WriteOp getWriteOp() {

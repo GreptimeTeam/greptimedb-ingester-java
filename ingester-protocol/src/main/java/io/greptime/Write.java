@@ -34,26 +34,26 @@ public interface Write {
     /**
      * @see #write(Collection, WriteOp, Context)
      */
-    default CompletableFuture<Result<WriteOk, Err>> write(Collection<Table> rows) {
-        return write(rows, WriteOp.Insert, Context.newDefault());
+    default CompletableFuture<Result<WriteOk, Err>> write(Collection<Table> tables) {
+        return write(tables, WriteOp.Insert, Context.newDefault());
     }
 
     /**
      * @see #write(Collection, WriteOp, Context)
      */
-    default CompletableFuture<Result<WriteOk, Err>> write(Collection<Table> rows, WriteOp writeOp) {
-        return write(rows, writeOp, Context.newDefault());
+    default CompletableFuture<Result<WriteOk, Err>> write(Collection<Table> tables, WriteOp writeOp) {
+        return write(tables, writeOp, Context.newDefault());
     }
 
     /**
-     * Write multi tables multi rows data to database.
+     * Write multi tables multi tables data to database.
      *
-     * @param rows rows with multi tables
+     * @param tables rows with multi tables
      * @param writeOp write operation(insert or delete)
      * @param ctx invoke context
      * @return write result
      */
-    CompletableFuture<Result<WriteOk, Err>> write(Collection<Table> rows, WriteOp writeOp, Context ctx);
+    CompletableFuture<Result<WriteOk, Err>> write(Collection<Table> tables, WriteOp writeOp, Context ctx);
 
     /**
      * @see #streamWriter(int, Context)

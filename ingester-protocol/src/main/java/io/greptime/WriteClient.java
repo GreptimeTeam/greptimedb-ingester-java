@@ -37,7 +37,7 @@ import io.greptime.models.Result;
 import io.greptime.models.WriteOk;
 import io.greptime.models.Table;
 import io.greptime.models.TableHelper;
-import io.greptime.models.WriteTable;
+import io.greptime.models.WriteTables;
 import io.greptime.options.WriteOptions;
 import io.greptime.rpc.Context;
 import io.greptime.rpc.Observer;
@@ -79,13 +79,13 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
     }
 
     @Override
-    public CompletableFuture<Result<WriteOk, Err>> write(Collection<Table> rows, WriteOp writeOp, Context ctx) {
-        Ensures.ensureNonNull(rows, "null `rows`");
-        Ensures.ensure(!rows.isEmpty(), "empty `rows`");
+    public CompletableFuture<Result<WriteOk, Err>> write(Collection<Table> tables, WriteOp writeOp, Context ctx) {
+        Ensures.ensureNonNull(tables, "null `tables`");
+        Ensures.ensure(!tables.isEmpty(), "empty `tables`");
 
         long startCall = Clock.defaultClock().getTick();
-
-        return this.writeLimiter.acquireAndDo(rows, () -> write0(rows, writeOp, ctx, 0).whenCompleteAsync((r, e) -> {
+        WriteTables writeTables = new WriteTables(tables, writeOp);
+        return this.writeLimiter.acquireAndDo(tables, () -> write0(writeTables, ctx, 0).whenCompleteAsync((r, e) -> {
             InnerMetricHelper.writeQps().mark();
             if (r != null) {
                 if (Util.isRwLogging()) {
@@ -118,11 +118,11 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
                 .thenApply(reqObserver -> new RateLimitingStreamWriter(reqObserver, permitsPerSecond) {
 
                     @Override
-                    public StreamWriter<Table, WriteOk> write(Table rows, WriteOp writeOp) {
+                    public StreamWriter<Table, WriteOk> write(Table table, WriteOp writeOp) {
                         if (respFuture.isCompletedExceptionally()) {
                             respFuture.getNow(null); // throw the exception now
                         }
-                        return super.write(rows, writeOp); // may wait
+                        return super.write(table, writeOp); // may wait
                     }
 
                     @Override
@@ -133,11 +133,11 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
                 }).join();
     }
 
-    private CompletableFuture<Result<WriteOk, Err>> write0(Collection<Table> rows, WriteOp writeOp, Context ctx, int retries) {
+    private CompletableFuture<Result<WriteOk, Err>> write0(WriteTables writeTables, Context ctx, int retries) {
         InnerMetricHelper.writeByRetries(retries).mark();
 
         return this.routerClient.route()
-            .thenComposeAsync(endpoint -> writeTo(endpoint, rows, writeOp, ctx, retries), this.asyncPool)
+            .thenComposeAsync(endpoint -> writeTo(endpoint, writeTables, ctx, retries), this.asyncPool)
             .thenComposeAsync(r -> {
                 if (r.isOk()) {
                     LOG.debug("Success to write to {}, ok={}.", Keys.DB_NAME, r.getOk());
@@ -155,14 +155,14 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
                     return Util.completedCf(r);
                 }
 
-                return write0(rows, writeOp, ctx, retries + 1);
+                return write0(writeTables, ctx, retries + 1);
             }, this.asyncPool);
     }
 
-    private CompletableFuture<Result<WriteOk, Err>> writeTo(Endpoint endpoint, Collection<Table> rows, WriteOp writeOp, Context ctx, int retries) {
+    private CompletableFuture<Result<WriteOk, Err>> writeTo(Endpoint endpoint, WriteTables writeTables, Context ctx, int retries) {
         String database = this.opts.getDatabase();
         AuthInfo authInfo = this.opts.getAuthInfo();
-        Database.GreptimeRequest req = TableHelper.toGreptimeRequest(rows, writeOp, database, authInfo);
+        Database.GreptimeRequest req = TableHelper.toGreptimeRequest(writeTables, database, authInfo);
         ctx.with("retries", retries);
 
         CompletableFuture<Database.GreptimeResponse> future = this.routerClient.invoke(endpoint, req, ctx);
@@ -175,12 +175,12 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
                 int affectedRows = resp.getAffectedRows().getValue();
                 return WriteOk.ok(affectedRows, 0).mapToResult();
             } else {
-                return Err.writeErr(statusCode, new ServerException(status.getErrMsg()), endpoint, rows).mapToResult();
+                return Err.writeErr(statusCode, new ServerException(status.getErrMsg()), endpoint).mapToResult();
             }
         }, this.asyncPool);
     }
 
-    private Observer<WriteTable> streamWriteTo(Endpoint endpoint, Context ctx, Observer<WriteOk> respObserver) {
+    private Observer<WriteTables> streamWriteTo(Endpoint endpoint, Context ctx, Observer<WriteOk> respObserver) {
         Observer<Database.GreptimeRequest> rpcObserver =
                 this.routerClient.invokeClientStreaming(endpoint, Database.GreptimeRequest.getDefaultInstance(), ctx,
                         new Observer<Database.GreptimeResponse>() {
@@ -207,15 +207,13 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
                             }
                         });
 
-        return new Observer<WriteTable>() {
+        return new Observer<WriteTables>() {
 
             @Override
-            public void onNext(WriteTable writeTable) {
-                Table rows = writeTable.getRows();
-                WriteOp writeOp = writeTable.getWriteOp();
+            public void onNext(WriteTables writeTables) {
                 String database = WriteClient.this.opts.getDatabase();
                 AuthInfo authInfo = WriteClient.this.opts.getAuthInfo();
-                Database.GreptimeRequest req = TableHelper.toGreptimeRequest(rows, writeOp, database, authInfo);
+                Database.GreptimeRequest req = TableHelper.toGreptimeRequest(writeTables, database, authInfo);
                 rpcObserver.onNext(req);
             }
 
@@ -317,17 +315,17 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
                             state.acquirePermits(), //
                             state.maxPermits(), //
                             state.availablePermits());
-            return Result.err(Err.writeErr(Result.FLOW_CONTROL, new LimitedException(errMsg), null, in));
+            return Result.err(Err.writeErr(Result.FLOW_CONTROL, new LimitedException(errMsg), null));
         }
     }
 
     @SuppressWarnings("UnstableApiUsage")
     static abstract class RateLimitingStreamWriter implements StreamWriter<Table, WriteOk> {
 
-        private final Observer<WriteTable> observer;
+        private final Observer<WriteTables> observer;
         private final RateLimiter rateLimiter;
 
-        RateLimitingStreamWriter(Observer<WriteTable> observer, double permitsPerSecond) {
+        RateLimitingStreamWriter(Observer<WriteTables> observer, double permitsPerSecond) {
             this.observer = observer;
             if (permitsPerSecond > 0) {
                 this.rateLimiter = RateLimiter.create(permitsPerSecond);
@@ -337,14 +335,14 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
         }
 
         @Override
-        public StreamWriter<Table, WriteOk> write(Table rows, WriteOp writeOp) {
-            Ensures.ensureNonNull(rows, "null `rows`");
+        public StreamWriter<Table, WriteOk> write(Table table, WriteOp writeOp) {
+            Ensures.ensureNonNull(table, "null `table`");
 
             if (this.rateLimiter != null) {
-                double timeSpent = this.rateLimiter.acquire(rows.pointCount());
+                double timeSpent = this.rateLimiter.acquire(table.pointCount());
                 InnerMetricHelper.writeStreamLimiterTimeSpent().update((long) timeSpent);
             }
-            this.observer.onNext(new WriteTable(rows, writeOp));
+            this.observer.onNext(new WriteTables(table, writeOp));
             return this;
         }
     }

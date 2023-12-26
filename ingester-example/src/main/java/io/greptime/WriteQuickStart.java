@@ -72,8 +72,8 @@ public class WriteQuickStart {
                 .addColumn("field2", SemanticType.Field, DataType.Float64) //
                 .build();
 
-        Table myMetric3Rows = Table.from(myMetric3Schema);
-        Table myMetric4Rows = Table.from(myMetric4Schema);
+        Table myMetric3 = Table.from(myMetric3Schema);
+        Table myMetric4 = Table.from(myMetric4Schema);
 
         for (int i = 0; i < 10; i++) {
             String tag1v = "tag_value_1_" + i;
@@ -85,7 +85,7 @@ public class WriteQuickStart {
             BigDecimal field3 = new BigDecimal(i);
             int field4 = i + 1;
 
-            myMetric3Rows.addRow(tag1v, tag2v, tag3v, ts, field1, field2, field3, field4);
+            myMetric3.addRow(tag1v, tag2v, tag3v, ts, field1, field2, field3, field4);
         }
 
         for (int i = 0; i < 10; i++) {
@@ -95,15 +95,15 @@ public class WriteQuickStart {
             Date field1 = Calendar.getInstance().getTime();
             double field2 = i + 0.1;
 
-            myMetric4Rows.addRow(tag1v, tag2v, ts, field1, field2);
+            myMetric4.addRow(tag1v, tag2v, ts, field1, field2);
         }
 
-        Collection<Table> rows = Arrays.asList(myMetric3Rows, myMetric4Rows);
+        Collection<Table> tables = Arrays.asList(myMetric3, myMetric4);
 
         // For performance reasons, the SDK is designed to be purely asynchronous.
         // The return value is a future object. If you want to immediately obtain
         // the result, you can call `future.get()`.
-        CompletableFuture<Result<WriteOk, Err>> future = greptimeDB.write(rows);
+        CompletableFuture<Result<WriteOk, Err>> future = greptimeDB.write(tables);
 
         Result<WriteOk, Err> result = future.get();
 
@@ -113,8 +113,8 @@ public class WriteQuickStart {
             LOG.error("Failed to write: {}", result.getErr());
         }
 
-        List<Table> delete_pojos = Arrays.asList(myMetric3Rows.subRange(0, 5), myMetric4Rows.subRange(0, 5));
-        Result<WriteOk, Err> deletes = greptimeDB.write(delete_pojos, WriteOp.Delete).get();
+        List<Table> delete_objs = Arrays.asList(myMetric3.subRange(0, 5), myMetric4.subRange(0, 5));
+        Result<WriteOk, Err> deletes = greptimeDB.write(delete_objs, WriteOp.Delete).get();
 
         if (deletes.isOk()) {
             LOG.info("Delete result: {}", result.getOk());
