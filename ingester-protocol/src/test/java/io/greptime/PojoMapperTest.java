@@ -18,7 +18,7 @@ package io.greptime;
 import io.greptime.models.Column;
 import io.greptime.models.DataType;
 import io.greptime.models.Metric;
-import io.greptime.models.TableRows;
+import io.greptime.models.Table;
 import org.junit.Assert;
 import org.junit.Test;
 import java.util.ArrayList;
@@ -31,13 +31,13 @@ import java.util.Random;
 public class PojoMapperTest {
 
     @Test
-    public void testToTableRows() {
+    public void testToTable() {
         List<Pojo1Test> pojos1 = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
             Pojo1Test pojo1 = createNewPojo1Test();
             pojos1.add(pojo1);
         }
-        TableRows tp1 = new PojoMapper(65536).toTableRows(pojos1);
+        Table tp1 = new PojoMapper(65536).toTableData(pojos1);
         Assert.assertEquals("pojo1", tp1.tableName());
         Assert.assertEquals(50, tp1.pointCount());
 
@@ -47,7 +47,7 @@ public class PojoMapperTest {
             Pojo2Test pojo2 = createNewPojo2Test();
             pojos2.add(pojo2);
         }
-        TableRows tp2 = new PojoMapper(65536).toTableRows(pojos2);
+        Table tp2 = new PojoMapper(65536).toTableData(pojos2);
         Assert.assertEquals("pojo2", tp2.tableName());
         Assert.assertEquals(30, tp2.pointCount());
     }

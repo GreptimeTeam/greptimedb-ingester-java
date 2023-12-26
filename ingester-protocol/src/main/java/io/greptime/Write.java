@@ -18,7 +18,7 @@ package io.greptime;
 import io.greptime.models.Err;
 import io.greptime.models.Result;
 import io.greptime.models.WriteOk;
-import io.greptime.models.TableRows;
+import io.greptime.models.Table;
 import io.greptime.rpc.Context;
 
 import java.util.Collection;
@@ -34,14 +34,14 @@ public interface Write {
     /**
      * @see #write(Collection, WriteOp, Context)
      */
-    default CompletableFuture<Result<WriteOk, Err>> write(Collection<TableRows> rows) {
+    default CompletableFuture<Result<WriteOk, Err>> write(Collection<Table> rows) {
         return write(rows, WriteOp.Insert, Context.newDefault());
     }
 
     /**
      * @see #write(Collection, WriteOp, Context)
      */
-    default CompletableFuture<Result<WriteOk, Err>> write(Collection<TableRows> rows, WriteOp writeOp) {
+    default CompletableFuture<Result<WriteOk, Err>> write(Collection<Table> rows, WriteOp writeOp) {
         return write(rows, writeOp, Context.newDefault());
     }
 
@@ -53,29 +53,29 @@ public interface Write {
      * @param ctx invoke context
      * @return write result
      */
-    CompletableFuture<Result<WriteOk, Err>> write(Collection<TableRows> rows, WriteOp writeOp, Context ctx);
+    CompletableFuture<Result<WriteOk, Err>> write(Collection<Table> rows, WriteOp writeOp, Context ctx);
 
     /**
      * @see #streamWriter(int, Context)
      */
-    default StreamWriter<TableRows, WriteOk> streamWriter() {
+    default StreamWriter<Table, WriteOk> streamWriter() {
         return streamWriter(-1);
     }
 
     /**
      * @see #streamWriter(int, Context)
      */
-    default StreamWriter<TableRows, WriteOk> streamWriter(int maxPointsPerSecond) {
+    default StreamWriter<Table, WriteOk> streamWriter(int maxPointsPerSecond) {
         return streamWriter(maxPointsPerSecond, Context.newDefault());
     }
 
     /**
-     * Create a `Stream` to write `TableRows` data.
+     * Create a `Stream` to write `Table` data.
      *
      * @param maxPointsPerSecond The max number of points that can be written per second,
      *                           exceeding which may cause blockage.
      * @param ctx invoke context
      * @return a stream writer instance
      */
-    StreamWriter<TableRows, WriteOk> streamWriter(int maxPointsPerSecond, Context ctx);
+    StreamWriter<Table, WriteOk> streamWriter(int maxPointsPerSecond, Context ctx);
 }

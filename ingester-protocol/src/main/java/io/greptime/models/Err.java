@@ -31,7 +31,7 @@ public class Err {
     // the server address where the error occurred
     private Endpoint errTo;
     // the data of wrote failed, can be used to retry
-    private Collection<TableRows> rowsFailed;
+    private Collection<Table> rowsFailed;
     // the QL failed to query
     private String failedQl;
 
@@ -59,7 +59,7 @@ public class Err {
     /**
      * Returns the data of wrote failed, can be used to retry.
      */
-    public Collection<TableRows> getRowsFailed() {
+    public Collection<Table> getRowsFailed() {
         return rowsFailed;
     }
 
@@ -96,7 +96,7 @@ public class Err {
      * @param rowsFailed the data of wrote failed, can be used to retry
      * @return a new {@link Err} for write error
      */
-    public static Err writeErr(int code, Throwable error, Endpoint errTo, Collection<TableRows> rowsFailed) {
+    public static Err writeErr(int code, Throwable error, Endpoint errTo, Collection<Table> rowsFailed) {
         Err err = new Err();
         err.code = code;
         err.error = error;
