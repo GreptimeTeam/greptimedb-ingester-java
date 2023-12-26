@@ -29,7 +29,7 @@ import java.util.List;
  *
  * @author jiachun.fjc
  */
-public interface TableRows {
+public interface Table {
 
     /**
      * The table name to write.
@@ -56,9 +56,9 @@ public interface TableRows {
     /**
      * Insets one row.
      */
-    TableRows insert(Object... values);
+    Table addRow(Object... values);
 
-    TableRows subRange(int fromIndex, int toIndex);
+    Table subRange(int fromIndex, int toIndex);
 
     /**
      * Convert to {@link Database.RowInsertRequest}.
@@ -79,7 +79,7 @@ public interface TableRows {
         Ensures.ensure(columnCount == len, "Expected values num: %d, actual: %d", columnCount, len);
     }
 
-    static TableRows from(TableSchema tableSchema) {
+    static Table from(TableSchema tableSchema) {
         return new Builder(tableSchema).build();
     }
 
@@ -90,7 +90,7 @@ public interface TableRows {
             this.tableSchema = tableSchema;
         }
 
-        public TableRows build() {
+        public Table build() {
             String tableName = this.tableSchema.getTableName();
             List<String> columnNames = this.tableSchema.getColumnNames();
             List<Common.SemanticType> semanticTypes = this.tableSchema.getSemanticTypes();
@@ -112,13 +112,13 @@ public interface TableRows {
             return buildRow(tableName, columnCount, columnNames, semanticTypes, dataTypes, dataTypeExtensions);
         }
 
-        private static TableRows buildRow(String tableName, //
-                                          int columnCount, //
-                                          List<String> columnNames, //
-                                          List<Common.SemanticType> semanticTypes, //
-                                          List<Common.ColumnDataType> dataTypes, //
-                                          List<Common.ColumnDataTypeExtension> dataTypeExtensions) {
-            RowBasedTableRows rows = new RowBasedTableRows();
+        private static Table buildRow(String tableName, //
+                                      int columnCount, //
+                                      List<String> columnNames, //
+                                      List<Common.SemanticType> semanticTypes, //
+                                      List<Common.ColumnDataType> dataTypes, //
+                                      List<Common.ColumnDataTypeExtension> dataTypeExtensions) {
+            RowBasedTable rows = new RowBasedTable();
             rows.tableName = tableName;
             rows.columnSchemas = new ArrayList<>(columnCount);
 
@@ -134,18 +134,18 @@ public interface TableRows {
         }
     }
 
-    class RowBasedTableRows implements TableRows, Into<RowData.Rows> {
+    class RowBasedTable implements Table, Into<RowData.Rows> {
 
         private String tableName;
 
         private List<RowData.ColumnSchema> columnSchemas;
         private final List<RowData.Row> rows;
 
-        public RowBasedTableRows() {
+        public RowBasedTable() {
             this.rows = new ArrayList<>();
         }
 
-        private RowBasedTableRows(String tableName, List<RowData.ColumnSchema> columnSchemas, List<RowData.Row> rows) {
+        private RowBasedTable(String tableName, List<RowData.ColumnSchema> columnSchemas, List<RowData.Row> rows) {
             this.tableName = tableName;
             this.columnSchemas = columnSchemas;
             this.rows = rows;
@@ -167,7 +167,7 @@ public interface TableRows {
         }
 
         @Override
-        public TableRows insert(Object... values) {
+        public Table addRow(Object... values) {
             checkNumValues(values.length);
 
             RowData.Row.Builder rowBuilder = RowData.Row.newBuilder();
@@ -182,9 +182,9 @@ public interface TableRows {
         }
 
         @Override
-        public TableRows subRange(int fromIndex, int toIndex) {
+        public Table subRange(int fromIndex, int toIndex) {
             List<RowData.Row> rows = this.rows.subList(fromIndex, toIndex);
-            return new RowBasedTableRows(this.tableName, this.columnSchemas, rows);
+            return new RowBasedTable(this.tableName, this.columnSchemas, rows);
         }
 
         @Override

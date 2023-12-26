@@ -24,16 +24,16 @@ import java.util.Collections;
 /**
  * @author jiachun.fjc
  */
-public class TableRowsHelper {
+public class TableHelper {
 
-    public static Database.GreptimeRequest toGreptimeRequest(TableRows rows, //
+    public static Database.GreptimeRequest toGreptimeRequest(Table rows, //
             WriteOp writeOp, //
             String database, //
             AuthInfo authInfo) {
         return toGreptimeRequest(Collections.singleton(rows), writeOp, database, authInfo);
     }
 
-    public static Database.GreptimeRequest toGreptimeRequest(Collection<TableRows> rows, //
+    public static Database.GreptimeRequest toGreptimeRequest(Collection<Table> rows, //
             WriteOp writeOp, //
             String database, //
             AuthInfo authInfo) {
@@ -48,7 +48,7 @@ public class TableRowsHelper {
         switch (writeOp) {
             case Insert:
                 Database.RowInsertRequests.Builder insertBuilder = Database.RowInsertRequests.newBuilder();
-                for (TableRows r : rows) {
+                for (Table r : rows) {
                     insertBuilder.addInserts(r.intoRowInsertRequest());
                 }
                 return Database.GreptimeRequest.newBuilder() //
@@ -57,7 +57,7 @@ public class TableRowsHelper {
                         .build();
             case Delete:
                 Database.RowDeleteRequests.Builder deleteBuilder = Database.RowDeleteRequests.newBuilder();
-                for (TableRows r : rows) {
+                for (Table r : rows) {
                     deleteBuilder.addDeletes(r.intoRowDeleteRequest());
                 }
                 return Database.GreptimeRequest.newBuilder() //
@@ -69,5 +69,5 @@ public class TableRowsHelper {
         }
     }
 
-    private TableRowsHelper() {}
+    private TableHelper() {}
 }

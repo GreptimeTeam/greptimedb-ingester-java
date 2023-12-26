@@ -20,7 +20,7 @@ import io.greptime.limit.LimitedPolicy;
 import io.greptime.limit.WriteLimiter;
 import io.greptime.models.Err;
 import io.greptime.models.Result;
-import io.greptime.models.TableRows;
+import io.greptime.models.Table;
 import io.greptime.models.WriteOk;
 import org.junit.Assert;
 import org.junit.Test;
@@ -38,7 +38,7 @@ public class WriteLimitTest {
     @Test(expected = LimitedException.class)
     public void abortWriteLimitTest() throws ExecutionException, InterruptedException {
         WriteLimiter limiter = new WriteClient.DefaultWriteLimiter(1, new LimitedPolicy.AbortPolicy());
-        Collection<TableRows> rows = TestUtil.testTableRows("test1", 1);
+        Collection<Table> rows = TestUtil.testTable("test1", 1);
 
         // consume the permits
         limiter.acquireAndDo(rows, CompletableFuture::new);
@@ -49,7 +49,7 @@ public class WriteLimitTest {
     @Test
     public void discardWriteLimitTest() throws ExecutionException, InterruptedException {
         WriteLimiter limiter = new WriteClient.DefaultWriteLimiter(1, new LimitedPolicy.DiscardPolicy());
-        Collection<TableRows> rows = TestUtil.testTableRows("test1", 1);
+        Collection<Table> rows = TestUtil.testTable("test1", 1);
 
         // consume the permits
         limiter.acquireAndDo(rows, CompletableFuture::new);
@@ -63,7 +63,7 @@ public class WriteLimitTest {
     @Test
     public void blockingWriteLimitTest() throws InterruptedException {
         WriteLimiter limiter = new WriteClient.DefaultWriteLimiter(1, new LimitedPolicy.BlockingPolicy());
-        Collection<TableRows> rows = TestUtil.testTableRows("test1", 1);
+        Collection<Table> rows = TestUtil.testTable("test1", 1);
 
         // consume the permits
         limiter.acquireAndDo(rows, CompletableFuture::new);
@@ -93,7 +93,7 @@ public class WriteLimitTest {
         int timeoutSecs = 2;
         WriteLimiter limiter = new WriteClient.DefaultWriteLimiter(1,
                 new LimitedPolicy.BlockingTimeoutPolicy(timeoutSecs, TimeUnit.SECONDS));
-        Collection<TableRows> rows = TestUtil.testTableRows("test1", 1);
+        Collection<Table> rows = TestUtil.testTable("test1", 1);
 
         // consume the permits
         limiter.acquireAndDo(rows, CompletableFuture::new);
@@ -111,7 +111,7 @@ public class WriteLimitTest {
         int timeoutSecs = 2;
         WriteLimiter limiter = new WriteClient.DefaultWriteLimiter(1,
                 new LimitedPolicy.AbortOnBlockingTimeoutPolicy(timeoutSecs, TimeUnit.SECONDS));
-        Collection<TableRows> rows = TestUtil.testTableRows("test1", 1);
+        Collection<Table> rows = TestUtil.testTable("test1", 1);
 
         // consume the permits
         limiter.acquireAndDo(rows, CompletableFuture::new);

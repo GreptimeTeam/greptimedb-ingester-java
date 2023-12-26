@@ -35,8 +35,8 @@ import io.greptime.models.AuthInfo;
 import io.greptime.models.Err;
 import io.greptime.models.Result;
 import io.greptime.models.WriteOk;
-import io.greptime.models.TableRows;
-import io.greptime.models.TableRowsHelper;
+import io.greptime.models.Table;
+import io.greptime.models.TableHelper;
 import io.greptime.models.WriteTable;
 import io.greptime.options.WriteOptions;
 import io.greptime.rpc.Context;
@@ -79,7 +79,7 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
     }
 
     @Override
-    public CompletableFuture<Result<WriteOk, Err>> write(Collection<TableRows> rows, WriteOp writeOp, Context ctx) {
+    public CompletableFuture<Result<WriteOk, Err>> write(Collection<Table> rows, WriteOp writeOp, Context ctx) {
         Ensures.ensureNonNull(rows, "null `rows`");
         Ensures.ensure(!rows.isEmpty(), "empty `rows`");
 
@@ -108,7 +108,7 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
     }
 
     @Override
-    public StreamWriter<TableRows, WriteOk> streamWriter(int maxPointsPerSecond, Context ctx) {
+    public StreamWriter<Table, WriteOk> streamWriter(int maxPointsPerSecond, Context ctx) {
         int permitsPerSecond = maxPointsPerSecond > 0 ? maxPointsPerSecond : this.opts.getDefaultStreamMaxWritePointsPerSecond();
 
         CompletableFuture<WriteOk> respFuture = new CompletableFuture<>();
@@ -118,7 +118,7 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
                 .thenApply(reqObserver -> new RateLimitingStreamWriter(reqObserver, permitsPerSecond) {
 
                     @Override
-                    public StreamWriter<TableRows, WriteOk> write(TableRows rows, WriteOp writeOp) {
+                    public StreamWriter<Table, WriteOk> write(Table rows, WriteOp writeOp) {
                         if (respFuture.isCompletedExceptionally()) {
                             respFuture.getNow(null); // throw the exception now
                         }
@@ -133,7 +133,7 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
                 }).join();
     }
 
-    private CompletableFuture<Result<WriteOk, Err>> write0(Collection<TableRows> rows, WriteOp writeOp, Context ctx, int retries) {
+    private CompletableFuture<Result<WriteOk, Err>> write0(Collection<Table> rows, WriteOp writeOp, Context ctx, int retries) {
         InnerMetricHelper.writeByRetries(retries).mark();
 
         return this.routerClient.route()
@@ -159,10 +159,10 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
             }, this.asyncPool);
     }
 
-    private CompletableFuture<Result<WriteOk, Err>> writeTo(Endpoint endpoint, Collection<TableRows> rows, WriteOp writeOp,  Context ctx, int retries) {
+    private CompletableFuture<Result<WriteOk, Err>> writeTo(Endpoint endpoint, Collection<Table> rows, WriteOp writeOp, Context ctx, int retries) {
         String database = this.opts.getDatabase();
         AuthInfo authInfo = this.opts.getAuthInfo();
-        Database.GreptimeRequest req = TableRowsHelper.toGreptimeRequest(rows, writeOp, database, authInfo);
+        Database.GreptimeRequest req = TableHelper.toGreptimeRequest(rows, writeOp, database, authInfo);
         ctx.with("retries", retries);
 
         CompletableFuture<Database.GreptimeResponse> future = this.routerClient.invoke(endpoint, req, ctx);
@@ -211,11 +211,11 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
 
             @Override
             public void onNext(WriteTable writeTable) {
-                TableRows rows = writeTable.getRows();
+                Table rows = writeTable.getRows();
                 WriteOp writeOp = writeTable.getWriteOp();
                 String database = WriteClient.this.opts.getDatabase();
                 AuthInfo authInfo = WriteClient.this.opts.getAuthInfo();
-                Database.GreptimeRequest req = TableRowsHelper.toGreptimeRequest(rows, writeOp, database, authInfo);
+                Database.GreptimeRequest req = TableHelper.toGreptimeRequest(rows, writeOp, database, authInfo);
                 rpcObserver.onNext(req);
             }
 
@@ -306,12 +306,12 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
         }
 
         @Override
-        public int calculatePermits(Collection<TableRows> in) {
-            return in.stream().map(TableRows::rowCount).reduce(0, Integer::sum);
+        public int calculatePermits(Collection<Table> in) {
+            return in.stream().map(Table::rowCount).reduce(0, Integer::sum);
         }
 
         @Override
-        public Result<WriteOk, Err> rejected(Collection<TableRows> in, RejectedState state) {
+        public Result<WriteOk, Err> rejected(Collection<Table> in, RejectedState state) {
             String errMsg =
                     String.format("Write limited by client, acquirePermits=%d, maxPermits=%d, availablePermits=%d.", //
                             state.acquirePermits(), //
@@ -322,7 +322,7 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
     }
 
     @SuppressWarnings("UnstableApiUsage")
-    static abstract class RateLimitingStreamWriter implements StreamWriter<TableRows, WriteOk> {
+    static abstract class RateLimitingStreamWriter implements StreamWriter<Table, WriteOk> {
 
         private final Observer<WriteTable> observer;
         private final RateLimiter rateLimiter;
@@ -337,7 +337,7 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
         }
 
         @Override
-        public StreamWriter<TableRows, WriteOk> write(TableRows rows, WriteOp writeOp) {
+        public StreamWriter<Table, WriteOk> write(Table rows, WriteOp writeOp) {
             Ensures.ensureNonNull(rows, "null `rows`");
 
             if (this.rateLimiter != null) {

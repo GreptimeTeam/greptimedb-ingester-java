@@ -17,7 +17,7 @@ package io.greptime;
 
 import io.greptime.models.DataType;
 import io.greptime.models.SemanticType;
-import io.greptime.models.TableRows;
+import io.greptime.models.Table;
 import io.greptime.models.TableSchema;
 import java.util.Collection;
 import java.util.Collections;
@@ -27,16 +27,16 @@ import java.util.Collections;
  */
 public class TestUtil {
 
-    public static Collection<TableRows> testTableRows(String tableName, int rowCount) {
+    public static Collection<Table> testTable(String tableName, int rowCount) {
         TableSchema tableSchema = TableSchema.newBuilder(tableName) //
                 .addColumn("host", SemanticType.Tag, DataType.String) //
                 .addColumn("ts", SemanticType.Timestamp, DataType.TimestampMillisecond) //
                 .addColumn("cpu", SemanticType.Field, DataType.Float64) //
                 .build();
 
-        TableRows rows = TableRows.from(tableSchema);
+        Table rows = Table.from(tableSchema);
         for (int i = 0; i < rowCount; i++) {
-            rows.insert("127.0.0.1", System.currentTimeMillis(), i);
+            rows.addRow("127.0.0.1", System.currentTimeMillis(), i);
         }
         return Collections.singleton(rows);
     }

@@ -21,15 +21,15 @@ import io.greptime.WriteOp;
  * @author jiachun.fjc
  */
 public class WriteTable {
-    private final TableRows rows;
+    private final Table rows;
     private final WriteOp writeOp;
 
-    public WriteTable(TableRows rows, WriteOp writeOp) {
+    public WriteTable(Table rows, WriteOp writeOp) {
         this.rows = rows;
         this.writeOp = writeOp;
     }
 
-    public TableRows getRows() {
+    public Table getRows() {
         return rows;
     }
 

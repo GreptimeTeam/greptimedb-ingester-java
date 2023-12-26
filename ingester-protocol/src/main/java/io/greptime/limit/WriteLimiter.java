@@ -18,7 +18,7 @@ package io.greptime.limit;
 import io.greptime.models.Err;
 import io.greptime.models.Result;
 import io.greptime.models.WriteOk;
-import io.greptime.models.TableRows;
+import io.greptime.models.Table;
 import java.util.Collection;
 
 /**
@@ -26,7 +26,7 @@ import java.util.Collection;
  *
  * @author jiachun.fjc
  */
-public abstract class WriteLimiter extends AbstractLimiter<Collection<TableRows>, Result<WriteOk, Err>> {
+public abstract class WriteLimiter extends AbstractLimiter<Collection<Table>, Result<WriteOk, Err>> {
 
     public WriteLimiter(int maxInFlight, LimitedPolicy policy, String metricPrefix) {
         super(maxInFlight, policy, metricPrefix);

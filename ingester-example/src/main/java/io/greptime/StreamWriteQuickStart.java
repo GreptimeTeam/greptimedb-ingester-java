@@ -16,30 +16,25 @@
 package io.greptime;
 
 import io.greptime.models.DataType;
-import io.greptime.models.Err;
-import io.greptime.models.Result;
 import io.greptime.models.SemanticType;
-import io.greptime.models.TableRows;
+import io.greptime.models.Table;
 import io.greptime.models.TableSchema;
 import io.greptime.models.WriteOk;
 import io.greptime.options.GreptimeOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.Date;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 /**
  * @author jiachun.fjc
  */
-public class WriteTableRowsQuickStart {
+public class StreamWriteQuickStart {
 
-    private static final Logger LOG = LoggerFactory.getLogger(WriteTableRowsQuickStart.class);
+    private static final Logger LOG = LoggerFactory.getLogger(StreamWriteQuickStart.class);
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
         // GreptimeDB has a default database named "public", we can use it as the test database
@@ -72,8 +67,8 @@ public class WriteTableRowsQuickStart {
                 .addColumn("field2", SemanticType.Field, DataType.Float64) //
                 .build();
 
-        TableRows myMetric3Rows = TableRows.from(myMetric3Schema);
-        TableRows myMetric4Rows = TableRows.from(myMetric4Schema);
+        Table myMetric3Rows = Table.from(myMetric3Schema);
+        Table myMetric4Rows = Table.from(myMetric4Schema);
 
         for (int i = 0; i < 10; i++) {
             String tag1v = "tag_value_1_" + i;
@@ -85,7 +80,7 @@ public class WriteTableRowsQuickStart {
             BigDecimal field3 = new BigDecimal(i);
             int field4 = i + 1;
 
-            myMetric3Rows.insert(tag1v, tag2v, tag3v, ts, field1, field2, field3, field4);
+            myMetric3Rows.addRow(tag1v, tag2v, tag3v, ts, field1, field2, field3, field4);
         }
 
         for (int i = 0; i < 10; i++) {
@@ -95,31 +90,23 @@ public class WriteTableRowsQuickStart {
             Date field1 = Calendar.getInstance().getTime();
             double field2 = i + 0.1;
 
-            myMetric4Rows.insert(tag1v, tag2v, ts, field1, field2);
+            myMetric4Rows.addRow(tag1v, tag2v, ts, field1, field2);
         }
 
-        Collection<TableRows> rows = Arrays.asList(myMetric3Rows, myMetric4Rows);
+        StreamWriter<Table, WriteOk> writer = greptimeDB.streamWriter();
 
-        // For performance reasons, the SDK is designed to be purely asynchronous.
-        // The return value is a future object. If you want to immediately obtain
-        // the result, you can call `future.get()`.
-        CompletableFuture<Result<WriteOk, Err>> future = greptimeDB.write(rows);
+        // write data into stream
+        writer.write(myMetric3Rows);
+        writer.write(myMetric4Rows);
 
-        Result<WriteOk, Err> result = future.get();
+        // delete the first 5 rows
+        writer.write(myMetric3Rows.subRange(0, 5), WriteOp.Delete);
 
-        if (result.isOk()) {
-            LOG.info("Write result: {}", result.getOk());
-        } else {
-            LOG.error("Failed to write: {}", result.getErr());
-        }
+        // complete the stream
+        CompletableFuture<WriteOk> future = writer.completed();
 
-        List<TableRows> delete_pojos = Arrays.asList(myMetric3Rows.subRange(0, 5), myMetric4Rows.subRange(0, 5));
-        Result<WriteOk, Err> deletes = greptimeDB.write(delete_pojos, WriteOp.Delete).get();
+        WriteOk result = future.get();
 
-        if (deletes.isOk()) {
-            LOG.info("Delete result: {}", result.getOk());
-        } else {
-            LOG.error("Failed to delete: {}", result.getErr());
-        }
+        LOG.info("Write result: {}", result);
     }
 }

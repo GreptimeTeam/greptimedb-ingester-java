@@ -26,7 +26,7 @@ import io.greptime.common.util.MetricsUtil;
 import io.greptime.models.Err;
 import io.greptime.models.Result;
 import io.greptime.models.WriteOk;
-import io.greptime.models.TableRows;
+import io.greptime.models.Table;
 import io.greptime.options.GreptimeOptions;
 import io.greptime.options.RouterOptions;
 import io.greptime.options.WriteOptions;
@@ -139,20 +139,20 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
 
     @Override
     public CompletableFuture<Result<WriteOk, Err>> writePOJOs(Collection<List<?>> pojos, WriteOp writeOp, Context ctx) {
-        List<TableRows> rows = new ArrayList<>(pojos.size());
+        List<Table> rows = new ArrayList<>(pojos.size());
         for (List<?> pojo : pojos) {
-            rows.add(this.pojoMapper.toTableRows(pojo));
+            rows.add(this.pojoMapper.toTableData(pojo));
         }
         return write(rows, writeOp, ctx);
     }
 
     @Override
     public StreamWriter<List<?>, WriteOk> streamWriterPOJOs(int maxPointsPerSecond, Context ctx) {
-        StreamWriter<TableRows, WriteOk> delegate = streamWriter(maxPointsPerSecond, ctx);
+        StreamWriter<Table, WriteOk> delegate = streamWriter(maxPointsPerSecond, ctx);
         return new StreamWriter<List<?>, WriteOk>() {
             @Override
             public StreamWriter<List<?>, WriteOk> write(List<?> val, WriteOp writeOp) {
-                TableRows rows = pojoMapper.toTableRows(val);
+                Table rows = pojoMapper.toTableData(val);
                 delegate.write(rows, writeOp);
                 return this;
             }
@@ -165,13 +165,13 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
     }
 
     @Override
-    public CompletableFuture<Result<WriteOk, Err>> write(Collection<TableRows> rows, WriteOp writeOp, Context ctx) {
+    public CompletableFuture<Result<WriteOk, Err>> write(Collection<Table> rows, WriteOp writeOp, Context ctx) {
         ensureInitialized();
         return this.writeClient.write(rows, writeOp, attachCtx(ctx));
     }
 
     @Override
-    public StreamWriter<TableRows, WriteOk> streamWriter(int maxPointsPerSecond, Context ctx) {
+    public StreamWriter<Table, WriteOk> streamWriter(int maxPointsPerSecond, Context ctx) {
         return this.writeClient.streamWriter(maxPointsPerSecond, attachCtx(ctx));
     }
 

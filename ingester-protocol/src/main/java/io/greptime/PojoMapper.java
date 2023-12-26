@@ -21,7 +21,7 @@ import io.greptime.models.Column;
 import io.greptime.models.DataType;
 import io.greptime.models.Metric;
 import io.greptime.models.SemanticType;
-import io.greptime.models.TableRows;
+import io.greptime.models.Table;
 import io.greptime.models.TableSchema;
 import java.lang.reflect.Field;
 import java.util.HashMap;
@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * This utility class converts POJO classes into {@link io.greptime.models.TableRows} objects,
+ * This utility class converts POJO classes into {@link Table} objects,
  * inspired by <a href="https://github.com/influxdata/influxdb-client-java/blob/master/client/src/main/java/com/influxdb/client/internal/MeasurementMapper.java">InfluxDB client-java</a>.
  *
  * @author jiachun.fjc
@@ -45,7 +45,7 @@ public class PojoMapper {
         this.maxCachedPOJOs = maxCachedPOJOs;
     }
 
-    public <M> TableRows toTableRows(List<M> pojos) {
+    public <M> Table toTableData(List<M> pojos) {
         Ensures.ensureNonNull(pojos, "pojos");
         Ensures.ensure(!pojos.isEmpty(), "pojos can not be empty");
 
@@ -72,7 +72,7 @@ public class PojoMapper {
             schemaBuilder.addColumn(name, semanticType, dataType);
         }
 
-        TableRows tableRows = TableRows.from(schemaBuilder.build());
+        Table table = Table.from(schemaBuilder.build());
         for (M pojo : pojos) {
             Class<?> type = pojo.getClass();
             if (!type.equals(metricType)) {
@@ -88,10 +88,10 @@ public class PojoMapper {
 
                 j++;
             }
-            tableRows.insert(values);
+            table.addRow(values);
         }
 
-        return tableRows;
+        return table;
     }
 
     private String getMetricName(Class<?> metricType) {

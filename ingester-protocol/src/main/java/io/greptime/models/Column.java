@@ -21,7 +21,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * This annotation is used to mapping POJO class into {@link io.greptime.models.TableRows}.
+ * This annotation is used to mapping POJO class into {@link Table}.
  *
  * @author jiachun.fjc
  */

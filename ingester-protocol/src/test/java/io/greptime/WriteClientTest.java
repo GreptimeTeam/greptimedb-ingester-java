@@ -19,8 +19,7 @@ import io.greptime.common.Endpoint;
 import io.greptime.models.DataType;
 import io.greptime.models.Err;
 import io.greptime.models.Result;
-import io.greptime.models.SemanticType;
-import io.greptime.models.TableRows;
+import io.greptime.models.Table;
 import io.greptime.models.TableSchema;
 import io.greptime.models.WriteOk;
 import io.greptime.options.WriteOptions;
@@ -37,23 +36,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
-import static io.greptime.models.DataType.Binary;
-import static io.greptime.models.DataType.Bool;
-import static io.greptime.models.DataType.Date;
-import static io.greptime.models.DataType.DateTime;
-import static io.greptime.models.DataType.Float32;
-import static io.greptime.models.DataType.Float64;
-import static io.greptime.models.DataType.Int16;
-import static io.greptime.models.DataType.Int32;
-import static io.greptime.models.DataType.Int64;
-import static io.greptime.models.DataType.Int8;
-import static io.greptime.models.DataType.TimestampMillisecond;
-import static io.greptime.models.DataType.TimestampNanosecond;
-import static io.greptime.models.DataType.TimestampSecond;
-import static io.greptime.models.DataType.UInt16;
-import static io.greptime.models.DataType.UInt32;
-import static io.greptime.models.DataType.UInt64;
-import static io.greptime.models.DataType.UInt8;
 import static io.greptime.models.SemanticType.Field;
 import static io.greptime.models.SemanticType.Tag;
 import static io.greptime.models.SemanticType.Timestamp;
@@ -106,12 +88,12 @@ public class WriteClientTest {
                 .addColumn("field16", Field, DataType.TimestampMillisecond) //
                 .addColumn("field17", Field, DataType.TimestampNanosecond) //
                 .build();
-        TableRows rows = TableRows.from(schema);
+        Table rows = Table.from(schema);
         long ts = System.currentTimeMillis();
 
-        rows.insert("tag1", ts, 1, 2, 3, 4L, 5, 6, 7, 8L, 0.9F, 0.10D, true, new byte[0], 11, 12L, 13L, 14L, 15L);
-        rows.insert("tag1", ts, 1, 2, 3, 4, 5, 6, 7, 8, 0.9, 0.10, false, new byte[0], 11, 12, 13, 14, 15);
-        rows.insert("tag1", ts, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, false, new byte[] {0, 1}, 11, 12, 13, 14, 15);
+        rows.addRow("tag1", ts, 1, 2, 3, 4L, 5, 6, 7, 8L, 0.9F, 0.10D, true, new byte[0], 11, 12L, 13L, 14L, 15L);
+        rows.addRow("tag1", ts, 1, 2, 3, 4, 5, 6, 7, 8, 0.9, 0.10, false, new byte[0], 11, 12, 13, 14, 15);
+        rows.addRow("tag1", ts, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, false, new byte[] {0, 1}, 11, 12, 13, 14, 15);
 
         Endpoint addr = Endpoint.parse("127.0.0.1:8081");
         Database.GreptimeResponse response = Database.GreptimeResponse.newBuilder() //

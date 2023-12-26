@@ -22,20 +22,20 @@ import org.junit.Test;
 /**
  * @author jiachun.fjc
  */
-public class TableRowsTest {
+public class TableTest {
 
     @Test
-    public void testWriteRowsNonNull() {
+    public void testTableNonNull() {
         TableSchema schema = TableSchema.newBuilder("test_table") //
                 .addColumn("col1", SemanticType.Tag, DataType.String) //
                 .addColumn("col2", SemanticType.Tag, DataType.String) //
                 .addColumn("col3", SemanticType.Field, DataType.Int32) //
                 .build();
 
-        TableRows.RowBasedTableRows rows = (TableRows.RowBasedTableRows) TableRows.from(schema);
-        rows.insert("1", "11", 111) //
-                .insert("2", "22", 222) //
-                .insert("3", "33", 333);
+        Table.RowBasedTable rows = (Table.RowBasedTable) Table.from(schema);
+        rows.addRow("1", "11", 111) //
+                .addRow("2", "22", 222) //
+                .addRow("3", "33", 333);
 
         Assert.assertEquals(3, rows.rowCount());
         RowData.Rows rawRows = rows.into();
@@ -45,17 +45,17 @@ public class TableRowsTest {
     }
 
     @Test
-    public void testWriteRowsSomeNull() {
+    public void testTableSomeNull() {
         TableSchema schema = TableSchema.newBuilder("test_table") //
                 .addColumn("col1", SemanticType.Tag, DataType.String) //
                 .addColumn("col2", SemanticType.Tag, DataType.String) //
                 .addColumn("col3", SemanticType.Field, DataType.Int32) //
                 .build();
 
-        TableRows.RowBasedTableRows rows = (TableRows.RowBasedTableRows) TableRows.from(schema);
-        rows.insert("1", "11", 111) //
-                .insert("2", null, 222) //
-                .insert("3", "33", null);
+        Table.RowBasedTable rows = (Table.RowBasedTable) Table.from(schema);
+        rows.addRow("1", "11", 111) //
+                .addRow("2", null, 222) //
+                .addRow("3", "33", null);
 
         Assert.assertEquals(3, rows.rowCount());
         RowData.Rows rawRows = rows.into();
