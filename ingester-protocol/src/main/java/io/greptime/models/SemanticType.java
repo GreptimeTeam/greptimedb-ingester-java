@@ -40,20 +40,4 @@ public enum SemanticType {
                 return null;
         }
     }
-
-    /**
-     * Converts from the corresponding proto value.
-     */
-    public static SemanticType fromProtoValue(Common.SemanticType v) {
-        switch (v) {
-            case TAG:
-                return Tag;
-            case FIELD:
-                return Field;
-            case TIMESTAMP:
-                return Timestamp;
-            default:
-                return null;
-        }
-    }
 }
