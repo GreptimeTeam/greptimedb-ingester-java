@@ -67,8 +67,8 @@ public class StreamWriteQuickStart {
                 .addColumn("field2", SemanticType.Field, DataType.Float64) //
                 .build();
 
-        Table myMetric3Rows = Table.from(myMetric3Schema);
-        Table myMetric4Rows = Table.from(myMetric4Schema);
+        Table myMetric3 = Table.from(myMetric3Schema);
+        Table myMetric4 = Table.from(myMetric4Schema);
 
         for (int i = 0; i < 10; i++) {
             String tag1v = "tag_value_1_" + i;
@@ -80,7 +80,7 @@ public class StreamWriteQuickStart {
             BigDecimal field3 = new BigDecimal(i);
             int field4 = i + 1;
 
-            myMetric3Rows.addRow(tag1v, tag2v, tag3v, ts, field1, field2, field3, field4);
+            myMetric3.addRow(tag1v, tag2v, tag3v, ts, field1, field2, field3, field4);
         }
 
         for (int i = 0; i < 10; i++) {
@@ -90,17 +90,17 @@ public class StreamWriteQuickStart {
             Date field1 = Calendar.getInstance().getTime();
             double field2 = i + 0.1;
 
-            myMetric4Rows.addRow(tag1v, tag2v, ts, field1, field2);
+            myMetric4.addRow(tag1v, tag2v, ts, field1, field2);
         }
 
         StreamWriter<Table, WriteOk> writer = greptimeDB.streamWriter();
 
         // write data into stream
-        writer.write(myMetric3Rows);
-        writer.write(myMetric4Rows);
+        writer.write(myMetric3);
+        writer.write(myMetric4);
 
         // delete the first 5 rows
-        writer.write(myMetric3Rows.subRange(0, 5), WriteOp.Delete);
+        writer.write(myMetric3.subRange(0, 5), WriteOp.Delete);
 
         // complete the stream
         CompletableFuture<WriteOk> future = writer.completed();

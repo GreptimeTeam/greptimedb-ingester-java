@@ -32,13 +32,13 @@ public class TableTest {
                 .addColumn("col3", SemanticType.Field, DataType.Int32) //
                 .build();
 
-        Table.RowBasedTable rows = (Table.RowBasedTable) Table.from(schema);
-        rows.addRow("1", "11", 111) //
+        Table.RowBasedTable table = (Table.RowBasedTable) Table.from(schema);
+        table.addRow("1", "11", 111) //
                 .addRow("2", "22", 222) //
                 .addRow("3", "33", 333);
 
-        Assert.assertEquals(3, rows.rowCount());
-        RowData.Rows rawRows = rows.into();
+        Assert.assertEquals(3, table.rowCount());
+        RowData.Rows rawRows = table.into();
         Assert.assertEquals(111, rawRows.getRows(0).getValues(2).getI32Value());
         Assert.assertEquals(222, rawRows.getRows(1).getValues(2).getI32Value());
         Assert.assertEquals(333, rawRows.getRows(2).getValues(2).getI32Value());
@@ -52,13 +52,13 @@ public class TableTest {
                 .addColumn("col3", SemanticType.Field, DataType.Int32) //
                 .build();
 
-        Table.RowBasedTable rows = (Table.RowBasedTable) Table.from(schema);
-        rows.addRow("1", "11", 111) //
+        Table.RowBasedTable table = (Table.RowBasedTable) Table.from(schema);
+        table.addRow("1", "11", 111) //
                 .addRow("2", null, 222) //
                 .addRow("3", "33", null);
 
-        Assert.assertEquals(3, rows.rowCount());
-        RowData.Rows rawRows = rows.into();
+        Assert.assertEquals(3, table.rowCount());
+        RowData.Rows rawRows = table.into();
         Assert.assertEquals(111, rawRows.getRows(0).getValues(2).getI32Value());
         Assert.assertEquals(222, rawRows.getRows(1).getValues(2).getI32Value());
         Assert.assertFalse(rawRows.getRows(2).getValues(2).hasI32Value());

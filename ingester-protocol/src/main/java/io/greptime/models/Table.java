@@ -109,18 +109,18 @@ public interface Table {
             Ensures.ensure(columnCount == dataTypes.size(), "Column names size not equal to data types size");
             Ensures.ensure(columnCount == dataTypeExtensions.size(), "Column names size not equal to data type extensions size");
 
-            return buildRow(tableName, columnCount, columnNames, semanticTypes, dataTypes, dataTypeExtensions);
+            return buildTable(tableName, columnCount, columnNames, semanticTypes, dataTypes, dataTypeExtensions);
         }
 
-        private static Table buildRow(String tableName, //
-                                      int columnCount, //
-                                      List<String> columnNames, //
-                                      List<Common.SemanticType> semanticTypes, //
-                                      List<Common.ColumnDataType> dataTypes, //
-                                      List<Common.ColumnDataTypeExtension> dataTypeExtensions) {
-            RowBasedTable rows = new RowBasedTable();
-            rows.tableName = tableName;
-            rows.columnSchemas = new ArrayList<>(columnCount);
+        private static Table buildTable(String tableName, //
+                                        int columnCount, //
+                                        List<String> columnNames, //
+                                        List<Common.SemanticType> semanticTypes, //
+                                        List<Common.ColumnDataType> dataTypes, //
+                                        List<Common.ColumnDataTypeExtension> dataTypeExtensions) {
+            RowBasedTable table = new RowBasedTable();
+            table.tableName = tableName;
+            table.columnSchemas = new ArrayList<>(columnCount);
 
             for (int i = 0; i < columnCount; i++) {
                 RowData.ColumnSchema.Builder builder = RowData.ColumnSchema.newBuilder();
@@ -128,9 +128,9 @@ public interface Table {
                         .setSemanticType(semanticTypes.get(i)) //
                         .setDatatype(dataTypes.get(i)) //
                         .setDatatypeExtension(dataTypeExtensions.get(i));
-                rows.columnSchemas.add(builder.build());
+                table.columnSchemas.add(builder.build());
             }
-            return rows;
+            return table;
         }
     }
 

@@ -29,7 +29,7 @@ public class ResultTest {
         final Result<Integer, Err> r2 = r1.map(WriteOk::getSuccess);
         Assert.assertEquals(2, r2.getOk().intValue());
 
-        final Result<WriteOk, Err> r5 = Result.err(Err.writeErr(400, null, null, null));
+        final Result<WriteOk, Err> r5 = Result.err(Err.writeErr(400, null, null));
         final Result<Integer, Err> r6 = r5.map(WriteOk::getSuccess);
         Assert.assertFalse(r6.isOk());
     }
@@ -40,7 +40,7 @@ public class ResultTest {
         final Integer r2 = r1.mapOr(-1, WriteOk::getSuccess);
         Assert.assertEquals(2, r2.intValue());
 
-        final Result<WriteOk, Err> r3 = Result.err(Err.writeErr(400, null, null, null));
+        final Result<WriteOk, Err> r3 = Result.err(Err.writeErr(400, null, null));
         final Integer r4 = r3.mapOr(-1, WriteOk::getSuccess);
         Assert.assertEquals(-1, r4.intValue());
     }
@@ -51,7 +51,7 @@ public class ResultTest {
         final Integer r2 = r1.mapOrElse(err -> -1, WriteOk::getSuccess);
         Assert.assertEquals(2, r2.intValue());
 
-        final Result<WriteOk, Err> r3 = Result.err(Err.writeErr(400, null, null, null));
+        final Result<WriteOk, Err> r3 = Result.err(Err.writeErr(400, null, null));
         final Integer r4 = r3.mapOrElse(err -> -1, WriteOk::getSuccess);
         Assert.assertEquals(-1, r4.intValue());
     }
@@ -63,7 +63,7 @@ public class ResultTest {
         Assert.assertEquals(2, r2.getOk().getSuccess());
 
         IllegalStateException error = new IllegalStateException("error test");
-        final Result<WriteOk, Err> r3 = Result.err(Err.writeErr(400, error, null, null));
+        final Result<WriteOk, Err> r3 = Result.err(Err.writeErr(400, error, null));
         final Result<WriteOk, Throwable> r4 = r3.mapErr(Err::getError);
         Assert.assertEquals("error test", r4.getErr().getMessage());
     }
@@ -77,7 +77,7 @@ public class ResultTest {
         });
         Assert.assertEquals(3, r2.getOk().getSuccess());
 
-        final Result<WriteOk, Err> r3 = Result.err(Err.writeErr(400, null, null, null));
+        final Result<WriteOk, Err> r3 = Result.err(Err.writeErr(400, null, null));
         final Result<WriteOk, Err> r4 = r3.andThen(writeOk -> {
             WriteOk newOne = WriteOk.ok(writeOk.getSuccess() + 1, 0);
             return newOne.mapToResult();
@@ -91,7 +91,7 @@ public class ResultTest {
         final Result<WriteOk, String> r2 = r1.orElse(err -> Result.ok(WriteOk.ok(0, 0)));
         Assert.assertEquals(2, r2.getOk().getSuccess());
 
-        final Result<WriteOk, Err> r3 = Result.err(Err.writeErr(400, null, null, null));
+        final Result<WriteOk, Err> r3 = Result.err(Err.writeErr(400, null, null));
         final Result<WriteOk, String> r4 = r3.orElse(err -> Result.ok(WriteOk.ok(0, 0)));
         Assert.assertEquals(0, r4.getOk().getSuccess());
     }
@@ -102,7 +102,7 @@ public class ResultTest {
         final WriteOk r2 = r1.unwrapOr(WriteOk.emptyOk());
         Assert.assertEquals(2, r2.getSuccess());
 
-        final Result<WriteOk, Err> r3 = Result.err(Err.writeErr(400, null, null, null));
+        final Result<WriteOk, Err> r3 = Result.err(Err.writeErr(400, null, null));
         final WriteOk r4 = r3.unwrapOr(WriteOk.emptyOk());
         Assert.assertEquals(0, r4.getSuccess());
     }
@@ -113,7 +113,7 @@ public class ResultTest {
         final WriteOk r2 = r1.unwrapOrElse(err -> WriteOk.emptyOk());
         Assert.assertEquals(2, r2.getSuccess());
 
-        final Result<WriteOk, Err> r3 = Result.err(Err.writeErr(400, null, null, null));
+        final Result<WriteOk, Err> r3 = Result.err(Err.writeErr(400, null, null));
         final WriteOk r4 = r3.unwrapOrElse(err -> WriteOk.emptyOk());
         Assert.assertEquals(0, r4.getSuccess());
     }

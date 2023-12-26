@@ -30,10 +30,6 @@ public class Err {
     private Throwable error;
     // the server address where the error occurred
     private Endpoint errTo;
-    // the data of wrote failed, can be used to retry
-    private Collection<Table> rowsFailed;
-    // the QL failed to query
-    private String failedQl;
 
     /**
      * Returns the error code.
@@ -57,20 +53,6 @@ public class Err {
     }
 
     /**
-     * Returns the data of wrote failed, can be used to retry.
-     */
-    public Collection<Table> getRowsFailed() {
-        return rowsFailed;
-    }
-
-    /**
-     * Returns the QL failed to query.
-     */
-    public String getFailedQl() {
-        return failedQl;
-    }
-
-    /**
      * Returns a {@link Result} containing this error.
      */
     public <T> Result<T, Err> mapToResult() {
@@ -83,7 +65,6 @@ public class Err {
                 "code=" + code + //
                 ", error='" + error + '\'' + //
                 ", errTo=" + errTo + //
-                ", failedQl=" + failedQl + //
                 '}';
     }
 
@@ -93,33 +74,13 @@ public class Err {
      * @param code the error code
      * @param error the error
      * @param errTo the server address where the error occurred
-     * @param rowsFailed the data of wrote failed, can be used to retry
      * @return a new {@link Err} for write error
      */
-    public static Err writeErr(int code, Throwable error, Endpoint errTo, Collection<Table> rowsFailed) {
+    public static Err writeErr(int code, Throwable error, Endpoint errTo) {
         Err err = new Err();
         err.code = code;
         err.error = error;
         err.errTo = errTo;
-        err.rowsFailed = rowsFailed;
-        return err;
-    }
-
-    /**
-     * Creates a new {@link Err} for query error.
-     *
-     * @param code the error code
-     * @param error the error
-     * @param errTo the server address where the error occurred
-     * @param failedQl the QL failed to query
-     * @return a new {@link Err} for query error
-     */
-    public static Err queryErr(int code, Throwable error, Endpoint errTo, String failedQl) {
-        Err err = new Err();
-        err.code = code;
-        err.error = error;
-        err.errTo = errTo;
-        err.failedQl = failedQl;
         return err;
     }
 }
