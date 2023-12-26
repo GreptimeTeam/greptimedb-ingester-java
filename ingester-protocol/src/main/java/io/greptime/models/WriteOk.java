@@ -15,8 +15,6 @@
  */
 package io.greptime.models;
 
-import java.util.Collection;
-
 /**
  * Contains the success value of write.
  *

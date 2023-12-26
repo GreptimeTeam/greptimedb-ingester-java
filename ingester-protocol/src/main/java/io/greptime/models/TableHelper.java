@@ -19,7 +19,6 @@ import io.greptime.WriteOp;
 import io.greptime.v1.Common;
 import io.greptime.v1.Database;
 import java.util.Collection;
-import java.util.Collections;
 
 /**
  * @author jiachun.fjc

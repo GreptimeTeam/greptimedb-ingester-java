@@ -17,8 +17,8 @@ package io.greptime.limit;
 
 import io.greptime.models.Err;
 import io.greptime.models.Result;
-import io.greptime.models.WriteOk;
 import io.greptime.models.Table;
+import io.greptime.models.WriteOk;
 import java.util.Collection;
 
 /**

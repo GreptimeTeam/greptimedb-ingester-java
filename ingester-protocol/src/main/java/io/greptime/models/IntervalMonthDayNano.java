@@ -44,7 +44,6 @@ public class IntervalMonthDayNano implements Into<Common.IntervalMonthDayNano> {
         return nanoseconds;
     }
 
-
     @Override
     public Common.IntervalMonthDayNano into() {
         return Common.IntervalMonthDayNano.newBuilder() //

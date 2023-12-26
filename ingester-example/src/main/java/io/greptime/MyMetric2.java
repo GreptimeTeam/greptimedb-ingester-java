@@ -18,7 +18,6 @@ package io.greptime;
 import io.greptime.models.Column;
 import io.greptime.models.DataType;
 import io.greptime.models.Metric;
-import java.math.BigDecimal;
 import java.util.Date;
 
 /**
