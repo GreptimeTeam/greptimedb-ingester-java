@@ -16,6 +16,7 @@
 package io.greptime.models;
 
 import io.greptime.WriteOp;
+import io.greptime.common.util.Ensures;
 import io.greptime.v1.Common;
 import io.greptime.v1.Database;
 import java.util.Collection;
@@ -41,6 +42,7 @@ public class TableHelper {
             case Insert:
                 Database.RowInsertRequests.Builder insertBuilder = Database.RowInsertRequests.newBuilder();
                 for (Table t : tables) {
+                    Ensures.ensure(t.pointCount() > 0, "No data to insert in table: %s", t.tableName());
                     insertBuilder.addInserts(t.intoRowInsertRequest());
                 }
                 return Database.GreptimeRequest.newBuilder() //
@@ -50,6 +52,7 @@ public class TableHelper {
             case Delete:
                 Database.RowDeleteRequests.Builder deleteBuilder = Database.RowDeleteRequests.newBuilder();
                 for (Table t : tables) {
+                    Ensures.ensure(t.pointCount() > 0, "No data to delete in table: %s", t.tableName());
                     deleteBuilder.addDeletes(t.intoRowDeleteRequest());
                 }
                 return Database.GreptimeRequest.newBuilder() //

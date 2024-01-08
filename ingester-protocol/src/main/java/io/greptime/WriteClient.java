@@ -340,11 +340,14 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
         public StreamWriter<Table, WriteOk> write(Table table, WriteOp writeOp) {
             Ensures.ensureNonNull(table, "null `table`");
 
+            WriteTables writeTables = new WriteTables(table, writeOp);
+
             if (this.rateLimiter != null) {
                 double timeSpent = this.rateLimiter.acquire(table.pointCount());
                 InnerMetricHelper.writeStreamLimiterTimeSpent().update((long) timeSpent);
             }
-            this.observer.onNext(new WriteTables(table, writeOp));
+
+            this.observer.onNext(writeTables);
             return this;
         }
     }

@@ -18,9 +18,7 @@ package io.greptime;
 import io.greptime.models.WriteOk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -35,41 +33,33 @@ public class StreamWritePOJOsQuickStart {
     public static void main(String[] args) throws ExecutionException, InterruptedException {
         GreptimeDB greptimeDB = TestConnector.connectToDefaultDB();
 
-        List<MyMetric1> myMetric1s = new ArrayList<>();
+        List<Cpu> cpus = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
-            MyMetric1 m = new MyMetric1();
-            m.setTag1("tag_value_1_" + i);
-            m.setTag2("tag_value_2_" + i);
-            m.setTag3("tag_value_3_" + i);
-            m.setTs(System.currentTimeMillis());
-            m.setField1("field_value_1_" + i);
-            m.setField2(i);
-            m.setField3(new BigDecimal(i));
-            m.setField4(i);
-
-            myMetric1s.add(m);
+            Cpu c = new Cpu();
+            c.setHost("127.0.0." + i);
+            c.setTs(System.currentTimeMillis());
+            c.setCpuUser(i + 0.1);
+            c.setCpuSys(i + 0.12);
+            cpus.add(c);
         }
 
-        List<MyMetric2> myMetric2s = new ArrayList<>();
+        List<Memory> memories = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
-            MyMetric2 m = new MyMetric2();
-            m.setTag1("tag_value_1_" + i);
-            m.setTag2("tag_value_2_" + i);
+            Memory m = new Memory();
+            m.setHost("127.0.0." + i);
             m.setTs(System.currentTimeMillis() / 1000);
-            m.setField1(Calendar.getInstance().getTime());
-            m.setField2(i);
-
-            myMetric2s.add(m);
+            m.setMemUsage(i + 0.2);
+            memories.add(m);
         }
 
         StreamWriter<List<?>, WriteOk> writer = greptimeDB.streamWriterPOJOs();
 
         // write data into stream
-        writer.write(myMetric1s);
-        writer.write(myMetric2s);
+        writer.write(cpus);
+        writer.write(memories);
 
         // delete the first 5 rows
-        writer.write(myMetric1s.subList(0, 5), WriteOp.Delete);
+        writer.write(cpus.subList(0, 5), WriteOp.Delete);
 
         // complete the stream
         CompletableFuture<WriteOk> future = writer.completed();
