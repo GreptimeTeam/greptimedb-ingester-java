@@ -80,7 +80,7 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
     public static GreptimeDB create(GreptimeOptions opts) {
         GreptimeDB greptimeDB = new GreptimeDB();
         if (!greptimeDB.init(opts)) {
-            throw new RuntimeException("Failed to start GreptimeDB client");
+            throw new RuntimeException("Failed to start the GreptimeDB client");
         }
         LOG.info("GreptimeDB client started: {}", greptimeDB);
         return greptimeDB;
