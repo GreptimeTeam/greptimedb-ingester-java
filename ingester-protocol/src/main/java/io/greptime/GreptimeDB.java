@@ -21,8 +21,8 @@ import io.greptime.common.Display;
 import io.greptime.common.Endpoint;
 import io.greptime.common.Lifecycle;
 import io.greptime.common.signal.SignalHandlersLoader;
-import io.greptime.common.util.MetricExecutor;
 import io.greptime.common.util.MetricsUtil;
+import io.greptime.common.util.Strings;
 import io.greptime.models.Err;
 import io.greptime.models.Result;
 import io.greptime.models.Table;
@@ -82,6 +82,7 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
         if (!greptimeDB.init(opts)) {
             throw new RuntimeException("Failed to start GreptimeDB client");
         }
+        LOG.info("GreptimeDB client started: {}", greptimeDB);
         return greptimeDB;
     }
 
@@ -96,6 +97,10 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
         }
 
         this.opts = GreptimeOptions.checkSelf(opts).copy();
+
+        if (Strings.isBlank(this.opts.getDatabase())) {
+            LOG.warn("The `database` is not specified, use default database: greptime.public");
+        }
 
         this.routerClient = makeRouteClient(opts);
         this.writeClient = makeWriteClient(opts, this.routerClient);
@@ -218,7 +223,7 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
         RpcOptions rpcOpts = opts.getRpcOptions();
         RpcClient rpcClient = RpcFactoryProvider.getRpcFactory().createRpcClient();
         if (!rpcClient.init(rpcOpts)) {
-            throw new IllegalStateException("Start RPC client failed");
+            throw new IllegalStateException("Failed to start the RPC client");
         }
         rpcClient.registerConnectionObserver(new RpcConnectionObserver());
         return rpcClient;
@@ -229,7 +234,7 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
         routerOpts.setRpcClient(makeRpcClient(opts));
         RouterClient routerClient = new RouterClient();
         if (!routerClient.init(routerOpts)) {
-            throw new IllegalStateException("Start router client failed");
+            throw new IllegalStateException("Failed to start the router client");
         }
         return routerClient;
     }
@@ -239,7 +244,7 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
         writeOpts.setRouterClient(routerClient);
         WriteClient writeClient = new WriteClient();
         if (!writeClient.init(writeOpts)) {
-            throw new IllegalStateException("Start write client failed");
+            throw new IllegalStateException("Failed to start the write client failed");
         }
         return writeClient;
     }

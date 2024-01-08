@@ -114,11 +114,10 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         Ensures.ensureNonNull(opts, "null `opts (GreptimeOptions)`)`");
         Ensures.ensureNonNull(opts.getEndpoints(), "null `endpoints`");
         Ensures.ensure(!opts.getEndpoints().isEmpty(), "empty `endpoints`");
-        Ensures.ensure(Strings.isNotBlank(opts.getDatabase()),
-                "`database` can not be empty, we can use the default database of GreptimeDB: `greptime.public`");
         Ensures.ensureNonNull(opts.getRpcOptions(), "null `rpcOptions`");
         Ensures.ensureNonNull(opts.getRouterOptions(), "null `routerOptions`");
         Ensures.ensureNonNull(opts.getWriteOptions(), "null `writeOptions`");
+
         return opts;
     }
 
