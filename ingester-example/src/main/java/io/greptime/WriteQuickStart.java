@@ -88,12 +88,10 @@ public class WriteQuickStart {
             myMetric4.addRow(tag1v, tag2v, ts, field1, field2);
         }
 
-        Collection<Table> tables = Arrays.asList(myMetric3, myMetric4);
-
         // For performance reasons, the SDK is designed to be purely asynchronous.
         // The return value is a future object. If you want to immediately obtain
         // the result, you can call `future.get()`.
-        CompletableFuture<Result<WriteOk, Err>> future = greptimeDB.write(tables);
+        CompletableFuture<Result<WriteOk, Err>> future = greptimeDB.write(myMetric3, myMetric4);
 
         Result<WriteOk, Err> result = future.get();
 

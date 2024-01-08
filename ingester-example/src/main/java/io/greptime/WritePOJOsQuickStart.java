@@ -65,12 +65,10 @@ public class WritePOJOsQuickStart {
             myMetric2s.add(m);
         }
 
-        List<List<?>> pojos = Arrays.asList(myMetric1s, myMetric2s);
-
         // For performance reasons, the SDK is designed to be purely asynchronous.
         // The return value is a future object. If you want to immediately obtain
         // the result, you can call `future.get()`.
-        CompletableFuture<Result<WriteOk, Err>> puts = greptimeDB.writePOJOs(pojos);
+        CompletableFuture<Result<WriteOk, Err>> puts = greptimeDB.writePOJOs(myMetric1s, myMetric2s);
 
         Result<WriteOk, Err> result = puts.get();
 
