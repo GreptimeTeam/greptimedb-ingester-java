@@ -77,5 +77,8 @@ public class StreamWritePOJOsQuickStart {
         WriteOk result = future.get();
 
         LOG.info("Write result: {}", result);
+
+        // Shutdown the client when application exits.
+        greptimeDB.shutdownGracefully();
     }
 }

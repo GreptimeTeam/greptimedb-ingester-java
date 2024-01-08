@@ -105,7 +105,7 @@ public class WriteClientTest {
         Mockito.when(this.routerClient.invoke(Mockito.eq(addr), Mockito.any(), Mockito.any())) //
                 .thenReturn(Util.completedCf(response));
 
-        Result<WriteOk, Err> res = this.writeClient.write(Collections.singleton(table)).get();
+        Result<WriteOk, Err> res = this.writeClient.write(table).get();
 
         Assert.assertTrue(res.isOk());
         Assert.assertEquals(3, res.getOk().getSuccess());

@@ -35,7 +35,7 @@ public interface WritePOJO {
      * @see #writePOJOs(Collection, WriteOp, Context)
      */
     default CompletableFuture<Result<WriteOk, Err>> writePOJOs(List<?>... pojos) {
-        return writePOJOs(Arrays.asList(pojos), WriteOp.Insert, Context.newDefault());
+        return writePOJOs(Arrays.asList(pojos));
     }
     /**
      * @see #writePOJOs(Collection, WriteOp, Context)

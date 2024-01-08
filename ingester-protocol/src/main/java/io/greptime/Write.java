@@ -35,7 +35,7 @@ public interface Write {
      * @see #write(Collection, WriteOp, Context)
      */
     default CompletableFuture<Result<WriteOk, Err>> write(Table... tables) {
-        return write(Arrays.asList(tables), WriteOp.Insert, Context.newDefault());
+        return write(Arrays.asList(tables));
     }
 
     /**

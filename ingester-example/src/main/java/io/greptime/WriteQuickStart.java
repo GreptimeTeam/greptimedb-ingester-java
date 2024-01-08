@@ -109,5 +109,8 @@ public class WriteQuickStart {
         } else {
             LOG.error("Failed to delete: {}", result.getErr());
         }
+
+        // Shutdown the client when application exits.
+        greptimeDB.shutdownGracefully();
     }
 }
