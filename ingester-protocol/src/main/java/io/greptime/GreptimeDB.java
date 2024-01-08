@@ -99,7 +99,7 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
         this.opts = GreptimeOptions.checkSelf(opts).copy();
 
         if (Strings.isBlank(this.opts.getDatabase())) {
-            LOG.warn("The `database` is not specified, use default database: greptime.public");
+            LOG.warn("The `database` is not specified, use default (catalog-database): greptime-public");
         }
 
         this.routerClient = makeRouteClient(opts);

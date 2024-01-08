@@ -22,7 +22,6 @@ import io.greptime.models.SemanticType;
 import io.greptime.models.Table;
 import io.greptime.models.TableSchema;
 import io.greptime.models.WriteOk;
-import io.greptime.options.GreptimeOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.math.BigDecimal;
@@ -42,16 +41,7 @@ public class WriteQuickStart {
     private static final Logger LOG = LoggerFactory.getLogger(WriteQuickStart.class);
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
-        // GreptimeDB has a default database named "greptime.public", we can use it as the test database
-        String database = "greptime.public";
-        // By default, GreptimeDB listens on port 4001 using the gRPC protocol.
-        // We can provide multiple endpoints that point to the same GreptimeDB cluster.
-        // The client will make calls to these endpoints based on a load balancing strategy.
-        String[] endpoints = {"127.0.0.1:4001"};
-        GreptimeOptions opts = GreptimeOptions.newBuilder(endpoints, database) //
-                .build();
-
-        GreptimeDB greptimeDB = GreptimeDB.create(opts);
+        GreptimeDB greptimeDB = TestConnector.connectToDefaultDB();
 
         TableSchema myMetric3Schema = TableSchema.newBuilder("my_metric3") //
                 .addColumn("tag1", SemanticType.Tag, DataType.String) //

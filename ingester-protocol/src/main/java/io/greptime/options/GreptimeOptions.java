@@ -19,7 +19,6 @@ import io.greptime.Router;
 import io.greptime.common.Copiable;
 import io.greptime.common.Endpoint;
 import io.greptime.common.util.Ensures;
-import io.greptime.common.util.Strings;
 import io.greptime.limit.LimitedPolicy;
 import io.greptime.models.AuthInfo;
 import io.greptime.rpc.RpcOptions;
@@ -213,7 +212,13 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         }
 
         /**
-         * Set write limited policy.
+         * Write flow limit: the policy to use when the write flow limit is exceeded.
+         * The options:
+         *  - `LimitedPolicy.DiscardPolicy`: discard the data if the limiter is full.
+         *  - `LimitedPolicy.AbortPolicy`: abort if the limiter is full.
+         *  - `LimitedPolicy.BlockingPolicy`: blocks if the limiter is full.
+         *  - `LimitedPolicy.AbortOnBlockingTimeoutPolicy`: blocks the specified time if the limiter is full.
+         * The default is `LimitedPolicy.AbortOnBlockingTimeoutPolicy`
          *
          * @param writeLimitedPolicy write limited policy
          * @return this builder
@@ -224,7 +229,10 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         }
 
         /**
-         * The default rate limit for stream writer.
+         * The default rate limit for `StreamWriter`. It only takes effect when we do not specify the
+         * `maxPointsPerSecond` when creating a `StreamWriter`.
+         * The default is 10 * 65536
+         *
          * @param defaultStreamMaxWritePointsPerSecond default max write points per second
          * @return this builder
          */
@@ -235,7 +243,7 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
 
         /**
          * Refresh frequency of route tables. The background refreshes all route tables
-         * periodically. By default, all route tables are refreshed every 30 seconds.
+         * periodically. By default, By default, the route tables will not be refreshed.
          *
          * @param routeTableRefreshPeriodSeconds refresh period for route tables cache
          * @return this builder
@@ -246,7 +254,8 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         }
 
         /**
-         * Sets authentication information.
+         * Sets authentication information. If the DB is not required to authenticate,
+         * we can ignore this.
          *
          * @param authInfo the authentication information
          * @return this builder
@@ -257,7 +266,9 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         }
 
         /**
-         * Sets the request router.
+         * Sets the request router, The internal default implementation works well.
+         * You don't need to set it unless you have special requirements.
+         *
          * @param router the request router
          * @return this builder
          */
