@@ -42,7 +42,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -70,7 +69,6 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
     private GreptimeOptions opts;
     private RouterClient routerClient;
     private WriteClient writeClient;
-    private Executor asyncPool;
 
     /**
      * Returns all instances of {@link GreptimeDB}.
@@ -100,10 +98,7 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
         this.opts = GreptimeOptions.checkSelf(opts).copy();
 
         this.routerClient = makeRouteClient(opts);
-        if (this.asyncPool != null) {
-            this.asyncPool = new MetricExecutor(this.asyncPool, "async_pool.time");
-        }
-        this.writeClient = makeWriteClient(opts, this.routerClient, this.asyncPool);
+        this.writeClient = makeWriteClient(opts, this.routerClient);
 
         INSTANCES.put(this.id, this);
 
@@ -184,8 +179,10 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
                 .println(VERSION) //
                 .print("endpoints=") //
                 .println(this.opts.getEndpoints()) //
-                .print("userAsyncPool=") //
-                .println(this.opts.getAsyncPool());
+                .print("database=") //
+                .println(this.opts.getDatabase()) //
+                .print("rpcOptions=") //
+                .println(this.opts.getRpcOptions());
 
         if (this.routerClient != null) {
             out.println("");
@@ -208,7 +205,6 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
                 ", opts=" + opts + //
                 ", routerClient=" + routerClient + //
                 ", writeClient=" + writeClient + //
-                ", asyncPool=" + asyncPool + //
                 '}';
     }
 
@@ -222,7 +218,7 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
         RpcOptions rpcOpts = opts.getRpcOptions();
         RpcClient rpcClient = RpcFactoryProvider.getRpcFactory().createRpcClient();
         if (!rpcClient.init(rpcOpts)) {
-            throw new IllegalStateException("Fail to start RPC client");
+            throw new IllegalStateException("Start RPC client failed");
         }
         rpcClient.registerConnectionObserver(new RpcConnectionObserver());
         return rpcClient;
@@ -233,21 +229,17 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
         routerOpts.setRpcClient(makeRpcClient(opts));
         RouterClient routerClient = new RouterClient();
         if (!routerClient.init(routerOpts)) {
-            throw new IllegalStateException("Fail to start router client");
+            throw new IllegalStateException("Start router client failed");
         }
         return routerClient;
     }
 
-    private static WriteClient makeWriteClient(GreptimeOptions opts, RouterClient routerClient, Executor asyncPool) {
+    private static WriteClient makeWriteClient(GreptimeOptions opts, RouterClient routerClient) {
         WriteOptions writeOpts = opts.getWriteOptions();
         writeOpts.setRouterClient(routerClient);
-        writeOpts.setAsyncPool(asyncPool);
         WriteClient writeClient = new WriteClient();
-        if (opts.getAuthInfo() != null) {
-            writeOpts.setAuthInfo(opts.getAuthInfo());
-        }
         if (!writeClient.init(writeOpts)) {
-            throw new IllegalStateException("Fail to start write client");
+            throw new IllegalStateException("Start write client failed");
         }
         return writeClient;
     }

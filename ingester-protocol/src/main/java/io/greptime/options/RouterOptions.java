@@ -15,6 +15,7 @@
  */
 package io.greptime.options;
 
+import io.greptime.Router;
 import io.greptime.common.Copiable;
 import io.greptime.common.Endpoint;
 import io.greptime.rpc.RpcClient;
@@ -34,6 +35,7 @@ public class RouterOptions implements Copiable<RouterOptions> {
     // all route tables periodically. If the value is less than or
     // equal to 0, the route tables will not be refreshed.
     private long refreshPeriodSeconds = -1;
+    private Router<Void, Endpoint> router;
 
     public RpcClient getRpcClient() {
         return rpcClient;
@@ -59,12 +61,21 @@ public class RouterOptions implements Copiable<RouterOptions> {
         this.refreshPeriodSeconds = refreshPeriodSeconds;
     }
 
+    public Router<Void, Endpoint> getRouter() {
+        return router;
+    }
+
+    public void setRouter(Router<Void, Endpoint> router) {
+        this.router = router;
+    }
+
     @Override
     public RouterOptions copy() {
         RouterOptions opts = new RouterOptions();
         opts.rpcClient = rpcClient;
         opts.endpoints = this.endpoints;
         opts.refreshPeriodSeconds = this.refreshPeriodSeconds;
+        opts.router = this.router;
         return opts;
     }
 

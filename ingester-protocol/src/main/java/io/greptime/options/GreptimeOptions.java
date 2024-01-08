@@ -15,6 +15,7 @@
  */
 package io.greptime.options;
 
+import io.greptime.Router;
 import io.greptime.common.Copiable;
 import io.greptime.common.Endpoint;
 import io.greptime.common.util.Ensures;
@@ -35,12 +36,10 @@ import java.util.stream.Collectors;
  */
 public class GreptimeOptions implements Copiable<GreptimeOptions> {
     private List<Endpoint> endpoints;
-    private Executor asyncPool;
     private RpcOptions rpcOptions;
     private RouterOptions routerOptions;
     private WriteOptions writeOptions;
     private String database;
-    private AuthInfo authInfo;
 
     public List<Endpoint> getEndpoints() {
         return endpoints;
@@ -48,14 +47,6 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
 
     public void setEndpoints(List<Endpoint> endpoints) {
         this.endpoints = endpoints;
-    }
-
-    public Executor getAsyncPool() {
-        return asyncPool;
-    }
-
-    public void setAsyncPool(Executor asyncPool) {
-        this.asyncPool = asyncPool;
     }
 
     public RpcOptions getRpcOptions() {
@@ -90,21 +81,11 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         this.database = database;
     }
 
-    public AuthInfo getAuthInfo() {
-        return authInfo;
-    }
-
-    public void setAuthInfo(AuthInfo authInfo) {
-        this.authInfo = authInfo;
-    }
-
     @Override
     public GreptimeOptions copy() {
         GreptimeOptions opts = new GreptimeOptions();
         opts.endpoints = new ArrayList<>(this.endpoints);
-        opts.asyncPool = this.asyncPool;
         opts.database = this.database;
-        opts.authInfo = this.authInfo;
         if (this.rpcOptions != null) {
             opts.rpcOptions = this.rpcOptions.copy();
         }
@@ -121,12 +102,10 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
     public String toString() {
         return "GreptimeOptions{" + //
                 "endpoints=" + endpoints + //
-                ", asyncPool=" + asyncPool + //
                 ", rpcOptions=" + rpcOptions + //
                 ", routerOptions=" + routerOptions + //
                 ", writeOptions=" + writeOptions + //
                 ", database='" + database + '\'' + //
-                ", authInfo=" + authInfo + //
                 '}';
     }
 
@@ -174,6 +153,8 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         private long routeTableRefreshPeriodSeconds = -1;
         // Authentication information
         private AuthInfo authInfo;
+        // The request router
+        private Router<Void, Endpoint> router;
 
         public Builder(List<Endpoint> endpoints, String database) {
             this.endpoints.addAll(endpoints);
@@ -274,6 +255,16 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         }
 
         /**
+         * Sets the request router.
+         * @param router the request router
+         * @return this builder
+         */
+        public Builder router(Router<Void, Endpoint> router) {
+            this.router = router;
+            return this;
+        }
+
+        /**
          * A good start, happy coding.
          *
          * @return nice things
@@ -281,23 +272,22 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         public GreptimeOptions build() {
             GreptimeOptions opts = new GreptimeOptions();
             opts.setEndpoints(this.endpoints);
-            opts.setAsyncPool(this.asyncPool);
             opts.setRpcOptions(this.rpcOptions);
             opts.setDatabase(this.database);
-            opts.setAuthInfo(this.authInfo);
-            opts.setRouterOptions(createRouterOptions());
-            opts.setWriteOptions(createWriteOptions());
+            opts.setRouterOptions(routerOptions());
+            opts.setWriteOptions(writeOptions());
             return GreptimeOptions.checkSelf(opts);
         }
 
-        private RouterOptions createRouterOptions() {
+        private RouterOptions routerOptions() {
             RouterOptions routerOpts = new RouterOptions();
             routerOpts.setEndpoints(this.endpoints);
+            routerOpts.setRouter(this.router);
             routerOpts.setRefreshPeriodSeconds(this.routeTableRefreshPeriodSeconds);
             return routerOpts;
         }
 
-        private WriteOptions createWriteOptions() {
+        private WriteOptions writeOptions() {
             WriteOptions writeOpts = new WriteOptions();
             writeOpts.setDatabase(this.database);
             writeOpts.setAuthInfo(this.authInfo);

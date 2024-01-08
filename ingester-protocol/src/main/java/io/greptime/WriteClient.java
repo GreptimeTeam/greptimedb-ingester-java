@@ -24,6 +24,7 @@ import io.greptime.common.Keys;
 import io.greptime.common.Lifecycle;
 import io.greptime.common.util.Clock;
 import io.greptime.common.util.Ensures;
+import io.greptime.common.util.MetricExecutor;
 import io.greptime.common.util.MetricsUtil;
 import io.greptime.common.util.SerializingExecutor;
 import io.greptime.errors.LimitedException;
@@ -69,6 +70,7 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
         this.routerClient = this.opts.getRouterClient();
         Executor pool = this.opts.getAsyncPool();
         this.asyncPool = pool != null ? pool : new SerializingExecutor("write_client");
+        this.asyncPool = new MetricExecutor(this.asyncPool, "async_write_pool.time");
         this.writeLimiter = new DefaultWriteLimiter(this.opts.getMaxInFlightWriteRows(), this.opts.getLimitedPolicy());
         return true;
     }

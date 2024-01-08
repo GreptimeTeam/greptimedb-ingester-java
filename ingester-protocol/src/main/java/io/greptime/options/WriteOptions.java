@@ -118,9 +118,9 @@ public class WriteOptions implements Copiable<WriteOptions> {
 
     @Override
     public String toString() {
+        // Do not print auto info
         return "WriteOptions{" + //
                 "database='" + database + '\'' + //
-                ", authInfo=" + authInfo + //
                 ", routerClient=" + routerClient + //
                 ", asyncPool=" + asyncPool + //
                 ", maxRetries=" + maxRetries + //

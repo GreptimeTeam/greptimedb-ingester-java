@@ -15,6 +15,7 @@
  */
 package io.greptime;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -22,7 +23,7 @@ import java.util.concurrent.CompletableFuture;
  *
  * @author jiachun.fjc
  */
-public interface Router<Req, Resp> {
+public interface Router<R, E> {
 
     /**
      * For a given request return the routing decision for the call.
@@ -30,5 +31,20 @@ public interface Router<Req, Resp> {
      * @param request route request
      * @return a endpoint for the call
      */
-    CompletableFuture<Resp> routeFor(Req request);
+    CompletableFuture<E> routeFor(R request);
+
+    /**
+     * Refresh the routing table from remote server.
+     * @return a future that will be completed when the refresh is done
+     */
+    CompletableFuture<Boolean> refresh();
+
+    /**
+     * Refresh the routing table.
+     * We need to get all the endpoints, and this method will overwrite all
+     * current endpoints.
+     *
+     * @param endpoints all new endpoints
+     */
+    void onRefresh(List<E> endpoints);
 }
