@@ -33,7 +33,7 @@ public class GreptimeOptionsTest {
 
     @Test
     public void testAllOptions() {
-        String database = "public";
+        String database = "greptime.public";
         String[] endpoints = {"127.0.0.1:4001"};
         Executor asyncPool = command -> System.out.println("asyncPool");
         RpcOptions rpcOptions = RpcOptions.newDefault();

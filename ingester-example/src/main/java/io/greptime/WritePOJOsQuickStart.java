@@ -37,8 +37,8 @@ public class WritePOJOsQuickStart {
     private static final Logger LOG = LoggerFactory.getLogger(WritePOJOsQuickStart.class);
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
-        // GreptimeDB has a default database named "public", we can use it as the test database
-        String database = "public";
+        // GreptimeDB has a default database named "greptime.public", we can use it as the test database
+        String database = "greptime.public";
         // By default, GreptimeDB listens on port 4001 using the gRPC protocol.
         // We can provide multiple endpoints that point to the same GreptimeDB cluster.
         // The client will make calls to these endpoints based on a load balancing strategy.

@@ -19,6 +19,7 @@ import io.greptime.Router;
 import io.greptime.common.Copiable;
 import io.greptime.common.Endpoint;
 import io.greptime.common.util.Ensures;
+import io.greptime.common.util.Strings;
 import io.greptime.limit.LimitedPolicy;
 import io.greptime.models.AuthInfo;
 import io.greptime.rpc.RpcOptions;
@@ -113,6 +114,8 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         Ensures.ensureNonNull(opts, "null `opts (GreptimeOptions)`)`");
         Ensures.ensureNonNull(opts.getEndpoints(), "null `endpoints`");
         Ensures.ensure(!opts.getEndpoints().isEmpty(), "empty `endpoints`");
+        Ensures.ensure(Strings.isNotBlank(opts.getDatabase()),
+                "`database` can not be empty, we can use the default database of GreptimeDB: `greptime.public`");
         Ensures.ensureNonNull(opts.getRpcOptions(), "null `rpcOptions`");
         Ensures.ensureNonNull(opts.getRouterOptions(), "null `routerOptions`");
         Ensures.ensureNonNull(opts.getWriteOptions(), "null `writeOptions`");
