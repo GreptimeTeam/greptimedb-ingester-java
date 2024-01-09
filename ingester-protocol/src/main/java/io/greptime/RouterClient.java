@@ -49,7 +49,7 @@ public class RouterClient implements Lifecycle<RouterOptions>, Display {
     private ScheduledExecutorService refresher;
     private RouterOptions opts;
     private RpcClient rpcClient;
-    private InnerRouter inner;
+    private Router<Void, Endpoint> router;
 
     @Override
     public boolean init(RouterOptions opts) {
@@ -58,14 +58,20 @@ public class RouterClient implements Lifecycle<RouterOptions>, Display {
 
         List<Endpoint> endpoints = Ensures.ensureNonNull(this.opts.getEndpoints(), "null `endpoints`");
 
-        this.inner = new InnerRouter();
-        this.inner.refreshLocal(endpoints);
+        this.router = new DefaultRouter();
+        this.router.onRefresh(endpoints);
 
         long refreshPeriod = this.opts.getRefreshPeriodSeconds();
         if (refreshPeriod > 0) {
             this.refresher = REFRESHER_POOL.getObject();
             this.refresher.scheduleWithFixedDelay(
-                    () -> this.inner.refreshFromRemote(),
+                    () -> this.router.refresh().whenComplete((r, e) -> {
+                        if (e != null) {
+                            LOG.error("Router cache refresh failed.", e);
+                        } else {
+                            LOG.debug("Router cache refresh {}.", r ? "success" : "failed");
+                        }
+                    }),
                     Util.randomInitialDelay(180), refreshPeriod, TimeUnit.SECONDS);
 
             LOG.info("Router cache refresher started.");
@@ -90,7 +96,7 @@ public class RouterClient implements Lifecycle<RouterOptions>, Display {
      * Get the current routing table.
      */
     public CompletableFuture<Endpoint> route() {
-        return this.inner.routeFor(null);
+        return this.router.routeFor(null);
     }
 
     /**
@@ -211,17 +217,9 @@ public class RouterClient implements Lifecycle<RouterOptions>, Display {
      * the client send request using a rr or random policy, and frontend server needs to
      * be able to return the member list for the purpose of frontend server members change.
      */
-    private static class InnerRouter implements Router<Void, Endpoint> {
+    private static class DefaultRouter implements Router<Void, Endpoint> {
 
         private final AtomicReference<List<Endpoint>> endpointsRef = new AtomicReference<>();
-
-        public void refreshFromRemote() {
-            // TODO
-        }
-
-        void refreshLocal(List<Endpoint> input) {
-            this.endpointsRef.set(input);
-        }
 
         @Override
         public CompletableFuture<Endpoint> routeFor(Void request) {
@@ -229,6 +227,17 @@ public class RouterClient implements Lifecycle<RouterOptions>, Display {
             ThreadLocalRandom random = ThreadLocalRandom.current();
             int i = random.nextInt(0, endpoints.size());
             return Util.completedCf(endpoints.get(i));
+        }
+
+        @Override
+        public CompletableFuture<Boolean> refresh() {
+            // always return true
+            return Util.completedCf(true);
+        }
+
+        @Override
+        public void onRefresh(List<Endpoint> endpoints) {
+            this.endpointsRef.set(endpoints);
         }
     }
 }

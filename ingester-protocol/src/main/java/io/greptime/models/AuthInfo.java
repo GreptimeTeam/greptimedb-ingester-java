@@ -25,8 +25,8 @@ import io.greptime.v1.Common;
  */
 public class AuthInfo implements Into<Common.AuthHeader> {
 
-    private String username;
-    private String password;
+    private final String username;
+    private final String password;
 
     /**
      * Create AuthInfo from username/password.
@@ -36,27 +36,15 @@ public class AuthInfo implements Into<Common.AuthHeader> {
         this.password = password;
     }
 
-    public String getUsername() {
-        return this.username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return this.password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
+    public static AuthInfo noAuthorization() {
+        return null;
     }
 
     @Override
     public Common.AuthHeader into() {
         Common.Basic basic = Common.Basic.newBuilder() //
-                .setUsername(getUsername()) //
-                .setPassword(getPassword()) //
+                .setUsername(this.username) //
+                .setPassword(this.password) //
                 .build();
         return Common.AuthHeader.newBuilder() //
                 .setBasic(basic) //

@@ -24,6 +24,7 @@ import io.greptime.common.Keys;
 import io.greptime.common.Lifecycle;
 import io.greptime.common.util.Clock;
 import io.greptime.common.util.Ensures;
+import io.greptime.common.util.MetricExecutor;
 import io.greptime.common.util.MetricsUtil;
 import io.greptime.common.util.SerializingExecutor;
 import io.greptime.errors.LimitedException;
@@ -69,6 +70,7 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
         this.routerClient = this.opts.getRouterClient();
         Executor pool = this.opts.getAsyncPool();
         this.asyncPool = pool != null ? pool : new SerializingExecutor("write_client");
+        this.asyncPool = new MetricExecutor(this.asyncPool, "async_write_pool.time");
         this.writeLimiter = new DefaultWriteLimiter(this.opts.getMaxInFlightWriteRows(), this.opts.getLimitedPolicy());
         return true;
     }
@@ -338,11 +340,14 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
         public StreamWriter<Table, WriteOk> write(Table table, WriteOp writeOp) {
             Ensures.ensureNonNull(table, "null `table`");
 
+            WriteTables writeTables = new WriteTables(table, writeOp);
+
             if (this.rateLimiter != null) {
                 double timeSpent = this.rateLimiter.acquire(table.pointCount());
                 InnerMetricHelper.writeStreamLimiterTimeSpent().update((long) timeSpent);
             }
-            this.observer.onNext(new WriteTables(table, writeOp));
+
+            this.observer.onNext(writeTables);
             return this;
         }
     }

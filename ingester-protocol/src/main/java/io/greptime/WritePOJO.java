@@ -20,6 +20,7 @@ import io.greptime.models.Result;
 import io.greptime.models.WriteOk;
 import io.greptime.rpc.Context;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -30,6 +31,12 @@ import java.util.concurrent.CompletableFuture;
  * @author jiachun.fjc
  */
 public interface WritePOJO {
+    /**
+     * @see #writePOJOs(Collection, WriteOp, Context)
+     */
+    default CompletableFuture<Result<WriteOk, Err>> writePOJOs(List<?>... pojos) {
+        return writePOJOs(Arrays.asList(pojos));
+    }
     /**
      * @see #writePOJOs(Collection, WriteOp, Context)
      */

@@ -21,6 +21,7 @@ import io.greptime.models.Table;
 import io.greptime.models.WriteOk;
 import io.greptime.rpc.Context;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
@@ -30,6 +31,12 @@ import java.util.concurrent.CompletableFuture;
  * @author jiachun.fjc
  */
 public interface Write {
+    /**
+     * @see #write(Collection, WriteOp, Context)
+     */
+    default CompletableFuture<Result<WriteOk, Err>> write(Table... tables) {
+        return write(Arrays.asList(tables));
+    }
 
     /**
      * @see #write(Collection, WriteOp, Context)

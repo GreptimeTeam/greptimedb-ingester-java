@@ -16,12 +16,9 @@
 package io.greptime;
 
 import io.greptime.models.WriteOk;
-import io.greptime.options.GreptimeOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -34,52 +31,35 @@ public class StreamWritePOJOsQuickStart {
     private static final Logger LOG = LoggerFactory.getLogger(StreamWritePOJOsQuickStart.class);
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
-        // GreptimeDB has a default database named "public", we can use it as the test database
-        String database = "public";
-        // By default, GreptimeDB listens on port 4001 using the gRPC protocol.
-        // We can provide multiple endpoints that point to the same GreptimeDB cluster.
-        // The client will make calls to these endpoints based on a load balancing strategy.
-        String[] endpoints = {"127.0.0.1:4001"};
-        GreptimeOptions opts = GreptimeOptions.newBuilder(endpoints, database) //
-                .build();
+        GreptimeDB greptimeDB = TestConnector.connectToDefaultDB();
 
-        GreptimeDB greptimeDB = GreptimeDB.create(opts);
-
-        List<MyMetric1> myMetric1s = new ArrayList<>();
+        List<Cpu> cpus = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
-            MyMetric1 m = new MyMetric1();
-            m.setTag1("tag_value_1_" + i);
-            m.setTag2("tag_value_2_" + i);
-            m.setTag3("tag_value_3_" + i);
-            m.setTs(System.currentTimeMillis());
-            m.setField1("field_value_1_" + i);
-            m.setField2(i);
-            m.setField3(new BigDecimal(i));
-            m.setField4(i);
-
-            myMetric1s.add(m);
+            Cpu c = new Cpu();
+            c.setHost("127.0.0." + i);
+            c.setTs(System.currentTimeMillis());
+            c.setCpuUser(i + 0.1);
+            c.setCpuSys(i + 0.12);
+            cpus.add(c);
         }
 
-        List<MyMetric2> myMetric2s = new ArrayList<>();
+        List<Memory> memories = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
-            MyMetric2 m = new MyMetric2();
-            m.setTag1("tag_value_1_" + i);
-            m.setTag2("tag_value_2_" + i);
+            Memory m = new Memory();
+            m.setHost("127.0.0." + i);
             m.setTs(System.currentTimeMillis() / 1000);
-            m.setField1(Calendar.getInstance().getTime());
-            m.setField2(i);
-
-            myMetric2s.add(m);
+            m.setMemUsage(i + 0.2);
+            memories.add(m);
         }
 
         StreamWriter<List<?>, WriteOk> writer = greptimeDB.streamWriterPOJOs();
 
         // write data into stream
-        writer.write(myMetric1s);
-        writer.write(myMetric2s);
+        writer.write(cpus);
+        writer.write(memories);
 
         // delete the first 5 rows
-        writer.write(myMetric1s.subList(0, 5), WriteOp.Delete);
+        writer.write(cpus.subList(0, 5), WriteOp.Delete);
 
         // complete the stream
         CompletableFuture<WriteOk> future = writer.completed();
@@ -87,5 +67,8 @@ public class StreamWritePOJOsQuickStart {
         WriteOk result = future.get();
 
         LOG.info("Write result: {}", result);
+
+        // Shutdown the client when application exits.
+        greptimeDB.shutdownGracefully();
     }
 }

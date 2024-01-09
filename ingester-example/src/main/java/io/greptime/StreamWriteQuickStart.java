@@ -20,12 +20,8 @@ import io.greptime.models.SemanticType;
 import io.greptime.models.Table;
 import io.greptime.models.TableSchema;
 import io.greptime.models.WriteOk;
-import io.greptime.options.GreptimeOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.math.BigDecimal;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -37,70 +33,47 @@ public class StreamWriteQuickStart {
     private static final Logger LOG = LoggerFactory.getLogger(StreamWriteQuickStart.class);
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
-        // GreptimeDB has a default database named "public", we can use it as the test database
-        String database = "public";
-        // By default, GreptimeDB listens on port 4001 using the gRPC protocol.
-        // We can provide multiple endpoints that point to the same GreptimeDB cluster.
-        // The client will make calls to these endpoints based on a load balancing strategy.
-        String[] endpoints = {"127.0.0.1:4001"};
-        GreptimeOptions opts = GreptimeOptions.newBuilder(endpoints, database) //
-                .build();
+        GreptimeDB greptimeDB = TestConnector.connectToDefaultDB();
 
-        GreptimeDB greptimeDB = GreptimeDB.create(opts);
-
-        TableSchema myMetric3Schema = TableSchema.newBuilder("my_metric3") //
-                .addColumn("tag1", SemanticType.Tag, DataType.String) //
-                .addColumn("tag2", SemanticType.Tag, DataType.String) //
-                .addColumn("tag3", SemanticType.Tag, DataType.String) //
+        TableSchema cpuMetricSchema = TableSchema.newBuilder("cpu_metric") //
+                .addColumn("host", SemanticType.Tag, DataType.String) //
                 .addColumn("ts", SemanticType.Timestamp, DataType.TimestampMillisecond) //
-                .addColumn("field1", SemanticType.Field, DataType.String) //
-                .addColumn("field2", SemanticType.Field, DataType.Float64) //
-                .addColumn("field3", SemanticType.Field, DataType.Decimal128) //
-                .addColumn("field4", SemanticType.Field, DataType.Int32) //
+                .addColumn("cpu_user", SemanticType.Field, DataType.Float64) //
+                .addColumn("cpu_sys", SemanticType.Field, DataType.Float64) //
                 .build();
 
-        TableSchema myMetric4Schema = TableSchema.newBuilder("my_metric4") //
-                .addColumn("tag1", SemanticType.Tag, DataType.String) //
-                .addColumn("tag2", SemanticType.Tag, DataType.String) //
-                .addColumn("ts", SemanticType.Timestamp, DataType.TimestampSecond) //
-                .addColumn("field1", SemanticType.Field, DataType.Date) //
-                .addColumn("field2", SemanticType.Field, DataType.Float64) //
+        TableSchema memMetricSchema = TableSchema.newBuilder("mem_metric") //
+                .addColumn("host", SemanticType.Tag, DataType.String) //
+                .addColumn("ts", SemanticType.Timestamp, DataType.TimestampMillisecond) //
+                .addColumn("mem_usage", SemanticType.Field, DataType.Float64) //
                 .build();
 
-        Table myMetric3 = Table.from(myMetric3Schema);
-        Table myMetric4 = Table.from(myMetric4Schema);
+        Table cpuMetric = Table.from(cpuMetricSchema);
+        Table memMetric = Table.from(memMetricSchema);
 
         for (int i = 0; i < 10; i++) {
-            String tag1v = "tag_value_1_" + i;
-            String tag2v = "tag_value_2_" + i;
-            String tag3v = "tag_value_3_" + i;
+            String host = "127.0.0." + i;
             long ts = System.currentTimeMillis();
-            String field1 = "field_value_1" + i;
-            double field2 = i + 0.1;
-            BigDecimal field3 = new BigDecimal(i);
-            int field4 = i + 1;
-
-            myMetric3.addRow(tag1v, tag2v, tag3v, ts, field1, field2, field3, field4);
+            double cpuUser = i + 0.1;
+            double cpuSys = i + 0.12;
+            cpuMetric.addRow(host, ts, cpuUser, cpuSys);
         }
 
         for (int i = 0; i < 10; i++) {
-            String tag1v = "tag_value_1_" + i;
-            String tag2v = "tag_value_2_" + i;
-            long ts = System.currentTimeMillis() / 1000;
-            Date field1 = Calendar.getInstance().getTime();
-            double field2 = i + 0.1;
-
-            myMetric4.addRow(tag1v, tag2v, ts, field1, field2);
+            String host = "127.0.0." + i;
+            long ts = System.currentTimeMillis();
+            double memUsage = i + 0.2;
+            memMetric.addRow(host, ts, memUsage);
         }
 
         StreamWriter<Table, WriteOk> writer = greptimeDB.streamWriter();
 
         // write data into stream
-        writer.write(myMetric3);
-        writer.write(myMetric4);
+        writer.write(cpuMetric);
+        writer.write(memMetric);
 
         // delete the first 5 rows
-        writer.write(myMetric3.subRange(0, 5), WriteOp.Delete);
+        writer.write(cpuMetric.subRange(0, 5), WriteOp.Delete);
 
         // complete the stream
         CompletableFuture<WriteOk> future = writer.completed();
@@ -108,5 +81,8 @@ public class StreamWriteQuickStart {
         WriteOk result = future.get();
 
         LOG.info("Write result: {}", result);
+
+        // Shutdown the client when application exits.
+        greptimeDB.shutdownGracefully();
     }
 }
