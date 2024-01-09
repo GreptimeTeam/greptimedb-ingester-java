@@ -42,7 +42,7 @@ public class TestConnector {
                 // set it, there will be a default implementation, which you can reconfigure
                 // if the default implementation is not satisfied.
                 // The default implementation is: `SerializingExecutor`
-                .asyncPool(new SerializingExecutor("asyncPool"))
+                .asyncPool(new SerializingExecutor("async_pool"))
                 // Optional, the default value is fine.
                 //
                 // Sets the RPC options, in general, the default configuration is fine.
