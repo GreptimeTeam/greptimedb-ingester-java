@@ -26,7 +26,7 @@ import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Write API: writes data in row format to the DB.
+ * Write API: writes data to the database.
  *
  * @author jiachun.fjc
  */
@@ -53,9 +53,9 @@ public interface Write {
     }
 
     /**
-     * Write multi tables multi tables data to database.
+     * Write multiple rows of data (which can belong to multiple tables) to the database at once.
      *
-     * @param tables rows with multi tables
+     * @param tables a collection of data to be written, classified by table
      * @param writeOp write operation(insert or delete)
      * @param ctx invoke context
      * @return write result
@@ -77,10 +77,12 @@ public interface Write {
     }
 
     /**
-     * Create a `Stream` to write `Table` data.
+     * Create a stream to continuously write data to the database, typically used in data import
+     * scenarios. After completion, the stream needs to be closed(Call StreamWriter#completed()),
+     * and the write result can be obtained from the database server.
      *
-     * @param maxPointsPerSecond The max number of points that can be written per second,
-     *                           exceeding which may cause blockage.
+     * @param maxPointsPerSecond the max number of points that can be written per second,
+     *                           exceeding which may cause blockage
      * @param ctx invoke context
      * @return a stream writer instance
      */
