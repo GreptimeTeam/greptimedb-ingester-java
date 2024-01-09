@@ -254,8 +254,8 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
         static final Histogram DELETE_ROWS_SUCCESS_NUM = MetricsUtil.histogram("delete_rows_success_num");
         static final Histogram INSERT_ROWS_FAILURE_NUM = MetricsUtil.histogram("insert_rows_failure_num");
         static final Histogram DELETE_ROWS_FAILURE_NUM = MetricsUtil.histogram("delete_rows_failure_num");
-        static final Histogram WRITE_STREAM_LIMITER_TIME_SPENT = MetricsUtil
-                .histogram("write_stream_limiter_time_spent");
+        static final Histogram WRITE_STREAM_LIMITER_ACQUIRE_WAIT_TIME = MetricsUtil
+                .histogram("write_stream_limiter_acquire_wait_time");
         static final Meter WRITE_FAILURE_NUM = MetricsUtil.meter("write_failure_num");
         static final Meter WRITE_QPS = MetricsUtil.meter("write_qps");
 
@@ -281,8 +281,8 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
             }
         }
 
-        static Histogram writeStreamLimiterTimeSpent() {
-            return WRITE_STREAM_LIMITER_TIME_SPENT;
+        static Histogram writeStreamLimiterAcquireWaitTime() {
+            return WRITE_STREAM_LIMITER_ACQUIRE_WAIT_TIME;
         }
 
         static Meter writeFailureNum() {
@@ -344,7 +344,7 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
 
             if (this.rateLimiter != null) {
                 double timeSpent = this.rateLimiter.acquire(table.pointCount());
-                InnerMetricHelper.writeStreamLimiterTimeSpent().update((long) timeSpent);
+                InnerMetricHelper.writeStreamLimiterAcquireWaitTime().update((long) timeSpent);
             }
 
             this.observer.onNext(writeTables);

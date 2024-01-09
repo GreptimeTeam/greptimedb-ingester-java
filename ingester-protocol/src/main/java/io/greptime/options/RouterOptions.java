@@ -82,9 +82,9 @@ public class RouterOptions implements Copiable<RouterOptions> {
     @Override
     public String toString() {
         return "RouterOptions{" + //
-                "rpcClient=" + rpcClient + //
-                ", endpoints=" + endpoints + //
+                "endpoints=" + endpoints + //
                 ", refreshPeriodSeconds=" + refreshPeriodSeconds + //
+                ", router=" + router + //
                 '}';
     }
 }
