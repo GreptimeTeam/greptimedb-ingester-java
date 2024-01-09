@@ -168,7 +168,8 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
          * set it, there will be a default implementation, which you can reconfigure
          * if the default implementation is not satisfied.
          * <p>
-         * Note: We do not close it to free resources, as we view it as shared.
+         * Note: We do not close it to free resources(if it needs to be closed), as we
+         * view it as shared.
          *
          * @param asyncPool async thread pool
          * @return this builder
@@ -267,7 +268,7 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         }
 
         /**
-         * Sets the request router, The internal default implementation works well.
+         * Sets the request router. The internal default implementation works well.
          * You don't need to set it unless you have special requirements.
          *
          * @param router the request router
