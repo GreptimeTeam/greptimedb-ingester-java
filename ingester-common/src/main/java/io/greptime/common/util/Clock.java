@@ -29,7 +29,7 @@ public abstract class Clock {
      */
     public abstract long getTick();
 
-    public long duration(final long startTick) {
+    public long duration(long startTick) {
         return getTick() - startTick;
     }
 
