@@ -2,7 +2,7 @@
 
 [![build](https://github.com/GreptimeTeam/greptimedb-ingester-java/actions/workflows/build.yml/badge.svg)](https://github.com/GreptimeTeam/greptimedb-ingester-java/actions/workflows/build.yml)
 ![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)
-[![Maven Central](https://img.shields.io/maven-central/v/io.greptime/greptimedb-ingester.svg?label=maven%20central)](https://central.sonatype.com/search?q=io.greptime)
+[![Maven Central](https://img.shields.io/maven-central/v/io.greptime/greptimedb-ingester.svg?label=maven%20central)](https://central.sonatype.com/search?q=io.greptime&name=ingester-all)
 
 A Java ingester for GreptimeDB, which is compatible with GreptimeDB protocol and lightweight.
 
