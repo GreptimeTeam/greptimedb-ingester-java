@@ -217,7 +217,8 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
          *  - `LimitedPolicy.DiscardPolicy`: discard the data if the limiter is full.
          *  - `LimitedPolicy.AbortPolicy`: abort if the limiter is full.
          *  - `LimitedPolicy.BlockingPolicy`: blocks if the limiter is full.
-         *  - `LimitedPolicy.AbortOnBlockingTimeoutPolicy`: blocks the specified time if the limiter is full.
+         *  - `LimitedPolicy.AbortOnBlockingTimeoutPolicy`: blocks the specified time if
+         *  the limiter is full, abort if timeout.
          * The default is `LimitedPolicy.AbortOnBlockingTimeoutPolicy`
          *
          * @param writeLimitedPolicy write limited policy
@@ -229,8 +230,8 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         }
 
         /**
-         * The default rate limit for `StreamWriter`. It only takes effect when we do not specify the
-         * `maxPointsPerSecond` when creating a `StreamWriter`.
+         * The default rate limit value(points per second) for `StreamWriter`. It only takes
+         * effect when we do not specify the `maxPointsPerSecond` when creating a `StreamWriter`.
          * The default is 10 * 65536
          *
          * @param defaultStreamMaxWritePointsPerSecond default max write points per second

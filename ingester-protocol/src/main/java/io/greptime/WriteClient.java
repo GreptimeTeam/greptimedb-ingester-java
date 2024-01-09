@@ -17,6 +17,7 @@ package io.greptime;
 
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
+import com.codahale.metrics.Timer;
 import com.google.common.util.concurrent.RateLimiter;
 import io.greptime.common.Display;
 import io.greptime.common.Endpoint;
@@ -49,6 +50,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Default Write API impl.
@@ -254,8 +256,8 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
         static final Histogram DELETE_ROWS_SUCCESS_NUM = MetricsUtil.histogram("delete_rows_success_num");
         static final Histogram INSERT_ROWS_FAILURE_NUM = MetricsUtil.histogram("insert_rows_failure_num");
         static final Histogram DELETE_ROWS_FAILURE_NUM = MetricsUtil.histogram("delete_rows_failure_num");
-        static final Histogram WRITE_STREAM_LIMITER_ACQUIRE_WAIT_TIME = MetricsUtil
-                .histogram("write_stream_limiter_acquire_wait_time");
+        static final Timer WRITE_STREAM_LIMITER_ACQUIRE_WAIT_TIME = MetricsUtil
+                .timer("write_stream_limiter_acquire_wait_time");
         static final Meter WRITE_FAILURE_NUM = MetricsUtil.meter("write_failure_num");
         static final Meter WRITE_QPS = MetricsUtil.meter("write_qps");
 
@@ -281,7 +283,7 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
             }
         }
 
-        static Histogram writeStreamLimiterAcquireWaitTime() {
+        static Timer writeStreamLimiterAcquireWaitTime() {
             return WRITE_STREAM_LIMITER_ACQUIRE_WAIT_TIME;
         }
 
@@ -340,14 +342,14 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
         public StreamWriter<Table, WriteOk> write(Table table, WriteOp writeOp) {
             Ensures.ensureNonNull(table, "null `table`");
 
-            WriteTables writeTables = new WriteTables(table, writeOp);
-
-            if (this.rateLimiter != null) {
-                double timeSpent = this.rateLimiter.acquire(table.pointCount());
-                InnerMetricHelper.writeStreamLimiterAcquireWaitTime().update((long) timeSpent);
+            int permits = table.pointCount();
+            if (this.rateLimiter != null && permits > 0) {
+                double millisToWait = this.rateLimiter.acquire(permits) * 1000;
+                InnerMetricHelper.writeStreamLimiterAcquireWaitTime()
+                        .update((long) millisToWait, TimeUnit.MILLISECONDS);
             }
 
-            this.observer.onNext(writeTables);
+            this.observer.onNext(new WriteTables(table, writeOp));
             return this;
         }
     }
