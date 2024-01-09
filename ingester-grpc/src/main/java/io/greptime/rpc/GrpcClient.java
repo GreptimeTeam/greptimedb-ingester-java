@@ -131,7 +131,7 @@ public class GrpcClient implements RpcClient {
         if (this.useSharedRpcPool) {
             this.asyncPool = SHARED_ASYNC_POOL.getObject();
         } else {
-            this.asyncPool = new DirectExecutor("rpc-direct-pool");
+            this.asyncPool = new DirectExecutor("rpc_direct_pool");
         }
 
         initInterceptors();
