@@ -77,8 +77,8 @@ public interface Write {
     }
 
     /**
-     * Create a stream to continuously write data to the database, typically used in data import
-     * scenarios. After completion, the stream needs to be closed(Call StreamWriter#completed()),
+     * Create a `Stream` to continuously write data to the database, typically used in data import
+     * scenarios. After completion, the stream needs to be closed(Call `StreamWriter#completed()`),
      * and the write result can be obtained from the database server.
      *
      * @param maxPointsPerSecond the max number of points that can be written per second,

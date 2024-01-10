@@ -76,10 +76,9 @@ public interface WritePOJO {
     }
 
     /**
-     * Create a stream to continuously write data to the database, typically used in data import
+     * Create a `Stream` to continuously write data to the database, typically used in data import
      * scenarios. After completion, the stream needs to be closed(Call `StreamWriter#completed()`),
      * and the write result can be obtained from the database server.
-     * Create a `Stream` to write POJO data.
      * <p>
      * It is important to note that each write operation can write a List of POJOs. However,
      * the POJO objects in the List must have the same type. If you need to write different types
