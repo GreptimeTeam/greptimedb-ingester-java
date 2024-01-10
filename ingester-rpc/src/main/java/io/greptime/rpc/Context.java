@@ -21,14 +21,13 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Invoke context.
+ * Invoke context, it can pass some additional information to the
+ * database server in the form of KV.
  *
  * @author jiachun.fjc
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked", "unused"})
 public class Context implements Copiable<Context> {
-
-    public static final String KEY_ENDPOINT = "Endpoint";
 
     private final Map<String, Object> ctx = new HashMap<>();
 
@@ -98,7 +97,6 @@ public class Context implements Copiable<Context> {
      * @return the value
      * @param <T> the type of the value
      */
-    @SuppressWarnings("unused")
     public <T> T getOrDefault(String key, T defaultValue) {
         synchronized (this) {
             return (T) this.ctx.getOrDefault(key, defaultValue);
@@ -108,7 +106,6 @@ public class Context implements Copiable<Context> {
     /**
      * Clears all key-value pairs from this {@link Context}.
      */
-    @SuppressWarnings("unused")
     public void clear() {
         synchronized (this) {
             this.ctx.clear();

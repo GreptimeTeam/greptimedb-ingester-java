@@ -101,6 +101,9 @@ public class Util {
         long high64Bits = unscaledValue.shiftRight(64).longValue();
         long low64Bits = unscaledValue.longValue();
 
-        return Common.Decimal128.newBuilder().setHi(high64Bits).setLo(low64Bits).build();
+        return Common.Decimal128.newBuilder() //
+                .setHi(high64Bits) //
+                .setLo(low64Bits) //
+                .build();
     }
 }

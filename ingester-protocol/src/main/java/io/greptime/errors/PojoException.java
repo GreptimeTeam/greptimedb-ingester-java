@@ -18,6 +18,7 @@ package io.greptime.errors;
 /**
  * @author jiachun.fjc
  */
+@SuppressWarnings("unused")
 public class PojoException extends RuntimeException {
 
     public PojoException() {}

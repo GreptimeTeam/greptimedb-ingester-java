@@ -15,6 +15,7 @@
  */
 package io.greptime.models;
 
+import io.greptime.TestUtil;
 import io.greptime.v1.Common;
 import org.junit.Assert;
 import org.junit.Test;
@@ -83,17 +84,7 @@ public class UtilTest {
             BigDecimal value = new BigDecimal(bigInt, scale);
             Common.Decimal128 result = Util.getDecimal128Value(dataTypeExtension, value);
 
-            long lo = result.getLo();
-            BigInteger loValue = BigInteger.valueOf(lo & Long.MAX_VALUE);
-            if (lo < 0) {
-                loValue = loValue.add(BigInteger.valueOf(1).shiftLeft(63));
-            }
-
-            BigInteger unscaledValue = BigInteger.valueOf(result.getHi());
-            unscaledValue = unscaledValue.shiftLeft(64);
-            unscaledValue = unscaledValue.add(loValue);
-
-            BigDecimal value2 = new BigDecimal(unscaledValue, scale);
+            BigDecimal value2 = TestUtil.getDecimal(result, scale);
 
             Assert.assertEquals(value, value2);
         }

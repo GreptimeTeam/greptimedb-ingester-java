@@ -40,8 +40,13 @@ public class LogThreadPoolExecutor extends ThreadPoolExecutor {
     private final int maximumPoolSize;
     private final String name;
 
-    public LogThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit,
-            BlockingQueue<Runnable> workQueue, ThreadFactory threadFactory, RejectedExecutionHandler handler,
+    public LogThreadPoolExecutor(int corePoolSize, //
+            int maximumPoolSize, //
+            long keepAliveTime, //
+            TimeUnit unit, //
+            BlockingQueue<Runnable> workQueue, //
+            ThreadFactory threadFactory, //
+            RejectedExecutionHandler handler, //
             String name) {
         super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, threadFactory, handler);
         this.corePoolSize = corePoolSize;

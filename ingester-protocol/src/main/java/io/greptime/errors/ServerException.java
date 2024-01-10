@@ -18,6 +18,7 @@ package io.greptime.errors;
 /**
  * @author jiachun.fjc
  */
+@SuppressWarnings("unused")
 public class ServerException extends RuntimeException {
 
     private static final long serialVersionUID = -1L;

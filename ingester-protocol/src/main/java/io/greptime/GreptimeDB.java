@@ -19,6 +19,7 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Meter;
 import io.greptime.common.Display;
 import io.greptime.common.Endpoint;
+import io.greptime.common.Keys;
 import io.greptime.common.Lifecycle;
 import io.greptime.common.signal.SignalHandlersLoader;
 import io.greptime.common.util.MetricsUtil;
@@ -40,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -55,11 +57,11 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
 
     private static final Logger LOG = LoggerFactory.getLogger(GreptimeDB.class);
 
+
     private static final Map<Integer, GreptimeDB> INSTANCES = new ConcurrentHashMap<>();
     private static final AtomicInteger ID = new AtomicInteger(0);
-    private static final String ID_KEY = "greptimedb.client.id";
-    private static final String VERSION_KEY = "greptimedb.client.version";
     private static final String VERSION = Util.clientVersion();
+    private static final String NODE_ID = UUID.randomUUID().toString();
 
     private final int id;
     private final AtomicBoolean started = new AtomicBoolean(false);
@@ -215,8 +217,9 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
 
     private Context attachCtx(Context ctx) {
         Context newCtx = ctx == null ? Context.newDefault() : ctx;
-        return newCtx.with(ID_KEY, this.id) //
-                .with(VERSION_KEY, VERSION);
+        return newCtx.with(Keys.VERSION_KEY, VERSION) //
+                .with(Keys.NODE_KEY, NODE_ID) //
+                .with(Keys.ID_KEY, this.id);
     }
 
     private static RpcClient makeRpcClient(GreptimeOptions opts) {
