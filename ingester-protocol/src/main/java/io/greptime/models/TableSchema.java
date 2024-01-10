@@ -19,8 +19,6 @@ import io.greptime.common.util.Ensures;
 import io.greptime.v1.Common;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Table schema for write.
@@ -28,8 +26,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author jiachun.fjc
  */
 public class TableSchema {
-
-    private static final Map<String, TableSchema> TABLE_SCHEMA_CACHE = new ConcurrentHashMap<>();
 
     private String tableName;
     private List<String> columnNames;
@@ -57,18 +53,6 @@ public class TableSchema {
 
     public List<Common.ColumnDataTypeExtension> getDataTypeExtensions() {
         return dataTypeExtensions;
-    }
-
-    public static TableSchema findSchema(String tableName) {
-        return TABLE_SCHEMA_CACHE.get(tableName);
-    }
-
-    public static TableSchema removeSchema(String tableName) {
-        return TABLE_SCHEMA_CACHE.remove(tableName);
-    }
-
-    public static void clearAllSchemas() {
-        TABLE_SCHEMA_CACHE.clear();
     }
 
     public static Builder newBuilder(String tableName) {
@@ -99,9 +83,15 @@ public class TableSchema {
             this.columnNames.add(name);
             this.semanticTypes.add(semanticType.toProtoValue());
             this.dataTypes.add(dataType.toProtoValue());
-            this.dataTypeExtensions.add(decimalTypeExtension == null ? Common.ColumnDataTypeExtension
-                    .getDefaultInstance() : Common.ColumnDataTypeExtension.newBuilder()
-                    .setDecimalType(decimalTypeExtension.into()).build());
+            if (decimalTypeExtension == null) {
+                this.dataTypeExtensions.add(Common.ColumnDataTypeExtension.getDefaultInstance());
+            } else {
+                Ensures.ensure(dataType == DataType.Decimal128, "Only decimal type can have decimal type extension");
+                Common.ColumnDataTypeExtension ext = Common.ColumnDataTypeExtension.newBuilder() //
+                        .setDecimalType(decimalTypeExtension.into()) //
+                        .build();
+                this.dataTypeExtensions.add(ext);
+            }
             return this;
         }
 
@@ -126,12 +116,6 @@ public class TableSchema {
             tableSchema.semanticTypes = this.semanticTypes;
             tableSchema.dataTypes = this.dataTypes;
             tableSchema.dataTypeExtensions = this.dataTypeExtensions;
-            return tableSchema;
-        }
-
-        public TableSchema buildAndCache() {
-            TableSchema tableSchema = build();
-            TABLE_SCHEMA_CACHE.putIfAbsent(tableSchema.tableName, tableSchema);
             return tableSchema;
         }
     }

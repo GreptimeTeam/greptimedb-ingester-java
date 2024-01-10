@@ -52,9 +52,9 @@ public interface WritePOJO {
     }
 
     /**
-     * Write multi tables multi rows data to database.
+     * Write multiple rows of data (which can belong to multiple tables) to the database at once.
      *
-     * @param pojos rows with multi tables
+     * @param pojos a collection of data to be written, classified by table
      * @param writeOp write operation(insert or delete)
      * @param ctx invoke context
      * @return write result
@@ -76,14 +76,14 @@ public interface WritePOJO {
     }
 
     /**
-     * Create a `Stream` to write POJO data.
-     * You can hold on to this `Stream` and continuously write to it. After you are finished
-     * writing, remember to close (call `StreamWriter#completed()`) it.
+     * Create a `Stream` to continuously write data to the database, typically used in data import
+     * scenarios. After completion, the stream needs to be closed(Call `StreamWriter#completed()`),
+     * and the write result can be obtained from the database server.
      * <p>
-     * It is important to note that each write operation can write a List of POJOs.
-     * However, the POJO objects in the List must have the same type. If you need to
-     * write different types of POJO objects, you can perform multiple write operations
-     * on the `Stream`, dividing them into separate writes when you obtain the `Stream`.
+     * It is important to note that each write operation can write a List of POJOs. However,
+     * the POJO objects in the List must have the same type. If you need to write different types
+     * of POJO objects, you can perform multiple write operations on the `Stream`, dividing them
+     * into separate writes when you obtain the `Stream`.
      *
      * @param maxPointsPerSecond The max number of points that can be written per second,
      *                           exceeding which may cause blockage.

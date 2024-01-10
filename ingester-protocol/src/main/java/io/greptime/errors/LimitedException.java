@@ -20,6 +20,7 @@ package io.greptime.errors;
  *
  * @author jiachun.fjc
  */
+@SuppressWarnings("unused")
 public class LimitedException extends RuntimeException {
 
     private static final long serialVersionUID = -1L;

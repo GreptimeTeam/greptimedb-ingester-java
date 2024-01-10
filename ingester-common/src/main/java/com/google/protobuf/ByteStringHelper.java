@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
- * A {@code ByteString} helper.
+ * A {@code ByteString} helper, avoid some memory copying to improve performance.
  *
  * @author jiachun.fjc
  */

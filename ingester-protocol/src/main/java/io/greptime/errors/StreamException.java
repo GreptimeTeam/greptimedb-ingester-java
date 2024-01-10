@@ -16,10 +16,11 @@
 package io.greptime.errors;
 
 /**
- * Error about stream-query or stream-write.
+ * Error about stream-write.
  *
  * @author jiachun.fjc
  */
+@SuppressWarnings("unused")
 public class StreamException extends RuntimeException {
 
     private static final long serialVersionUID = -1L;

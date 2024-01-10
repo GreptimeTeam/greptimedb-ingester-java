@@ -19,6 +19,10 @@ import java.util.Optional;
 
 /**
  * File signal.
+ * <p>
+ * Adopt the method of creating files with specified names to interact
+ * with the Client process and implement signal transmission, achieve the
+ * purpose of controlling the process to output specified content through this.
  *
  * @author jiachun.fjc
  */

@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author jiachun.fjc
  */
+@SuppressWarnings("unused")
 public class RpcOptions implements Copiable<RpcOptions> {
 
     private boolean useRpcSharedPool = false;

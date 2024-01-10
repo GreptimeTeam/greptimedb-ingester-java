@@ -15,9 +15,11 @@
  */
 package io.greptime.models;
 
+import io.greptime.TestUtil;
 import io.greptime.v1.RowData;
 import org.junit.Assert;
 import org.junit.Test;
+import java.math.BigDecimal;
 
 /**
  * @author jiachun.fjc
@@ -30,18 +32,25 @@ public class TableTest {
                 .addColumn("col1", SemanticType.Tag, DataType.String) //
                 .addColumn("col2", SemanticType.Tag, DataType.String) //
                 .addColumn("col3", SemanticType.Field, DataType.Int32) //
+                .addColumn("col4", SemanticType.Field, DataType.Decimal128, new DataType.DecimalTypeExtension(39, 9)) //
                 .build();
 
         Table.RowBasedTable table = (Table.RowBasedTable) Table.from(schema);
-        table.addRow("1", "11", 111) //
-                .addRow("2", "22", 222) //
-                .addRow("3", "33", 333);
+        table.addRow("1", "11", 111, new BigDecimal("0.1")) //
+                .addRow("2", "22", 222, new BigDecimal("0.2")) //
+                .addRow("3", "33", 333, new BigDecimal("0.3"));
 
         Assert.assertEquals(3, table.rowCount());
         RowData.Rows rawRows = table.into();
         Assert.assertEquals(111, rawRows.getRows(0).getValues(2).getI32Value());
         Assert.assertEquals(222, rawRows.getRows(1).getValues(2).getI32Value());
         Assert.assertEquals(333, rawRows.getRows(2).getValues(2).getI32Value());
+        Assert.assertEquals(new BigDecimal("0.100000000"),
+                TestUtil.getDecimal(rawRows.getRows(0).getValues(3).getDecimal128Value(), 9));
+        Assert.assertEquals(new BigDecimal("0.200000000"),
+                TestUtil.getDecimal(rawRows.getRows(1).getValues(3).getDecimal128Value(), 9));
+        Assert.assertEquals(new BigDecimal("0.300000000"),
+                TestUtil.getDecimal(rawRows.getRows(2).getValues(3).getDecimal128Value(), 9));
     }
 
     @Test

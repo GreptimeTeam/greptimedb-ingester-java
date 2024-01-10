@@ -38,26 +38,10 @@ public class LogScheduledThreadPoolExecutor extends ScheduledThreadPoolExecutor 
     private final int corePoolSize;
     private final String name;
 
-    public LogScheduledThreadPoolExecutor(int corePoolSize, String name) {
-        super(corePoolSize);
-        this.corePoolSize = corePoolSize;
-        this.name = name;
-    }
-
-    public LogScheduledThreadPoolExecutor(int corePoolSize, ThreadFactory threadFactory, String name) {
-        super(corePoolSize, threadFactory);
-        this.corePoolSize = corePoolSize;
-        this.name = name;
-    }
-
-    public LogScheduledThreadPoolExecutor(int corePoolSize, RejectedExecutionHandler handler, String name) {
-        super(corePoolSize, handler);
-        this.corePoolSize = corePoolSize;
-        this.name = name;
-    }
-
-    public LogScheduledThreadPoolExecutor(int corePoolSize, ThreadFactory threadFactory,
-            RejectedExecutionHandler handler, String name) {
+    public LogScheduledThreadPoolExecutor(int corePoolSize, //
+            ThreadFactory threadFactory, //
+            RejectedExecutionHandler handler, //
+            String name) {
         super(corePoolSize, threadFactory, handler);
         this.corePoolSize = corePoolSize;
         this.name = name;

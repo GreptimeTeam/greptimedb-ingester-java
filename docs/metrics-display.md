@@ -50,7 +50,7 @@ By default, 2 files are generated in the program's working directory
 ```
 --- GreptimeDB Client ---
 id=1
-version=0.5.0
+version=0.5.1
 endpoints=[127.0.0.1:4001]
 database=public
 rpcOptions=RpcOptions{useRpcSharedPool=false, defaultRpcTimeout=10000, maxInboundMessageSize=268435456, flowControlWindow=268435456, idleTimeoutSeconds=300, keepAliveTimeSeconds=9223372036854775807, keepAliveTimeoutSeconds=3, keepAliveWithoutCalls=false, limitKind=None, initialLimit=64, maxLimit=1024, longRttWindow=100, smoothing=0.2, blockOnLimit=false, logOnLimitChange=true, enableMetricInterceptor=false}

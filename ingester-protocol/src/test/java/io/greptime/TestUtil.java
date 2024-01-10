@@ -19,6 +19,9 @@ import io.greptime.models.DataType;
 import io.greptime.models.SemanticType;
 import io.greptime.models.Table;
 import io.greptime.models.TableSchema;
+import io.greptime.v1.Common;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -39,5 +42,19 @@ public class TestUtil {
             table.addRow("127.0.0.1", System.currentTimeMillis(), i);
         }
         return Collections.singleton(table);
+    }
+
+    public static BigDecimal getDecimal(Common.Decimal128 decimal128, int scale) {
+        long lo = decimal128.getLo();
+        BigInteger loValue = BigInteger.valueOf(lo & Long.MAX_VALUE);
+        if (lo < 0) {
+            loValue = loValue.add(BigInteger.valueOf(1).shiftLeft(63));
+        }
+
+        BigInteger unscaledValue = BigInteger.valueOf(decimal128.getHi());
+        unscaledValue = unscaledValue.shiftLeft(64);
+        unscaledValue = unscaledValue.add(loValue);
+
+        return new BigDecimal(unscaledValue, scale);
     }
 }

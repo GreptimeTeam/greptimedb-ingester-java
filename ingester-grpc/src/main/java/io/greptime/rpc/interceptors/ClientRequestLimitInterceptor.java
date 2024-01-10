@@ -33,7 +33,7 @@ import java.util.function.Function;
 
 /**
  * ClientInterceptor that enforces per service and/or per method concurrent
- * request limits and returns a Status.UNAVAILABLE when that limit has been
+ * request limits and returns a `Status.UNAVAILABLE` when that limit has been
  * reached.
  * <p>
  * Refer to `concurrency-limit-grpc`
