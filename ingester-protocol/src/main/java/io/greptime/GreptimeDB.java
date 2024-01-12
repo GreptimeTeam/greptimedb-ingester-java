@@ -23,6 +23,7 @@ import io.greptime.common.Keys;
 import io.greptime.common.Lifecycle;
 import io.greptime.common.signal.SignalHandlersLoader;
 import io.greptime.common.util.MetricsUtil;
+import io.greptime.common.util.ServiceLoader;
 import io.greptime.common.util.Strings;
 import io.greptime.models.Err;
 import io.greptime.models.Result;
@@ -57,16 +58,15 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
 
     private static final Logger LOG = LoggerFactory.getLogger(GreptimeDB.class);
 
-
     private static final Map<Integer, GreptimeDB> INSTANCES = new ConcurrentHashMap<>();
     private static final AtomicInteger ID = new AtomicInteger(0);
     private static final String VERSION = Util.clientVersion();
     private static final String NODE_ID = UUID.randomUUID().toString();
 
+    private static final PojoMapper POJO_MAPPER = getDefaultPojoMapper();
+
     private final int id;
     private final AtomicBoolean started = new AtomicBoolean(false);
-
-    private final PojoMapper pojoMapper = new PojoMapper(65536);
 
     private GreptimeOptions opts;
     private RouterClient routerClient;
@@ -143,7 +143,7 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
     public CompletableFuture<Result<WriteOk, Err>> writePOJOs(Collection<List<?>> pojos, WriteOp writeOp, Context ctx) {
         List<Table> rows = new ArrayList<>(pojos.size());
         for (List<?> pojo : pojos) {
-            rows.add(this.pojoMapper.toTableData(pojo));
+            rows.add(POJO_MAPPER.mapToTable(pojo));
         }
         return write(rows, writeOp, ctx);
     }
@@ -154,7 +154,7 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
         return new StreamWriter<List<?>, WriteOk>() {
             @Override
             public StreamWriter<List<?>, WriteOk> write(List<?> val, WriteOp writeOp) {
-                Table table = pojoMapper.toTableData(val);
+                Table table = POJO_MAPPER.mapToTable(val);
                 delegate.write(table, writeOp);
                 return this;
             }
@@ -317,6 +317,15 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
             } else {
                 this.buf = new StringBuilder();
             }
+        }
+    }
+
+    private static PojoMapper getDefaultPojoMapper() {
+        try {
+            return ServiceLoader.load(PojoMapper.class).first();
+        } catch (Throwable t) {
+            LOG.warn("Failed to load `PojoMapper`, use default: `CachedPojoMapper(1024)`", t);
+            return new CachedPojoMapper();
         }
     }
 
