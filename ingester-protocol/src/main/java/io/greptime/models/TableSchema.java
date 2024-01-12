@@ -21,8 +21,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Table schema for write.
- * 
+ * Table schema for write data to the database.
+ * <p>
+ * If the same `TableSchema` will be used multiple times, it is advisable to cache it
+ * to prevent redundant creation. The responsibility of caching lies with the user,
+ * as the `Ingester` client should strive to avoid managing the cache and excessive
+ * memory consumption.
+ *
  * @author jiachun.fjc
  */
 public class TableSchema {
@@ -70,10 +75,27 @@ public class TableSchema {
             this.tableName = tableName;
         }
 
+        /**
+         * Add column schema.
+         *
+         * @param name the name of this column
+         * @param semanticType the semantic type of this column (`Tag`, `Field` or `Timestamp`)
+         * @param dataType the data type of this column
+         * @return this builder
+         */
         public Builder addColumn(String name, SemanticType semanticType, DataType dataType) {
             return addColumn(name, semanticType, dataType, null);
         }
 
+        /**
+         * Add column schema.
+         *
+         * @param name the name of this column
+         * @param semanticType the semantic type of this column (`Tag`, `Field` or `Timestamp`)
+         * @param dataType the data type of this column
+         * @param decimalTypeExtension the decimal type extension of this column(only for `DataType.Decimal128`)
+         * @return this builder
+         */
         public Builder addColumn(String name, SemanticType semanticType, DataType dataType,
                 DataType.DecimalTypeExtension decimalTypeExtension) {
             Ensures.ensureNonNull(name, "Null column name");
@@ -95,6 +117,11 @@ public class TableSchema {
             return this;
         }
 
+        /**
+         * Build the table schema.
+         *
+         * @return the table schema
+         */
         public TableSchema build() {
             Ensures.ensureNonNull(this.tableName, "Null table name");
             Ensures.ensureNonNull(this.columnNames, "Null column names");
