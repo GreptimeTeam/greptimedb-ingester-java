@@ -59,7 +59,7 @@ public final class ServiceLoader<S> implements Iterable<S> {
     private LazyIterator lookupIterator;
 
     public static <S> ServiceLoader<S> load(Class<S> service) {
-        return ServiceLoader.load(service, Thread.currentThread().getContextClassLoader());
+        return ServiceLoader.load(service, ServiceLoader.class.getClassLoader());
     }
 
     public static <S> ServiceLoader<S> load(Class<S> service, ClassLoader loader) {
