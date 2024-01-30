@@ -112,18 +112,6 @@ public final class RowHelper {
             case INTERVAL_MONTH_DAY_NANO:
                 valueBuilder.setIntervalMonthDayNanoValue(Util.getIntervalMonthDayNanoValue(value));
                 break;
-            case DURATION_SECOND:
-                valueBuilder.setDurationSecondValue(Util.getLongValue(value));
-                break;
-            case DURATION_MILLISECOND:
-                valueBuilder.setDurationMillisecondValue(Util.getLongValue(value));
-                break;
-            case DURATION_MICROSECOND:
-                valueBuilder.setDurationMicrosecondValue(Util.getLongValue(value));
-                break;
-            case DURATION_NANOSECOND:
-                valueBuilder.setDurationNanosecondValue(Util.getLongValue(value));
-                break;
             case DECIMAL128:
                 valueBuilder.setDecimal128Value(Util.getDecimal128Value(dataTypeExtension, value));
                 break;
