@@ -50,10 +50,6 @@ public enum DataType {
     IntervalYearMonth, //
     IntervalDayTime, //
     IntervalMonthDayNano, //
-    DurationSecond, //
-    DurationMillisecond, //
-    DurationMicrosecond, //
-    DurationNanosecond, //
     Decimal128, //
     ;
 
@@ -111,14 +107,6 @@ public enum DataType {
                 return Common.ColumnDataType.INTERVAL_DAY_TIME;
             case IntervalMonthDayNano:
                 return Common.ColumnDataType.INTERVAL_MONTH_DAY_NANO;
-            case DurationSecond:
-                return Common.ColumnDataType.DURATION_SECOND;
-            case DurationMillisecond:
-                return Common.ColumnDataType.DURATION_MILLISECOND;
-            case DurationMicrosecond:
-                return Common.ColumnDataType.DURATION_MICROSECOND;
-            case DurationNanosecond:
-                return Common.ColumnDataType.DURATION_NANOSECOND;
             case Decimal128:
                 return Common.ColumnDataType.DECIMAL128;
             default:
