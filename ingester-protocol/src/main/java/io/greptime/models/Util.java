@@ -67,19 +67,17 @@ public class Util {
         return (int) getLongValue(value);
     }
 
-    static int getDateTimeValue(Object value) {
+    static long getDateTimeValue(Object value) {
         if (value instanceof Instant) {
-            long epochSecond = ((Instant) value).getEpochSecond();
-            return (int) epochSecond;
+            return ((Instant) value).toEpochMilli();
         }
 
         if (value instanceof Date) {
             Instant instant = ((Date) value).toInstant();
-            long epochSecond = instant.getEpochSecond();
-            return (int) epochSecond;
+            return instant.toEpochMilli();
         }
 
-        return (int) getLongValue(value);
+        return getLongValue(value);
     }
 
     static Common.IntervalMonthDayNano getIntervalMonthDayNanoValue(Object value) {

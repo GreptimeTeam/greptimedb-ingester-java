@@ -60,8 +60,10 @@ public class UtilTest {
         TimeZone gmtTimeZone = TimeZone.getTimeZone("GMT");
         cal.setTimeZone(gmtTimeZone);
         cal.set(1970, Calendar.JANUARY, 2, 0, 0, 0);
-        Assert.assertEquals(86400, Util.getDateTimeValue(cal.getTime()));
-        Assert.assertEquals(86400, Util.getDateTimeValue(Instant.ofEpochSecond(86400)));
+        cal.set(Calendar.MILLISECOND, 111);
+        Assert.assertEquals(86400111, Util.getDateTimeValue(cal.getTime()));
+        Assert.assertEquals(86400111, Util.getDateTimeValue(cal.getTime().toInstant()));
+        Assert.assertEquals(86400000, Util.getDateTimeValue(Instant.ofEpochSecond(86400)));
         Assert.assertEquals(86400, Util.getDateTimeValue(86400));
     }
 
