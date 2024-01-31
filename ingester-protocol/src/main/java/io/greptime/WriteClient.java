@@ -164,8 +164,10 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
     }
 
     private CompletableFuture<Result<WriteOk, Err>> writeTo(Endpoint endpoint, WriteTables writeTables, Context ctx, int retries) {
+        // Some info will be set into the GreptimeDB Request header.
         String database = this.opts.getDatabase();
         AuthInfo authInfo = this.opts.getAuthInfo();
+
         Database.GreptimeRequest req = TableHelper.toGreptimeRequest(writeTables, database, authInfo);
         ctx.with("retries", retries);
 
@@ -211,12 +213,14 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
                             }
                         });
 
+        // Some info will be set into the GreptimeDB Request header.
+        String database = this.opts.getDatabase();
+        AuthInfo authInfo = this.opts.getAuthInfo();
+
         return new Observer<WriteTables>() {
 
             @Override
             public void onNext(WriteTables writeTables) {
-                String database = WriteClient.this.opts.getDatabase();
-                AuthInfo authInfo = WriteClient.this.opts.getAuthInfo();
                 Database.GreptimeRequest req = TableHelper.toGreptimeRequest(writeTables, database, authInfo);
                 rpcObserver.onNext(req);
             }
