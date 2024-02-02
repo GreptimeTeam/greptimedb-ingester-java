@@ -76,10 +76,13 @@ public class WriteQuickStart {
 
         Result<WriteOk, Err> result = future.get();
 
-        if (result.isOk()) {
-            LOG.info("Write result: {}", result.getOk());
+        Result<Integer, String> simpleResult = result //
+                .map(WriteOk::getSuccess) //
+                .mapErr(err -> err.getError().getMessage());
+        if (simpleResult.isOk()) {
+            LOG.info("Write success: {}", simpleResult.getOk());
         } else {
-            LOG.error("Failed to write: {}", result.getErr());
+            LOG.error("Failed to write: {}", simpleResult.getErr());
         }
 
         List<Table> delete_objs = Arrays.asList(cpuMetric.subRange(0, 5), memMetric.subRange(0, 5));

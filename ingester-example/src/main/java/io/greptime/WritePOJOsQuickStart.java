@@ -62,10 +62,13 @@ public class WritePOJOsQuickStart {
 
         Result<WriteOk, Err> result = puts.get();
 
-        if (result.isOk()) {
-            LOG.info("Write result: {}", result.getOk());
+        Result<Integer, String> simpleResult = result //
+                .map(WriteOk::getSuccess) //
+                .mapErr(err -> err.getError().getMessage());
+        if (simpleResult.isOk()) {
+            LOG.info("Write success: {}", simpleResult.getOk());
         } else {
-            LOG.error("Failed to write: {}", result.getErr());
+            LOG.error("Failed to write: {}", simpleResult.getErr());
         }
 
         List<List<?>> delete_pojos = Arrays.asList(cpus.subList(0, 5), memories.subList(0, 5));
