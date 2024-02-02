@@ -29,9 +29,9 @@ public class TableTest {
     @Test
     public void testTableNonNull() {
         TableSchema schema = TableSchema.newBuilder("test_table") //
-                .addColumn("col1", SemanticType.Tag, DataType.String) //
-                .addColumn("col2", SemanticType.Tag, DataType.String) //
-                .addColumn("col3", SemanticType.Field, DataType.Int32) //
+                .addTag("col1", DataType.String) //
+                .addTag("col2", DataType.String) //
+                .addField("col3", DataType.Int32) //
                 .addColumn("col4", SemanticType.Field, DataType.Decimal128, new DataType.DecimalTypeExtension(39, 9)) //
                 .build();
 
@@ -56,9 +56,9 @@ public class TableTest {
     @Test
     public void testTableSomeNull() {
         TableSchema schema = TableSchema.newBuilder("test_table") //
-                .addColumn("col1", SemanticType.Tag, DataType.String) //
-                .addColumn("col2", SemanticType.Tag, DataType.String) //
-                .addColumn("col3", SemanticType.Field, DataType.Int32) //
+                .addTag("col1", DataType.String) //
+                .addTag("col2", DataType.String) //
+                .addField("col3", DataType.Int32) //
                 .build();
 
         Table.RowBasedTable table = (Table.RowBasedTable) Table.from(schema);

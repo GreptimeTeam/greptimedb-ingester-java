@@ -76,6 +76,40 @@ public class TableSchema {
         }
 
         /**
+         * Add tag schema.
+         *
+         * @param name the name of this tag
+         * @param dataType the data type of this tag
+         * @return this builder
+         */
+        public Builder addTag(String name, DataType dataType) {
+            return addColumn(name, SemanticType.Tag, dataType);
+        }
+
+        /**
+         * Add timestamp schema.
+         *
+         * @param name the name of this timestamp
+         * @param dataType the data type of this timestamp
+         * @return this builder
+         */
+        public Builder addTimestamp(String name, DataType dataType) {
+            Ensures.ensure(dataType.isTimestamp(), "Invalid timestamp data type");
+            return addColumn(name, SemanticType.Timestamp, dataType);
+        }
+
+        /**
+         * Add field schema.
+         *
+         * @param name the name of this field
+         * @param dataType the data type of this field
+         * @return this builder
+         */
+        public Builder addField(String name, DataType dataType) {
+            return addColumn(name, SemanticType.Field, dataType);
+        }
+
+        /**
          * Add column schema.
          *
          * @param name the name of this column
@@ -96,11 +130,17 @@ public class TableSchema {
          * @param decimalTypeExtension the decimal type extension of this column(only for `DataType.Decimal128`)
          * @return this builder
          */
-        public Builder addColumn(String name, SemanticType semanticType, DataType dataType,
+        public Builder addColumn(String name, //
+                SemanticType semanticType, //
+                DataType dataType, //
                 DataType.DecimalTypeExtension decimalTypeExtension) {
             Ensures.ensureNonNull(name, "Null column name");
             Ensures.ensureNonNull(semanticType, "Null semantic type");
             Ensures.ensureNonNull(dataType, "Null data type");
+
+            if (semanticType == SemanticType.Timestamp) {
+                Ensures.ensure(dataType.isTimestamp(), "Invalid timestamp data type");
+            }
 
             this.columnNames.add(name);
             this.semanticTypes.add(semanticType.toProtoValue());

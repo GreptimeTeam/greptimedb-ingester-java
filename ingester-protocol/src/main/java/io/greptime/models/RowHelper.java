@@ -88,6 +88,9 @@ public final class RowHelper {
             case TIMESTAMP_MILLISECOND:
                 valueBuilder.setTimestampMillisecondValue(Util.getLongValue(value));
                 break;
+            case TIMESTAMP_MICROSECOND:
+                valueBuilder.setTimestampMicrosecondValue(Util.getLongValue(value));
+                break;
             case TIMESTAMP_NANOSECOND:
                 valueBuilder.setTimestampNanosecondValue(Util.getLongValue(value));
                 break;

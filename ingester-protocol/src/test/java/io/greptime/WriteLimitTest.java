@@ -73,7 +73,7 @@ public class WriteLimitTest {
             try {
                 limiter.acquireAndDo(rows, this::emptyOk);
                 alwaysFalse.set(true);
-            } catch (final Throwable err) {
+            } catch (Throwable err) {
                 // noinspection ConstantConditions
                 Assert.assertTrue(err instanceof InterruptedException);
             }
