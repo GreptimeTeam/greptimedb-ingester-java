@@ -26,6 +26,6 @@ public class UtilTest {
     @Test
     public void testClientVersion() {
         String ver = Util.clientVersion();
-        Assert.assertEquals("0.5.1", ver);
+        Assert.assertEquals("0.7.0", ver);
     }
 }
