@@ -94,7 +94,8 @@ public class TableSchema {
          * @return this builder
          */
         public Builder addTimestamp(String name, DataType dataType) {
-            Ensures.ensure(dataType.isTimestamp(), "Invalid timestamp data type");
+            Ensures.ensure(dataType.isTimestamp(),
+                    "Invalid timestamp data type: %s, only support `DataType.TimestampXXX`", dataType);
             return addColumn(name, SemanticType.Timestamp, dataType);
         }
 
@@ -139,7 +140,8 @@ public class TableSchema {
             Ensures.ensureNonNull(dataType, "Null data type");
 
             if (semanticType == SemanticType.Timestamp) {
-                Ensures.ensure(dataType.isTimestamp(), "Invalid timestamp data type");
+                Ensures.ensure(dataType.isTimestamp(),
+                        "Invalid timestamp data type: %s, only support `DataType.TimestampXXX`", dataType);
             }
 
             this.columnNames.add(name);

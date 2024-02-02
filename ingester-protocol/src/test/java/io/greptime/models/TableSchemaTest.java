@@ -24,10 +24,10 @@ import java.math.BigDecimal;
 /**
  * @author jiachun.fjc
  */
-public class TableTest {
+public class TableSchemaTest {
 
     @Test
-    public void testTableNonNull() {
+    public void testNonNull() {
         TableSchema schema = TableSchema.newBuilder("test_table") //
                 .addTag("col1", DataType.String) //
                 .addTag("col2", DataType.String) //
@@ -54,7 +54,7 @@ public class TableTest {
     }
 
     @Test
-    public void testTableSomeNull() {
+    public void testSomeNull() {
         TableSchema schema = TableSchema.newBuilder("test_table") //
                 .addTag("col1", DataType.String) //
                 .addTag("col2", DataType.String) //
@@ -72,5 +72,36 @@ public class TableTest {
         Assert.assertEquals(222, rawRows.getRows(1).getValues(2).getI32Value());
         Assert.assertFalse(rawRows.getRows(2).getValues(2).hasI32Value());
         Assert.assertFalse(rawRows.getRows(1).getValues(1).hasStringValue());
+    }
+
+
+    @Test
+    public void testNotSupportTimestamp() {
+        TableSchema.Builder builder = TableSchema.newBuilder("test_table") //
+                .addTag("col1", DataType.String) //
+                .addTag("col2", DataType.String) //
+                .addField("col3", DataType.Int32);
+
+        try {
+            builder.addTimestamp("col4", DataType.Int32);
+            Assert.fail();
+        } catch (Exception e) {
+            Assert.assertTrue(e.getMessage().contains("Invalid timestamp data type"));
+        }
+    }
+
+    @Test
+    public void testNotSupportDecimalExtension() {
+        TableSchema.Builder builder = TableSchema.newBuilder("test_table") //
+                .addTag("col1", DataType.String) //
+                .addTag("col2", DataType.String) //
+                .addField("col3", DataType.Int32);
+
+        try {
+            builder.addColumn("col4", SemanticType.Field, DataType.Float64, new DataType.DecimalTypeExtension(39, 9));
+            Assert.fail();
+        } catch (Exception e) {
+            Assert.assertTrue(e.getMessage().contains("Only decimal type can have decimal type extension"));
+        }
     }
 }
