@@ -25,60 +25,60 @@ public class ResultTest {
 
     @Test
     public void testMap() {
-        final Result<WriteOk, Err> r1 = Result.ok(WriteOk.ok(2, 0));
-        final Result<Integer, Err> r2 = r1.map(WriteOk::getSuccess);
+        Result<WriteOk, Err> r1 = Result.ok(WriteOk.ok(2, 0));
+        Result<Integer, Err> r2 = r1.map(WriteOk::getSuccess);
         Assert.assertEquals(2, r2.getOk().intValue());
 
-        final Result<WriteOk, Err> r5 = Result.err(Err.writeErr(400, null, null));
-        final Result<Integer, Err> r6 = r5.map(WriteOk::getSuccess);
+        Result<WriteOk, Err> r5 = Result.err(Err.writeErr(400, null, null));
+        Result<Integer, Err> r6 = r5.map(WriteOk::getSuccess);
         Assert.assertFalse(r6.isOk());
     }
 
     @Test
     public void testMapOr() {
-        final Result<WriteOk, Err> r1 = Result.ok(WriteOk.ok(2, 0));
-        final Integer r2 = r1.mapOr(-1, WriteOk::getSuccess);
+        Result<WriteOk, Err> r1 = Result.ok(WriteOk.ok(2, 0));
+        Integer r2 = r1.mapOr(-1, WriteOk::getSuccess);
         Assert.assertEquals(2, r2.intValue());
 
-        final Result<WriteOk, Err> r3 = Result.err(Err.writeErr(400, null, null));
-        final Integer r4 = r3.mapOr(-1, WriteOk::getSuccess);
+        Result<WriteOk, Err> r3 = Result.err(Err.writeErr(400, null, null));
+        Integer r4 = r3.mapOr(-1, WriteOk::getSuccess);
         Assert.assertEquals(-1, r4.intValue());
     }
 
     @Test
     public void testMapOrElse() {
-        final Result<WriteOk, Err> r1 = Result.ok(WriteOk.ok(2, 0));
-        final Integer r2 = r1.mapOrElse(err -> -1, WriteOk::getSuccess);
+        Result<WriteOk, Err> r1 = Result.ok(WriteOk.ok(2, 0));
+        Integer r2 = r1.mapOrElse(err -> -1, WriteOk::getSuccess);
         Assert.assertEquals(2, r2.intValue());
 
-        final Result<WriteOk, Err> r3 = Result.err(Err.writeErr(400, null, null));
-        final Integer r4 = r3.mapOrElse(err -> -1, WriteOk::getSuccess);
+        Result<WriteOk, Err> r3 = Result.err(Err.writeErr(400, null, null));
+        Integer r4 = r3.mapOrElse(err -> -1, WriteOk::getSuccess);
         Assert.assertEquals(-1, r4.intValue());
     }
 
     @Test
     public void testMapErr() {
-        final Result<WriteOk, Err> r1 = Result.ok(WriteOk.ok(2, 0));
-        final Result<WriteOk, Throwable> r2 = r1.mapErr(Err::getError);
+        Result<WriteOk, Err> r1 = Result.ok(WriteOk.ok(2, 0));
+        Result<WriteOk, Throwable> r2 = r1.mapErr(Err::getError);
         Assert.assertEquals(2, r2.getOk().getSuccess());
 
         IllegalStateException error = new IllegalStateException("error test");
-        final Result<WriteOk, Err> r3 = Result.err(Err.writeErr(400, error, null));
-        final Result<WriteOk, Throwable> r4 = r3.mapErr(Err::getError);
+        Result<WriteOk, Err> r3 = Result.err(Err.writeErr(400, error, null));
+        Result<WriteOk, Throwable> r4 = r3.mapErr(Err::getError);
         Assert.assertEquals("error test", r4.getErr().getMessage());
     }
 
     @Test
     public void testAndThen() {
-        final Result<WriteOk, Err> r1 = Result.ok(WriteOk.ok(2, 0));
-        final Result<WriteOk, Err> r2 = r1.andThen(writeOk -> {
+        Result<WriteOk, Err> r1 = Result.ok(WriteOk.ok(2, 0));
+        Result<WriteOk, Err> r2 = r1.andThen(writeOk -> {
             WriteOk newOne = WriteOk.ok(writeOk.getSuccess() + 1, 0);
             return newOne.mapToResult();
         });
         Assert.assertEquals(3, r2.getOk().getSuccess());
 
-        final Result<WriteOk, Err> r3 = Result.err(Err.writeErr(400, null, null));
-        final Result<WriteOk, Err> r4 = r3.andThen(writeOk -> {
+        Result<WriteOk, Err> r3 = Result.err(Err.writeErr(400, null, null));
+        Result<WriteOk, Err> r4 = r3.andThen(writeOk -> {
             WriteOk newOne = WriteOk.ok(writeOk.getSuccess() + 1, 0);
             return newOne.mapToResult();
         });
@@ -87,34 +87,34 @@ public class ResultTest {
 
     @Test
     public void testOrElse() {
-        final Result<WriteOk, Err> r1 = Result.ok(WriteOk.ok(2, 0));
-        final Result<WriteOk, String> r2 = r1.orElse(err -> Result.ok(WriteOk.ok(0, 0)));
+        Result<WriteOk, Err> r1 = Result.ok(WriteOk.ok(2, 0));
+        Result<WriteOk, String> r2 = r1.orElse(err -> Result.ok(WriteOk.ok(0, 0)));
         Assert.assertEquals(2, r2.getOk().getSuccess());
 
-        final Result<WriteOk, Err> r3 = Result.err(Err.writeErr(400, null, null));
-        final Result<WriteOk, String> r4 = r3.orElse(err -> Result.ok(WriteOk.ok(0, 0)));
+        Result<WriteOk, Err> r3 = Result.err(Err.writeErr(400, null, null));
+        Result<WriteOk, String> r4 = r3.orElse(err -> Result.ok(WriteOk.ok(0, 0)));
         Assert.assertEquals(0, r4.getOk().getSuccess());
     }
 
     @Test
     public void testUnwrapOr() {
-        final Result<WriteOk, Err> r1 = Result.ok(WriteOk.ok(2, 0));
-        final WriteOk r2 = r1.unwrapOr(WriteOk.emptyOk());
+        Result<WriteOk, Err> r1 = Result.ok(WriteOk.ok(2, 0));
+        WriteOk r2 = r1.unwrapOr(WriteOk.emptyOk());
         Assert.assertEquals(2, r2.getSuccess());
 
-        final Result<WriteOk, Err> r3 = Result.err(Err.writeErr(400, null, null));
-        final WriteOk r4 = r3.unwrapOr(WriteOk.emptyOk());
+        Result<WriteOk, Err> r3 = Result.err(Err.writeErr(400, null, null));
+        WriteOk r4 = r3.unwrapOr(WriteOk.emptyOk());
         Assert.assertEquals(0, r4.getSuccess());
     }
 
     @Test
     public void testUnwrapOrElse() {
-        final Result<WriteOk, Err> r1 = Result.ok(WriteOk.ok(2, 0));
-        final WriteOk r2 = r1.unwrapOrElse(err -> WriteOk.emptyOk());
+        Result<WriteOk, Err> r1 = Result.ok(WriteOk.ok(2, 0));
+        WriteOk r2 = r1.unwrapOrElse(err -> WriteOk.emptyOk());
         Assert.assertEquals(2, r2.getSuccess());
 
-        final Result<WriteOk, Err> r3 = Result.err(Err.writeErr(400, null, null));
-        final WriteOk r4 = r3.unwrapOrElse(err -> WriteOk.emptyOk());
+        Result<WriteOk, Err> r3 = Result.err(Err.writeErr(400, null, null));
+        WriteOk r4 = r3.unwrapOrElse(err -> WriteOk.emptyOk());
         Assert.assertEquals(0, r4.getSuccess());
     }
 }

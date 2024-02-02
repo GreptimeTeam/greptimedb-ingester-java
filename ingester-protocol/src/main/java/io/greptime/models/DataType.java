@@ -53,6 +53,11 @@ public enum DataType {
     Decimal128, //
     ;
 
+    public boolean isTimestamp() {
+        return this == TimestampSecond || this == TimestampMillisecond || this == TimestampMicrosecond
+                || this == TimestampNanosecond;
+    }
+
     public Common.ColumnDataType toProtoValue() {
         switch (this) {
             case Bool:

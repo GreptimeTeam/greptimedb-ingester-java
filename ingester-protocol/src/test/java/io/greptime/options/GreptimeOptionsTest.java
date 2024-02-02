@@ -16,12 +16,12 @@
 package io.greptime.options;
 
 import io.greptime.Router;
+import io.greptime.common.Endpoint;
 import io.greptime.limit.LimitedPolicy;
 import io.greptime.models.AuthInfo;
 import io.greptime.rpc.RpcOptions;
 import org.junit.Assert;
 import org.junit.Test;
-import io.greptime.common.Endpoint;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;

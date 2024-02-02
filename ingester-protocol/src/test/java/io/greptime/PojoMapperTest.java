@@ -83,7 +83,7 @@ class Pojo1Test {
     long c;
     @Column(name = "d", dataType = DataType.Float64)
     double d;
-    @Column(name = "ts", dataType = DataType.TimeSecond, timestamp = true)
+    @Column(name = "ts", dataType = DataType.TimestampMillisecond, timestamp = true)
     long ts;
 }
 
