@@ -25,18 +25,9 @@ import java.security.PrivilegedAction;
  * parse the values of the Java system properties.
  *
  */
-@SuppressWarnings("unused")
 public final class SystemPropertyUtil {
 
     private static final Logger LOG = LoggerFactory.getLogger(SystemPropertyUtil.class);
-
-    /**
-     * Returns {@code true} if and only if the system property
-     * with the specified {@code key} exists.
-     */
-    public static boolean contains(String key) {
-        return get(key) != null;
-    }
 
     /**
      * Returns the value of the Java system property with the
@@ -155,6 +146,7 @@ public final class SystemPropertyUtil {
      * {@code def} if there's no such property or if access to
      * the specified property is not allowed.
      */
+    @SuppressWarnings("unused")
     public static long getLong(String key, long def) {
         String value = get(key);
         if (value == null) {
@@ -178,6 +170,7 @@ public final class SystemPropertyUtil {
      * Sets the value of the Java system property with the
      * specified {@code key}
      */
+    @SuppressWarnings("unused")
     public static Object setProperty(String key, String value) {
         return System.getProperties().setProperty(key, value);
     }
