@@ -20,26 +20,15 @@ package io.greptime.errors;
  *
  * @author jiachun.fjc
  */
-@SuppressWarnings("unused")
 public class LimitedException extends RuntimeException {
 
     private static final long serialVersionUID = -1L;
-
-    public LimitedException() {}
 
     public LimitedException(String message) {
         super(message);
     }
 
-    public LimitedException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
     public LimitedException(Throwable cause) {
         super(cause);
-    }
-
-    public LimitedException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
     }
 }

@@ -20,26 +20,11 @@ package io.greptime.errors;
  *
  * @author jiachun.fjc
  */
-@SuppressWarnings("unused")
 public class StreamException extends RuntimeException {
 
     private static final long serialVersionUID = -1L;
 
-    public StreamException() {}
-
     public StreamException(String message) {
         super(message);
-    }
-
-    public StreamException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public StreamException(Throwable cause) {
-        super(cause);
-    }
-
-    public StreamException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
     }
 }
