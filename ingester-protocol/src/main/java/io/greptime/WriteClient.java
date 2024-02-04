@@ -73,7 +73,8 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
         Executor pool = this.opts.getAsyncPool();
         this.asyncPool = pool != null ? pool : new SerializingExecutor("write_client");
         this.asyncPool = new MetricExecutor(this.asyncPool, "async_write_pool.time");
-        this.writeLimiter = new DefaultWriteLimiter(this.opts.getMaxInFlightWriteRows(), this.opts.getLimitedPolicy());
+        this.writeLimiter =
+                new DefaultWriteLimiter(this.opts.getMaxInFlightWritePoints(), this.opts.getLimitedPolicy());
         return true;
     }
 
@@ -313,7 +314,7 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
 
         @Override
         public int calculatePermits(Collection<Table> in) {
-            return in.stream().map(Table::rowCount).reduce(0, Integer::sum);
+            return in.stream().map(Table::pointCount).reduce(0, Integer::sum);
         }
 
         @Override

@@ -145,8 +145,8 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         // Rpc options, in general the default configuration is fine.
         private RpcOptions rpcOptions = RpcOptions.newDefault();
         private int writeMaxRetries = 1;
-        // Write flow limit: maximum number of data rows in-flight.
-        private int maxInFlightWriteRows = 65536;
+        // Write flow limit: maximum number of data points in-flight.
+        private int maxInFlightWritePoints = 10 * 65536;
         private LimitedPolicy writeLimitedPolicy = LimitedPolicy.defaultWriteLimitedPolicy();
         private int defaultStreamMaxWritePointsPerSecond = 10 * 65536;
         // Refresh frequency of route tables. The background refreshes all route tables periodically.
@@ -202,13 +202,13 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         }
 
         /**
-         * Write flow limit: maximum number of data rows in-flight.
+         * Write flow limit: maximum number of data points in-flight.
          *
-         * @param maxInFlightWriteRows max in-flight rows
+         * @param maxInFlightWritePoints max in-flight points
          * @return this builder
          */
-        public Builder maxInFlightWriteRows(int maxInFlightWriteRows) {
-            this.maxInFlightWriteRows = maxInFlightWriteRows;
+        public Builder maxInFlightWritePoints(int maxInFlightWritePoints) {
+            this.maxInFlightWritePoints = maxInFlightWritePoints;
             return this;
         }
 
@@ -308,7 +308,7 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
             writeOpts.setAuthInfo(this.authInfo);
             writeOpts.setAsyncPool(this.asyncPool);
             writeOpts.setMaxRetries(this.writeMaxRetries);
-            writeOpts.setMaxInFlightWriteRows(this.maxInFlightWriteRows);
+            writeOpts.setMaxInFlightWritePoints(this.maxInFlightWritePoints);
             writeOpts.setLimitedPolicy(this.writeLimitedPolicy);
             writeOpts.setDefaultStreamMaxWritePointsPerSecond(this.defaultStreamMaxWritePointsPerSecond);
             return writeOpts;
