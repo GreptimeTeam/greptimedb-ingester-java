@@ -24,7 +24,6 @@ import io.greptime.options.RouterOptions;
 import io.greptime.rpc.Context;
 import io.greptime.rpc.Observer;
 import io.greptime.rpc.RpcClient;
-import io.greptime.rpc.errors.RemotingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.List;
@@ -134,7 +133,7 @@ public class RouterClient implements Lifecycle<RouterOptions>, Display {
                 }
             }, timeoutMs);
 
-        } catch (RemotingException e) {
+        } catch (Exception e) {
             future.completeExceptionally(e);
         }
 
@@ -155,7 +154,7 @@ public class RouterClient implements Lifecycle<RouterOptions>, Display {
     public <Req, Resp> void invokeServerStreaming(Endpoint endpoint, Req request, Context ctx, Observer<Resp> observer) {
         try {
             this.rpcClient.invokeServerStreaming(endpoint, request, ctx, observer);
-        } catch (RemotingException e) {
+        } catch (Exception e) {
             observer.onError(e);
         }
     }
@@ -175,7 +174,7 @@ public class RouterClient implements Lifecycle<RouterOptions>, Display {
             Observer<Resp> respObserver) {
         try {
             return this.rpcClient.invokeClientStreaming(endpoint, defaultReqIns, ctx, respObserver);
-        } catch (RemotingException e) {
+        } catch (Exception e) {
             respObserver.onError(e);
             return new Observer.RejectedObserver<>(e);
         }

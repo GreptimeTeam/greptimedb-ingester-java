@@ -18,38 +18,20 @@ package io.greptime.rpc;
 import io.greptime.common.Display;
 import io.greptime.common.Endpoint;
 import io.greptime.common.Lifecycle;
-import io.greptime.rpc.errors.RemotingException;
 
 /**
  * A common RPC client interface.
  *
  * @author jiachun.fjc
  */
-@SuppressWarnings("unused")
 public interface RpcClient extends Lifecycle<RpcOptions>, Display {
 
     /**
-     * Check connection for given address.
-     *
-     * @param endpoint target address
-     * @return true if there is a connection adn the connection is active adn writable.
-     */
-    boolean checkConnection(Endpoint endpoint);
-
-    /**
-     * Check connection for given address and async to create a new one if there is no connection.
-     *
-     * @param endpoint target address
-     * @param createIfAbsent create a new one if there is no connection
-     * @return true if there is a connection and the connection is active and writable.
-     */
-    boolean checkConnection(Endpoint endpoint, boolean createIfAbsent);
-
-    /**
-     * Close all connections of an address.
+     * Closes all connections of an address.
      *
      * @param endpoint target address
      */
+    @SuppressWarnings("unused")
     void closeConnection(Endpoint endpoint);
 
     /**
@@ -88,102 +70,75 @@ public interface RpcClient extends Lifecycle<RpcOptions>, Display {
     }
 
     /**
-     * Executes a synchronous call.
-     *
-     * @param endpoint target address
-     * @param request request object
-     * @param timeoutMs timeout millisecond
-     * @param <Req> request message type
-     * @param <Resp> response message type
-     * @return response
-     */
-    default <Req, Resp> Resp invokeSync(Endpoint endpoint,
-                                        Req request,
-                                        long timeoutMs) throws RemotingException {
-        return invokeSync(endpoint, request, null, timeoutMs);
-    }
-
-    /**
-     * Executes a synchronous call using an invoke context.
-     *
-     * @param endpoint target address
-     * @param request request object
-     * @param ctx invoke context
-     * @param timeoutMs timeout millisecond
-     * @param <Req> request message type
-     * @param <Resp> response message type
-     * @return response
-     */
-    <Req, Resp> Resp invokeSync(Endpoint endpoint,
-                                Req request,
-                                Context ctx,
-                                long timeoutMs) throws RemotingException;
-
-    /**
      * Executes an asynchronous call with a response {@link Observer}.
      *
-     * @param endpoint target address
-     * @param request request object
-     * @param observer response observer
-     * @param timeoutMs timeout millisecond
-     * @param <Req> request message type
-     * @param <Resp> response message type
+     * @param endpoint the target address
+     * @param request the request object
+     * @param observer the response observer
+     * @param timeoutMs timeout with millisecond
+     * @param <Req> the request message type
+     * @param <Resp> the response message type
      */
-    default <Req, Resp> void invokeAsync(Endpoint endpoint,
-                                         Req request,
-                                         Observer<Resp> observer,
-                                         long timeoutMs) throws RemotingException {
+    @SuppressWarnings("unused")
+    default <Req, Resp> void invokeAsync(
+            Endpoint endpoint,
+            Req request,
+            Observer<Resp> observer,
+            long timeoutMs) {
         invokeAsync(endpoint, request, null, observer, timeoutMs);
     }
 
     /**
      * Executes an asynchronous call with a response {@link Observer}.
      *
-     * @param endpoint target address
-     * @param request request object
-     * @param ctx invoke context
-     * @param observer response observer
-     * @param timeoutMs timeout millisecond
-     * @param <Req> request message type
-     * @param <Resp> response message type
+     * @param endpoint the target address
+     * @param request the request object
+     * @param ctx the invoke context
+     * @param observer the response observer
+     * @param timeoutMs timeout with millisecond
+     * @param <Req> the request message type
+     * @param <Resp> the response message type
      */
-    <Req, Resp> void invokeAsync(Endpoint endpoint,
-                                 Req request,
-                                 Context ctx,
-                                 Observer<Resp> observer,
-                                 long timeoutMs) throws RemotingException;
+    <Req, Resp> void invokeAsync(
+            Endpoint endpoint,
+            Req request,
+            Context ctx,
+            Observer<Resp> observer,
+            long timeoutMs);
 
     /**
      * Executes a server-streaming call with a response {@link Observer}.
      * <p>
      * One request message followed by zero or more response messages.
      *
-     * @param endpoint target address
-     * @param request request object
-     * @param ctx invoke context
-     * @param observer response stream observer
-     * @param <Req> request message type
-     * @param <Resp> response message type
+     * @param endpoint the target address
+     * @param request the request object
+     * @param ctx the invoke context
+     * @param observer the response stream observer
+     * @param <Req> the request message type
+     * @param <Resp> the response message type
      */
-    <Req, Resp> void invokeServerStreaming(Endpoint endpoint,
-                                           Req request,
-                                           Context ctx,
-                                           Observer<Resp> observer) throws RemotingException;
+    <Req, Resp> void invokeServerStreaming(
+            Endpoint endpoint,
+            Req request,
+            Context ctx,
+            Observer<Resp> observer);
 
     /**
      * Executes a client-streaming call with a request {@link Observer}
      * and a response {@link Observer}.
      *
-     * @param endpoint target address
+     * @param endpoint the target address
      * @param defaultReqIns the default request instance
-     * @param ctx invoke context
-     * @param respObserver response stream observer
-     * @param <Req> request message type
-     * @param <Resp> response message type
+     * @param ctx the invoke context
+     * @param respObserver the response stream observer
+     * @param <Req> the request message type
+     * @param <Resp> the response message type
      * @return request {@link Observer}.
      */
-    <Req, Resp> Observer<Req> invokeClientStreaming(Endpoint endpoint,
-                                                    Req defaultReqIns,
-                                                    Context ctx,
-                                                    Observer<Resp> respObserver) throws RemotingException;
+    <Req, Resp> Observer<Req> invokeClientStreaming(
+            Endpoint endpoint,
+            Req defaultReqIns,
+            Context ctx,
+            Observer<Resp> respObserver);
 }

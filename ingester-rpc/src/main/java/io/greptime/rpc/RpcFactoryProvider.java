@@ -30,7 +30,7 @@ public class RpcFactoryProvider {
     private static final RpcFactory RPC_FACTORY = ServiceLoader.load(RpcFactory.class).first();
 
     /**
-     * Get the {@link RpcFactory} impl, base on SPI.
+     * Gets the {@link RpcFactory} impl, base on SPI.
      *
      * @return a shared rpcFactory instance
      */
