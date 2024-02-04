@@ -30,16 +30,16 @@ import java.util.TimeZone;
 /**
  * @author jiachun.fjc
  */
-public class UtilTest {
+public class ValueUtilTest {
 
     @Test
     public void testGetLongValue() {
-        Assert.assertEquals(1L, Util.getLongValue(1));
-        Assert.assertEquals(1L, Util.getLongValue(1L));
-        Assert.assertEquals(1L, Util.getLongValue(1.0));
-        Assert.assertEquals(1L, Util.getLongValue(1.0f));
-        Assert.assertEquals(1L, Util.getLongValue(BigInteger.valueOf(1)));
-        Assert.assertEquals(1L, Util.getLongValue(BigDecimal.valueOf(1)));
+        Assert.assertEquals(1L, ValueUtil.getLongValue(1));
+        Assert.assertEquals(1L, ValueUtil.getLongValue(1L));
+        Assert.assertEquals(1L, ValueUtil.getLongValue(1.0));
+        Assert.assertEquals(1L, ValueUtil.getLongValue(1.0f));
+        Assert.assertEquals(1L, ValueUtil.getLongValue(BigInteger.valueOf(1)));
+        Assert.assertEquals(1L, ValueUtil.getLongValue(BigDecimal.valueOf(1)));
     }
 
     @Test
@@ -48,10 +48,10 @@ public class UtilTest {
         TimeZone gmtTimeZone = TimeZone.getTimeZone("GMT");
         cal.setTimeZone(gmtTimeZone);
         cal.set(1970, Calendar.JANUARY, 2);
-        Assert.assertEquals(1, Util.getDateValue(cal.getTime()));
-        Assert.assertEquals(1, Util.getDateValue(Instant.ofEpochSecond(86400)));
-        Assert.assertEquals(1, Util.getDateValue(LocalDate.ofEpochDay(1)));
-        Assert.assertEquals(1, Util.getDateValue(1));
+        Assert.assertEquals(1, ValueUtil.getDateValue(cal.getTime()));
+        Assert.assertEquals(1, ValueUtil.getDateValue(Instant.ofEpochSecond(86400)));
+        Assert.assertEquals(1, ValueUtil.getDateValue(LocalDate.ofEpochDay(1)));
+        Assert.assertEquals(1, ValueUtil.getDateValue(1));
     }
 
     @Test
@@ -61,10 +61,27 @@ public class UtilTest {
         cal.setTimeZone(gmtTimeZone);
         cal.set(1970, Calendar.JANUARY, 2, 0, 0, 0);
         cal.set(Calendar.MILLISECOND, 111);
-        Assert.assertEquals(86400111, Util.getDateTimeValue(cal.getTime()));
-        Assert.assertEquals(86400111, Util.getDateTimeValue(cal.getTime().toInstant()));
-        Assert.assertEquals(86400000, Util.getDateTimeValue(Instant.ofEpochSecond(86400)));
-        Assert.assertEquals(86400, Util.getDateTimeValue(86400));
+        Assert.assertEquals(86400111, ValueUtil.getDateTimeValue(cal.getTime()));
+        Assert.assertEquals(86400111, ValueUtil.getDateTimeValue(cal.getTime().toInstant()));
+        Assert.assertEquals(86400000, ValueUtil.getDateTimeValue(Instant.ofEpochSecond(86400)));
+        Assert.assertEquals(86400, ValueUtil.getDateTimeValue(86400));
+    }
+
+    @Test
+    public void testGetIntervalMonthDayNanoValue() {
+        Common.IntervalMonthDayNano result = ValueUtil.getIntervalMonthDayNanoValue(new IntervalMonthDayNano(1, 2, 3));
+        Assert.assertEquals(1, result.getMonths());
+        Assert.assertEquals(2, result.getDays());
+        Assert.assertEquals(3, result.getNanoseconds());
+
+        // test invalid type
+        try {
+            ValueUtil.getIntervalMonthDayNanoValue(1);
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+            Assert.assertEquals("Expected type: `IntervalMonthDayNano`, actual: class java.lang.Integer",
+                    e.getMessage());
+        }
     }
 
     @Test
@@ -84,7 +101,7 @@ public class UtilTest {
             BigInteger bigInt = BigInteger.valueOf(new Random().nextLong()).shiftLeft(64);
             bigInt = bigInt.add(BigInteger.valueOf(new Random().nextLong()));
             BigDecimal value = new BigDecimal(bigInt, scale);
-            Common.Decimal128 result = Util.getDecimal128Value(dataTypeExtension, value);
+            Common.Decimal128 result = ValueUtil.getDecimal128Value(dataTypeExtension, value);
 
             BigDecimal value2 = TestUtil.getDecimal(result, scale);
 

@@ -47,7 +47,7 @@ public final class RowHelper {
                 valueBuilder.setI32Value((int) value);
                 break;
             case INT64:
-                valueBuilder.setI64Value(Util.getLongValue(value));
+                valueBuilder.setI64Value(ValueUtil.getLongValue(value));
                 break;
             case UINT8:
                 valueBuilder.setU8Value((int) value);
@@ -59,7 +59,7 @@ public final class RowHelper {
                 valueBuilder.setU32Value((int) value);
                 break;
             case UINT64:
-                valueBuilder.setU64Value(Util.getLongValue(value));
+                valueBuilder.setU64Value(ValueUtil.getLongValue(value));
                 break;
             case FLOAT32:
                 valueBuilder.setF32Value(((Number) value).floatValue());
@@ -77,46 +77,46 @@ public final class RowHelper {
                 valueBuilder.setStringValue((String) value);
                 break;
             case DATE:
-                valueBuilder.setDateValue(Util.getDateValue(value));
+                valueBuilder.setDateValue(ValueUtil.getDateValue(value));
                 break;
             case DATETIME:
-                valueBuilder.setDatetimeValue(Util.getDateTimeValue(value));
+                valueBuilder.setDatetimeValue(ValueUtil.getDateTimeValue(value));
                 break;
             case TIMESTAMP_SECOND:
-                valueBuilder.setTimestampSecondValue(Util.getLongValue(value));
+                valueBuilder.setTimestampSecondValue(ValueUtil.getLongValue(value));
                 break;
             case TIMESTAMP_MILLISECOND:
-                valueBuilder.setTimestampMillisecondValue(Util.getLongValue(value));
+                valueBuilder.setTimestampMillisecondValue(ValueUtil.getLongValue(value));
                 break;
             case TIMESTAMP_MICROSECOND:
-                valueBuilder.setTimestampMicrosecondValue(Util.getLongValue(value));
+                valueBuilder.setTimestampMicrosecondValue(ValueUtil.getLongValue(value));
                 break;
             case TIMESTAMP_NANOSECOND:
-                valueBuilder.setTimestampNanosecondValue(Util.getLongValue(value));
+                valueBuilder.setTimestampNanosecondValue(ValueUtil.getLongValue(value));
                 break;
             case TIME_SECOND:
-                valueBuilder.setTimeSecondValue(Util.getLongValue(value));
+                valueBuilder.setTimeSecondValue(ValueUtil.getLongValue(value));
                 break;
             case TIME_MILLISECOND:
-                valueBuilder.setTimeMillisecondValue(Util.getLongValue(value));
+                valueBuilder.setTimeMillisecondValue(ValueUtil.getLongValue(value));
                 break;
             case TIME_MICROSECOND:
-                valueBuilder.setTimeMicrosecondValue(Util.getLongValue(value));
+                valueBuilder.setTimeMicrosecondValue(ValueUtil.getLongValue(value));
                 break;
             case TIME_NANOSECOND:
-                valueBuilder.setTimeNanosecondValue(Util.getLongValue(value));
+                valueBuilder.setTimeNanosecondValue(ValueUtil.getLongValue(value));
                 break;
             case INTERVAL_YEAR_MONTH:
                 valueBuilder.setIntervalYearMonthValue((int) value);
                 break;
             case INTERVAL_DAY_TIME:
-                valueBuilder.setIntervalDayTimeValue(Util.getLongValue(value));
+                valueBuilder.setIntervalDayTimeValue(ValueUtil.getLongValue(value));
                 break;
             case INTERVAL_MONTH_DAY_NANO:
-                valueBuilder.setIntervalMonthDayNanoValue(Util.getIntervalMonthDayNanoValue(value));
+                valueBuilder.setIntervalMonthDayNanoValue(ValueUtil.getIntervalMonthDayNanoValue(value));
                 break;
             case DECIMAL128:
-                valueBuilder.setDecimal128Value(Util.getDecimal128Value(dataTypeExtension, value));
+                valueBuilder.setDecimal128Value(ValueUtil.getDecimal128Value(dataTypeExtension, value));
                 break;
             default:
                 throw new IllegalArgumentException(String.format("Unsupported `data_type`: %s", dataType));
