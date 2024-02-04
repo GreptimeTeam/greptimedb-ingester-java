@@ -38,7 +38,7 @@ public class GreptimeOptionsTest {
         Executor asyncPool = command -> System.out.println("asyncPool");
         RpcOptions rpcOptions = RpcOptions.newDefault();
         int writeMaxRetries = 2;
-        int maxInFlightWriteRows = 999;
+        int maxInFlightWritePoints = 9990;
         LimitedPolicy limitedPolicy = new LimitedPolicy.DiscardPolicy();
         int defaultStreamMaxWritePointsPerSecond = 100000;
         long routeTableRefreshPeriodSeconds = 99;
@@ -49,7 +49,7 @@ public class GreptimeOptionsTest {
                 .asyncPool(asyncPool) //
                 .rpcOptions(rpcOptions) //
                 .writeMaxRetries(writeMaxRetries) //
-                .maxInFlightWriteRows(maxInFlightWriteRows) //
+                .maxInFlightWritePoints(maxInFlightWritePoints) //
                 .writeLimitedPolicy(limitedPolicy) //
                 .defaultStreamMaxWritePointsPerSecond(defaultStreamMaxWritePointsPerSecond) //
                 .routeTableRefreshPeriodSeconds(routeTableRefreshPeriodSeconds) //
@@ -71,7 +71,7 @@ public class GreptimeOptionsTest {
         Assert.assertNotNull(writeOptions);
         Assert.assertEquals(asyncPool, writeOptions.getAsyncPool());
         Assert.assertEquals(writeMaxRetries, writeOptions.getMaxRetries());
-        Assert.assertEquals(maxInFlightWriteRows, writeOptions.getMaxInFlightWriteRows());
+        Assert.assertEquals(maxInFlightWritePoints, writeOptions.getMaxInFlightWritePoints());
         Assert.assertEquals(limitedPolicy, writeOptions.getLimitedPolicy());
         Assert.assertEquals(defaultStreamMaxWritePointsPerSecond, writeOptions.getDefaultStreamMaxWritePointsPerSecond());
         Assert.assertEquals(authInfo, writeOptions.getAuthInfo());

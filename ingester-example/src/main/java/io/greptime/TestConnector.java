@@ -54,9 +54,9 @@ public class TestConnector {
                 .writeMaxRetries(1)
                 // Optional, the default value is fine.
                 //
-                // Write flow limit: maximum number of data rows in-flight. It does not take effect on `StreamWriter`
-                // The default is 65536
-                .maxInFlightWriteRows(65536)
+                // Write flow limit: maximum number of data points in-flight. It does not take effect on `StreamWriter`
+                // The default is 10 * 65536
+                .maxInFlightWritePoints(10 * 65536)
                 // Optional, the default value is fine.
                 //
                 // Write flow limit: the policy to use when the write flow limit is exceeded.
