@@ -22,25 +22,19 @@ package io.greptime.common.util;
  *
  * @author jiachun.fjc
  */
-@SuppressWarnings("unused")
 public class StringBuilderHelper {
 
     private static final int MAX_BUF_SIZE;
     private static final ThreadLocal<StringBuilderHolder> HOLDER_THREAD_LOCAL;
 
     static {
-        MAX_BUF_SIZE = 1024 << 3;     // 8k
+        MAX_BUF_SIZE = 1024 << 3; // 8k
         HOLDER_THREAD_LOCAL = ThreadLocal.withInitial(StringBuilderHolder::new);
     }
 
     public static StringBuilder get() {
         StringBuilderHolder holder = HOLDER_THREAD_LOCAL.get();
         return holder.getStringBuilder();
-    }
-
-    public static void truncate() {
-        StringBuilderHolder holder = HOLDER_THREAD_LOCAL.get();
-        holder.truncate();
     }
 
     private static class StringBuilderHolder {

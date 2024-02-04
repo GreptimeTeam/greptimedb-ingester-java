@@ -32,18 +32,6 @@ public class IntervalMonthDayNano implements Into<Common.IntervalMonthDayNano> {
         this.nanoseconds = nanoseconds;
     }
 
-    public int getMonths() {
-        return months;
-    }
-
-    public int getDays() {
-        return days;
-    }
-
-    public long getNanoseconds() {
-        return nanoseconds;
-    }
-
     @Override
     public Common.IntervalMonthDayNano into() {
         return Common.IntervalMonthDayNano.newBuilder() //

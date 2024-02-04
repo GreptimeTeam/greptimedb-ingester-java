@@ -34,9 +34,7 @@ import io.greptime.common.util.StringBuilderHelper;
 import io.greptime.common.util.SystemPropertyUtil;
 import io.greptime.common.util.ThreadPoolUtil;
 import io.greptime.rpc.errors.ConnectFailException;
-import io.greptime.rpc.errors.InvokeTimeoutException;
 import io.greptime.rpc.errors.OnlyErrorMessage;
-import io.greptime.rpc.errors.RemotingException;
 import io.greptime.rpc.interceptors.ClientRequestLimitInterceptor;
 import io.greptime.rpc.interceptors.ContextToHeadersInterceptor;
 import io.greptime.rpc.interceptors.MetricInterceptor;
@@ -60,7 +58,6 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
@@ -68,7 +65,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -154,17 +150,6 @@ public class GrpcClient implements RpcClient {
     }
 
     @Override
-    public boolean checkConnection(Endpoint endpoint) {
-        return checkConnection(endpoint, false);
-    }
-
-    @Override
-    public boolean checkConnection(Endpoint endpoint, boolean createIfAbsent) {
-        Ensures.ensureNonNull(endpoint, "null `endpoint`");
-        return checkChannel(endpoint, createIfAbsent);
-    }
-
-    @Override
     public void closeConnection(Endpoint endpoint) {
         Ensures.ensureNonNull(endpoint, "null `endpoint`");
         closeChannel(endpoint);
@@ -176,41 +161,12 @@ public class GrpcClient implements RpcClient {
     }
 
     @Override
-    public <Req, Resp> Resp invokeSync(Endpoint endpoint, Req request, Context ctx, long timeoutMs)
-            throws RemotingException {
-        long timeout = calcTimeout(timeoutMs);
-        CompletableFuture<Resp> future = new CompletableFuture<>();
-
-        invokeAsync(endpoint, request, ctx, new Observer<Resp>() {
-
-            @Override
-            public void onNext(Resp value) {
-                future.complete(value);
-            }
-
-            @Override
-            public void onError(Throwable err) {
-                future.completeExceptionally(err);
-            }
-        }, timeout);
-
-        try {
-            return future.get(timeout, TimeUnit.MILLISECONDS);
-        } catch (TimeoutException e) {
-            future.cancel(true);
-            throw new InvokeTimeoutException(e);
-        } catch (Throwable t) {
-            future.cancel(true);
-            throw new RemotingException(t);
-        }
-    }
-
-    @Override
-    public <Req, Resp> void invokeAsync(Endpoint endpoint,
-                                        Req request,
-                                        Context ctx,
-                                        Observer<Resp> observer,
-                                        long timeoutMs) {
+    public <Req, Resp> void invokeAsync(
+            Endpoint endpoint,
+            Req request,
+            Context ctx,
+            Observer<Resp> observer,
+            long timeoutMs) {
         checkArgs(endpoint, request, ctx, observer);
         ContextToHeadersInterceptor.setCurrentCtx(ctx);
 
@@ -274,10 +230,11 @@ public class GrpcClient implements RpcClient {
     }
 
     @Override
-    public <Req, Resp> void invokeServerStreaming(Endpoint endpoint,
-                                                  Req request,
-                                                  Context ctx,
-                                                  Observer<Resp> observer) {
+    public <Req, Resp> void invokeServerStreaming(
+            Endpoint endpoint,
+            Req request,
+            Context ctx,
+            Observer<Resp> observer) {
         checkArgs(endpoint, request, ctx, observer);
         ContextToHeadersInterceptor.setCurrentCtx(ctx);
 
@@ -323,10 +280,11 @@ public class GrpcClient implements RpcClient {
     }
 
     @Override
-    public <Req, Resp> Observer<Req> invokeClientStreaming(Endpoint endpoint,
-                                                           Req defaultReqIns,
-                                                           Context ctx,
-                                                           Observer<Resp> respObserver) {
+    public <Req, Resp> Observer<Req> invokeClientStreaming(
+            Endpoint endpoint,
+            Req defaultReqIns,
+            Context ctx,
+            Observer<Resp> respObserver) {
         checkArgs(endpoint, defaultReqIns, ctx, respObserver);
         ContextToHeadersInterceptor.setCurrentCtx(ctx);
 
@@ -508,16 +466,6 @@ public class GrpcClient implements RpcClient {
         }
     }
 
-    private boolean checkChannel(Endpoint endpoint, boolean createIfAbsent) {
-        ManagedChannel ch = getChannel(endpoint, createIfAbsent);
-
-        if (ch == null) {
-            return false;
-        }
-
-        return checkConnectivity(endpoint, ch);
-    }
-
     private boolean checkConnectivity(Endpoint endpoint, ManagedChannel ch) {
         ConnectivityState st = ch.getState(false);
 
@@ -583,7 +531,7 @@ public class GrpcClient implements RpcClient {
     }
 
     private Channel getCheckedChannel(Endpoint endpoint, Consumer<Throwable> onFailed) {
-        ManagedChannel ch = getChannel(endpoint, true);
+        ManagedChannel ch = this.managedChannelPool.computeIfAbsent(endpoint, this::newChannel);
 
         if (checkConnectivity(endpoint, ch)) {
             return ch;
@@ -592,14 +540,6 @@ public class GrpcClient implements RpcClient {
         onFailed.accept(new ConnectFailException("Connect failed to " + endpoint));
 
         return null;
-    }
-
-    private ManagedChannel getChannel(Endpoint endpoint, boolean createIfAbsent) {
-        if (createIfAbsent) {
-            return this.managedChannelPool.computeIfAbsent(endpoint, this::newChannel);
-        } else {
-            return this.managedChannelPool.get(endpoint);
-        }
     }
 
     private IdChannel newChannel(Endpoint endpoint) {

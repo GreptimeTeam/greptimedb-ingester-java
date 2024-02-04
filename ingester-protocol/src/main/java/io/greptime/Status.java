@@ -62,7 +62,10 @@ public enum Status {
     //
     TableColumnNotFound(4002), //
     TableColumnExists(4003), //
-    DatabaseNotFound(4004), RegionNotFound(4005), RegionAlreadyExists(4006), RegionReadonly(4007),
+    DatabaseNotFound(4004), //
+    RegionNotFound(4005), //
+    RegionAlreadyExists(4006), //
+    RegionReadonly(4007),
     // ====== End of catalog related status code =======
 
     // ====== Begin of storage related status code =====
@@ -125,7 +128,6 @@ public enum Status {
     /**
      * Returns {@code true} if the status code is {@link #Success}.
      */
-    @SuppressWarnings("unused")
     public static boolean isSuccess(int statusCode) {
         return statusCode == Success.getStatusCode();
     }

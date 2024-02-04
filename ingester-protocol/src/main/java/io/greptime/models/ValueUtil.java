@@ -27,7 +27,7 @@ import java.util.Date;
 /**
  * @author jiachun.fjc
  */
-public class Util {
+public class ValueUtil {
 
     static int ONE_DAY_IN_SECONDS = 86400;
 

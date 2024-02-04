@@ -20,26 +20,11 @@ package io.greptime.rpc.errors;
  *
  * @author jiachun.fjc
  */
-@SuppressWarnings("unused")
-public class ConnectFailException extends RemotingException {
+public class ConnectFailException extends RuntimeException {
 
     private static final long serialVersionUID = 3129127065579018606L;
 
-    public ConnectFailException() {}
-
     public ConnectFailException(String message) {
         super(message);
-    }
-
-    public ConnectFailException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public ConnectFailException(Throwable cause) {
-        super(cause);
-    }
-
-    public ConnectFailException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
     }
 }

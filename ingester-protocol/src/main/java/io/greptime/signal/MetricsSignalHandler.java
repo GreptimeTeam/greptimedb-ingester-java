@@ -50,7 +50,7 @@ public class MetricsSignalHandler implements SignalHandler {
         try {
             File file = FileOutputHelper.getOutputFile(BASE_NAME);
 
-            LOG.info("Printing GreptimeDB client metrics triggered by signal: {} to file: {}.", signalName,
+            LOG.info("Printing GreptimeDB clients metrics triggered by signal: {} to file: {}.", signalName,
                     file.getAbsoluteFile());
 
             try (PrintStream out = new PrintStream(new FileOutputStream(file, true))) {

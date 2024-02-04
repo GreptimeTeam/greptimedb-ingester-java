@@ -57,11 +57,13 @@ public final class Strings {
     /**
      * Checks if a string is whitespace, empty ("") or null.
      * <p>
+     * ``` java
      * Strings.isBlank(null)      = true
      * Strings.isBlank("")        = true
      * Strings.isBlank(" ")       = true
      * Strings.isBlank("bob")     = false
      * Strings.isBlank("  bob  ") = false
+     * ```
      */
     public static boolean isBlank(String str) {
         int strLen;
@@ -78,11 +80,13 @@ public final class Strings {
     /**
      * Checks if a string is not empty (""), not null and not whitespace only.
      * <p>
+     * ``` java
      * Strings.isNotBlank(null)      = false
      * Strings.isNotBlank("")        = false
      * Strings.isNotBlank(" ")       = false
      * Strings.isNotBlank("bob")     = true
      * Strings.isNotBlank("  bob  ") = true
+     * ```
      */
     public static boolean isNotBlank(String str) {
         return !isBlank(str);
@@ -93,12 +97,14 @@ public final class Strings {
      * <p>
      * A null input String returns null.
      * <p>
+     * ``` java
      * Strings.split(null, *)         = null
      * Strings.split("", *)           = []
      * Strings.split("a.b.c", '.')    = ["a", "b", "c"]
      * Strings.split("a..b.c", '.')   = ["a", "b", "c"]
      * Strings.split("a:b:c", '.')    = ["a:b:c"]
      * Strings.split("a b c", ' ')    = ["a", "b", "c"]
+     * ```
      */
     public static String[] split(String str, char separator) {
         return split(str, separator, false);
@@ -111,6 +117,7 @@ public final class Strings {
      * <p>
      * A null input String returns null.
      * <p>
+     * ``` java
      * Strings.split(null, *, true)         = null
      * Strings.split("", *, true)           = []
      * Strings.split("a.b.c", '.', true)    = ["a", "b", "c"]
@@ -122,6 +129,7 @@ public final class Strings {
      * Strings.split(" a b c", ' ', true)   = ["", a", "b", "c"]
      * Strings.split("  a b c", ' ', true)  = ["", "", a", "b", "c"]
      * Strings.split(" a b c ", ' ', true)  = ["", a", "b", "c", ""]
+     * ```
      */
     public static String[] split(String str, char separator, boolean preserveAllTokens) {
         if (str == null) {

@@ -15,9 +15,6 @@
  */
 package com.google.protobuf;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 /**
  * A {@code ByteString} helper, avoid some memory copying to improve performance.
  *
@@ -30,44 +27,5 @@ public class ByteStringHelper {
      */
     public static ByteString wrap(byte[] bs) {
         return ByteString.wrap(bs);
-    }
-
-    /**
-     * Wrap a byte array into a ByteString.
-     *
-     * @param bs the byte array
-     * @param offset read start offset in array
-     * @param len read data length
-     * @return the result byte string.
-     */
-    public static ByteString wrap(byte[] bs, int offset, int len) {
-        return ByteString.wrap(bs, offset, len);
-    }
-
-    /**
-     * Wrap a byte buffer into a ByteString.
-     */
-    public static ByteString wrap(ByteBuffer buf) {
-        return ByteString.wrap(buf);
-    }
-
-    /**
-     * Steal the byte[] from {@link ByteString}, if failed,
-     * then call {@link ByteString#toByteArray()}.
-     *
-     * @param byteString the byteString source data
-     * @return carried bytes
-     */
-    public static byte[] sealByteArray(ByteString byteString) {
-        BytesStealer stealer = new BytesStealer();
-        try {
-            byteString.writeTo(stealer);
-            if (stealer.isValid()) {
-                return stealer.value();
-            }
-        } catch (IOException ignored) {
-            // ignored
-        }
-        return byteString.toByteArray();
     }
 }
