@@ -104,7 +104,7 @@ public final class SignalHelper {
                     h.handle(signal.getName());
                 }
             } catch (Throwable t) {
-                LOG.error("Fail to handle signal: {}.", signal, t);
+                LOG.error("Failed to handle signal: {}.", signal, t);
             }
         }
     }
