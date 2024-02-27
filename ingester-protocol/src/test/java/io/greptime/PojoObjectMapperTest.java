@@ -28,7 +28,7 @@ import java.util.Random;
 /**
  * @author jiachun.fjc
  */
-public class PojoMapperTest {
+public class PojoObjectMapperTest {
 
     @Test
     public void testToTable() {
@@ -37,7 +37,7 @@ public class PojoMapperTest {
             Pojo1Test pojo1 = createNewPojo1Test();
             pojos1.add(pojo1);
         }
-        Table tp1 = new CachedPojoMapper().mapToTable(pojos1);
+        Table tp1 = new CachedPojoObjectMapper().mapToTable(pojos1);
         Assert.assertEquals("pojo1", tp1.tableName());
         Assert.assertEquals(50, tp1.pointCount());
 
@@ -47,7 +47,7 @@ public class PojoMapperTest {
             Pojo2Test pojo2 = createNewPojo2Test();
             pojos2.add(pojo2);
         }
-        Table tp2 = new CachedPojoMapper().mapToTable(pojos2);
+        Table tp2 = new CachedPojoObjectMapper().mapToTable(pojos2);
         Assert.assertEquals("pojo2", tp2.tableName());
         Assert.assertEquals(30, tp2.pointCount());
     }

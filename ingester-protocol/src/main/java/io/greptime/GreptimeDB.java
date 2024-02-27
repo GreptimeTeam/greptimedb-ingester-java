@@ -54,7 +54,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author jiachun.fjc
  */
-public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>, Display {
+public class GreptimeDB implements Write, WriteObject, Lifecycle<GreptimeOptions>, Display {
 
     private static final Logger LOG = LoggerFactory.getLogger(GreptimeDB.class);
 
@@ -63,7 +63,7 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
     private static final String VERSION = Util.clientVersion();
     private static final String NODE_ID = UUID.randomUUID().toString();
 
-    private static final PojoMapper POJO_MAPPER = getDefaultPojoMapper();
+    private static final PojoObjectMapper POJO_OBJECT_MAPPER = getDefaultPojoObjectMapper();
 
     private final int id;
     private final AtomicBoolean started = new AtomicBoolean(false);
@@ -140,21 +140,22 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
     }
 
     @Override
-    public CompletableFuture<Result<WriteOk, Err>> writePOJOs(Collection<List<?>> pojos, WriteOp writeOp, Context ctx) {
-        List<Table> rows = new ArrayList<>(pojos.size());
-        for (List<?> pojo : pojos) {
-            rows.add(POJO_MAPPER.mapToTable(pojo));
+    public CompletableFuture<Result<WriteOk, Err>> writeObjects(Collection<List<?>> objects, WriteOp writeOp,
+            Context ctx) {
+        List<Table> rows = new ArrayList<>(objects.size());
+        for (List<?> pojo : objects) {
+            rows.add(POJO_OBJECT_MAPPER.mapToTable(pojo));
         }
         return write(rows, writeOp, ctx);
     }
 
     @Override
-    public StreamWriter<List<?>, WriteOk> streamWriterPOJOs(int maxPointsPerSecond, Context ctx) {
+    public StreamWriter<List<?>, WriteOk> objectsStreamWriter(int maxPointsPerSecond, Context ctx) {
         StreamWriter<Table, WriteOk> delegate = streamWriter(maxPointsPerSecond, ctx);
         return new StreamWriter<List<?>, WriteOk>() {
             @Override
             public StreamWriter<List<?>, WriteOk> write(List<?> val, WriteOp writeOp) {
-                Table table = POJO_MAPPER.mapToTable(val);
+                Table table = POJO_OBJECT_MAPPER.mapToTable(val);
                 delegate.write(table, writeOp);
                 return this;
             }
@@ -320,12 +321,12 @@ public class GreptimeDB implements Write, WritePOJO, Lifecycle<GreptimeOptions>,
         }
     }
 
-    private static PojoMapper getDefaultPojoMapper() {
+    private static PojoObjectMapper getDefaultPojoObjectMapper() {
         try {
-            return ServiceLoader.load(PojoMapper.class).first();
+            return ServiceLoader.load(PojoObjectMapper.class).first();
         } catch (Throwable t) {
             LOG.warn("Failed to load `PojoMapper`, use default: `CachedPojoMapper(1024)`", t);
-            return new CachedPojoMapper();
+            return new CachedPojoObjectMapper();
         }
     }
 

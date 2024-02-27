@@ -23,7 +23,7 @@ import java.util.List;
  *
  * @author jiachun.fjc
  */
-public interface PojoMapper {
+public interface PojoObjectMapper {
 
-    <M> Table mapToTable(List<M> pojos);
+    <M> Table mapToTable(List<M> pojoObjects);
 }

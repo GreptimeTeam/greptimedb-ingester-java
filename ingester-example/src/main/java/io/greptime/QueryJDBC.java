@@ -103,6 +103,6 @@ public class QueryJDBC {
             c.setCpuSys(i + 0.12);
             cpus.add(c);
         }
-        greptimeDB.writePOJOs(cpus).get();
+        greptimeDB.writeObjects(cpus).get();
     }
 }
