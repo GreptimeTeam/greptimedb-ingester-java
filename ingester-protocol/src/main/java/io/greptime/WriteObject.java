@@ -26,53 +26,53 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Write POJO API: writes data in POJO object format to the DB.
+ * Write POJO object API: writes data in POJO object format to the DB.
  *
  * @author jiachun.fjc
  */
-public interface WritePOJO {
+public interface WriteObject {
     /**
-     * @see #writePOJOs(Collection, WriteOp, Context)
+     * @see #writeObjects(Collection, WriteOp, Context)
      */
-    default CompletableFuture<Result<WriteOk, Err>> writePOJOs(List<?>... pojos) {
-        return writePOJOs(Arrays.asList(pojos));
+    default CompletableFuture<Result<WriteOk, Err>> writeObjects(List<?>... objects) {
+        return writeObjects(Arrays.asList(objects));
     }
     /**
-     * @see #writePOJOs(Collection, WriteOp, Context)
+     * @see #writeObjects(Collection, WriteOp, Context)
      */
-    default CompletableFuture<Result<WriteOk, Err>> writePOJOs(Collection<List<?>> pojos) {
-        return writePOJOs(pojos, WriteOp.Insert, Context.newDefault());
+    default CompletableFuture<Result<WriteOk, Err>> writeObjects(Collection<List<?>> objects) {
+        return writeObjects(objects, WriteOp.Insert, Context.newDefault());
     }
 
     /**
-     * @see #writePOJOs(Collection, WriteOp, Context)
+     * @see #writeObjects(Collection, WriteOp, Context)
      */
-    default CompletableFuture<Result<WriteOk, Err>> writePOJOs(Collection<List<?>> pojos, WriteOp writeOp) {
-        return writePOJOs(pojos, writeOp, Context.newDefault());
+    default CompletableFuture<Result<WriteOk, Err>> writeObjects(Collection<List<?>> objects, WriteOp writeOp) {
+        return writeObjects(objects, writeOp, Context.newDefault());
     }
 
     /**
      * Write multiple rows of data (which can belong to multiple tables) to the database at once.
      *
-     * @param pojos a collection of data to be written, classified by table
+     * @param objects a collection of data to be written, classified by table
      * @param writeOp write operation(insert or delete)
      * @param ctx invoke context
      * @return write result
      */
-    CompletableFuture<Result<WriteOk, Err>> writePOJOs(Collection<List<?>> pojos, WriteOp writeOp, Context ctx);
+    CompletableFuture<Result<WriteOk, Err>> writeObjects(Collection<List<?>> objects, WriteOp writeOp, Context ctx);
 
     /**
-     * @see #streamWriterPOJOs(int, Context)
+     * @see #objectsStreamWriter(int, Context)
      */
-    default StreamWriter<List<?>, WriteOk> streamWriterPOJOs() {
-        return streamWriterPOJOs(-1);
+    default StreamWriter<List<?>, WriteOk> objectsStreamWriter() {
+        return objectsStreamWriter(-1);
     }
 
     /**
-     * @see #streamWriterPOJOs(int, Context)
+     * @see #objectsStreamWriter(int, Context)
      */
-    default StreamWriter<List<?>, WriteOk> streamWriterPOJOs(int maxPointsPerSecond) {
-        return streamWriterPOJOs(maxPointsPerSecond, Context.newDefault());
+    default StreamWriter<List<?>, WriteOk> objectsStreamWriter(int maxPointsPerSecond) {
+        return objectsStreamWriter(maxPointsPerSecond, Context.newDefault());
     }
 
     /**
@@ -90,5 +90,5 @@ public interface WritePOJO {
      * @param ctx invoke context
      * @return a stream writer instance
      */
-    StreamWriter<List<?>, WriteOk> streamWriterPOJOs(int maxPointsPerSecond, Context ctx);
+    StreamWriter<List<?>, WriteOk> objectsStreamWriter(int maxPointsPerSecond, Context ctx);
 }

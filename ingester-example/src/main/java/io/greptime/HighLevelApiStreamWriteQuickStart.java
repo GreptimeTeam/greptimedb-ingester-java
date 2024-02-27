@@ -26,9 +26,9 @@ import java.util.concurrent.ExecutionException;
 /**
  * @author jiachun.fjc
  */
-public class StreamWritePOJOsQuickStart {
+public class HighLevelApiStreamWriteQuickStart {
 
-    private static final Logger LOG = LoggerFactory.getLogger(StreamWritePOJOsQuickStart.class);
+    private static final Logger LOG = LoggerFactory.getLogger(HighLevelApiStreamWriteQuickStart.class);
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
         GreptimeDB greptimeDB = TestConnector.connectToDefaultDB();
@@ -52,7 +52,7 @@ public class StreamWritePOJOsQuickStart {
             memories.add(m);
         }
 
-        StreamWriter<List<?>, WriteOk> writer = greptimeDB.streamWriterPOJOs();
+        StreamWriter<List<?>, WriteOk> writer = greptimeDB.objectsStreamWriter();
 
         // write data into stream
         writer.write(cpus);

@@ -39,15 +39,15 @@ import java.util.Map;
  * @author jiachun.fjc
  */
 @SPI(priority = 9)
-public class CachedPojoMapper implements PojoMapper {
+public class CachedPojoObjectMapper implements PojoObjectMapper {
 
     private final LoadingCache<Class<?>, Map<String, Field>> classFieldCache;
 
-    public CachedPojoMapper() {
+    public CachedPojoObjectMapper() {
         this(1024);
     }
 
-    public CachedPojoMapper(int maxCachedPOJOs) {
+    public CachedPojoObjectMapper(int maxCachedPOJOs) {
         this.classFieldCache =
                 CacheBuilder.newBuilder().maximumSize(maxCachedPOJOs)
                         .build(new CacheLoader<Class<?>, Map<String, Field>>() {
@@ -60,11 +60,11 @@ public class CachedPojoMapper implements PojoMapper {
     }
 
     @Override
-    public <M> Table mapToTable(List<M> pojos) {
-        Ensures.ensureNonNull(pojos, "pojos");
-        Ensures.ensure(!pojos.isEmpty(), "pojos can not be empty");
+    public <M> Table mapToTable(List<M> pojoObjects) {
+        Ensures.ensureNonNull(pojoObjects, "pojoObjects");
+        Ensures.ensure(!pojoObjects.isEmpty(), "pojoObjects can not be empty");
 
-        M first = pojos.get(0);
+        M first = pojoObjects.get(0);
 
         Class<?> metricType = first.getClass();
 
@@ -88,7 +88,7 @@ public class CachedPojoMapper implements PojoMapper {
         }
 
         Table table = Table.from(schemaBuilder.build());
-        for (M pojo : pojos) {
+        for (M pojo : pojoObjects) {
             Class<?> type = pojo.getClass();
             if (!type.equals(metricType)) {
                 throw new PojoException("All POJOs must be of the same type");

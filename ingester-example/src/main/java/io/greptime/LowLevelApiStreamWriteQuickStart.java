@@ -27,9 +27,9 @@ import java.util.concurrent.ExecutionException;
 /**
  * @author jiachun.fjc
  */
-public class StreamWriteQuickStart {
+public class LowLevelApiStreamWriteQuickStart {
 
-    private static final Logger LOG = LoggerFactory.getLogger(StreamWriteQuickStart.class);
+    private static final Logger LOG = LoggerFactory.getLogger(LowLevelApiStreamWriteQuickStart.class);
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
         GreptimeDB greptimeDB = TestConnector.connectToDefaultDB();

@@ -15,14 +15,12 @@
  */
 package io.greptime;
 
-import io.greptime.models.DataType;
 import io.greptime.models.Err;
 import io.greptime.models.Result;
-import io.greptime.models.Table;
-import io.greptime.models.TableSchema;
 import io.greptime.models.WriteOk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -31,50 +29,38 @@ import java.util.concurrent.ExecutionException;
 /**
  * @author jiachun.fjc
  */
-public class WriteQuickStart {
+public class HighLevelApiWriteQuickStart {
 
-    private static final Logger LOG = LoggerFactory.getLogger(WriteQuickStart.class);
+    private static final Logger LOG = LoggerFactory.getLogger(HighLevelApiWriteQuickStart.class);
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
         GreptimeDB greptimeDB = TestConnector.connectToDefaultDB();
 
-        TableSchema cpuMetricSchema = TableSchema.newBuilder("cpu_metric") //
-                .addTag("host", DataType.String) //
-                .addTimestamp("ts", DataType.TimestampMillisecond) //
-                .addField("cpu_user", DataType.Float64) //
-                .addField("cpu_sys", DataType.Float64) //
-                .build();
-
-        TableSchema memMetricSchema = TableSchema.newBuilder("mem_metric") //
-                .addTag("host", DataType.String) //
-                .addTimestamp("ts", DataType.TimestampMillisecond) //
-                .addField("mem_usage", DataType.Float64) //
-                .build();
-
-        Table cpuMetric = Table.from(cpuMetricSchema);
-        Table memMetric = Table.from(memMetricSchema);
-
+        List<Cpu> cpus = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
-            String host = "127.0.0." + i;
-            long ts = System.currentTimeMillis();
-            double cpuUser = i + 0.1;
-            double cpuSys = i + 0.12;
-            cpuMetric.addRow(host, ts, cpuUser, cpuSys);
+            Cpu c = new Cpu();
+            c.setHost("127.0.0." + i);
+            c.setTs(System.currentTimeMillis());
+            c.setCpuUser(i + 0.1);
+            c.setCpuSys(i + 0.12);
+            cpus.add(c);
         }
 
+        List<Memory> memories = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
-            String host = "127.0.0." + i;
-            long ts = System.currentTimeMillis();
-            double memUsage = i + 0.2;
-            memMetric.addRow(host, ts, memUsage);
+            Memory m = new Memory();
+            m.setHost("127.0.0." + i);
+            m.setTs(System.currentTimeMillis());
+            m.setMemUsage(i + 0.2);
+            memories.add(m);
         }
 
         // For performance reasons, the SDK is designed to be purely asynchronous.
         // The return value is a future object. If you want to immediately obtain
         // the result, you can call `future.get()`.
-        CompletableFuture<Result<WriteOk, Err>> future = greptimeDB.write(cpuMetric, memMetric);
+        CompletableFuture<Result<WriteOk, Err>> puts = greptimeDB.writeObjects(cpus, memories);
 
-        Result<WriteOk, Err> result = future.get();
+        Result<WriteOk, Err> result = puts.get();
 
         Result<Integer, String> simpleResult = result //
                 .map(WriteOk::getSuccess) //
@@ -85,8 +71,8 @@ public class WriteQuickStart {
             LOG.error("Failed to write: {}", simpleResult.getErr());
         }
 
-        List<Table> delete_objs = Arrays.asList(cpuMetric.subRange(0, 5), memMetric.subRange(0, 5));
-        Result<WriteOk, Err> deletes = greptimeDB.write(delete_objs, WriteOp.Delete).get();
+        List<List<?>> deletePojoObjects = Arrays.asList(cpus.subList(0, 5), memories.subList(0, 5));
+        Result<WriteOk, Err> deletes = greptimeDB.writeObjects(deletePojoObjects, WriteOp.Delete).get();
 
         if (deletes.isOk()) {
             LOG.info("Delete result: {}", result.getOk());
