@@ -573,10 +573,10 @@ public class GrpcClient implements RpcClient {
         NettyChannelBuilder innerChannelBuilder =
                 NettyChannelBuilder.forAddress(endpoint.getAddr(), endpoint.getPort());
 
-        if (this.opts.getTlsOptions().isEmpty()) {
-            innerChannelBuilder.usePlaintext();
-        } else {
+        if (this.opts.getTlsOptions().isPresent()) {
             innerChannelBuilder.useTransportSecurity().sslContext(newSslContext(this.opts.getTlsOptions().get()));
+        } else {
+            innerChannelBuilder.usePlaintext();
         }
 
         ManagedChannel innerChannel = innerChannelBuilder.executor(this.asyncPool) //
