@@ -552,10 +552,10 @@ public class GrpcClient implements RpcClient {
 
             if (tlsOptions.getClientCertChain().isPresent() && tlsOptions.getPrivateKey().isPresent()) {
                 if (tlsOptions.getPrivateKeyPassword().isPresent()) {
-                    builder.keyManager(tlsOptions.getClientCertChain().get(), tlsOptions.getPrivateKey().get());
-                } else {
                     builder.keyManager(tlsOptions.getClientCertChain().get(), tlsOptions.getPrivateKey().get(),
                             tlsOptions.getPrivateKeyPassword().get());
+                } else {
+                    builder.keyManager(tlsOptions.getClientCertChain().get(), tlsOptions.getPrivateKey().get());
                 }
             }
 
