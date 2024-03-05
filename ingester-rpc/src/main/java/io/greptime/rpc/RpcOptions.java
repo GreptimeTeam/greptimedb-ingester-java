@@ -16,6 +16,7 @@
 package io.greptime.rpc;
 
 import io.greptime.common.Copiable;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -99,6 +100,20 @@ public class RpcOptions implements Copiable<RpcOptions> {
     private boolean logOnLimitChange = true;
 
     private boolean enableMetricInterceptor = false;
+
+    /**
+     * Set `TlsOptions` to use secure connection between client and server. Set to `null` to use
+     * plaintext connection instead.
+     */
+    private Optional<TlsOptions> tlsOptions = Optional.empty();
+
+    public Optional<TlsOptions> getTlsOptions() {
+        return tlsOptions;
+    }
+
+    public void setTlsOptions(TlsOptions tlsOptions) {
+        this.tlsOptions = Optional.ofNullable(tlsOptions);
+    }
 
     public boolean isUseRpcSharedPool() {
         return useRpcSharedPool;
@@ -269,6 +284,7 @@ public class RpcOptions implements Copiable<RpcOptions> {
                 ", blockOnLimit=" + blockOnLimit + //
                 ", logOnLimitChange=" + logOnLimitChange + //
                 ", enableMetricInterceptor=" + enableMetricInterceptor + //
+                ", tlsOptions=" + tlsOptions + //
                 '}';
     }
 

@@ -50,6 +50,8 @@ import io.grpc.ManagedChannel;
 import io.grpc.MethodDescriptor;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.netty.shaded.io.netty.channel.ChannelOption;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import io.grpc.protobuf.ProtoUtils;
 import io.grpc.stub.ClientCalls;
 import io.grpc.stub.StreamObserver;
@@ -68,6 +70,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import javax.net.ssl.SSLException;
 
 /**
  * Grpc client implementation.
@@ -542,11 +545,41 @@ public class GrpcClient implements RpcClient {
         return null;
     }
 
+    private SslContext newSslContext(TlsOptions tlsOptions) {
+
+        try {
+            SslContextBuilder builder = SslContextBuilder.forClient();
+
+            if (tlsOptions.getClientCertChain().isPresent() && tlsOptions.getPrivateKey().isPresent()) {
+                if (tlsOptions.getPrivateKeyPassword().isPresent()) {
+                    builder.keyManager(tlsOptions.getClientCertChain().get(), tlsOptions.getPrivateKey().get());
+                } else {
+                    builder.keyManager(tlsOptions.getClientCertChain().get(), tlsOptions.getPrivateKey().get(),
+                            tlsOptions.getPrivateKeyPassword().get());
+                }
+            }
+
+            if (tlsOptions.getRootCerts().isPresent()) {
+                builder.trustManager(tlsOptions.getRootCerts().get());
+            }
+
+            return builder.build();
+        } catch (SSLException e) {
+            throw new RuntimeException("Failed to configure SslContext", e);
+        }
+    }
+
     private IdChannel newChannel(Endpoint endpoint) {
-        ManagedChannel innerChannel = NettyChannelBuilder //
-                .forAddress(endpoint.getAddr(), endpoint.getPort()) //
-                .usePlaintext() //
-                .executor(this.asyncPool) //
+        NettyChannelBuilder innerChannelBuilder =
+                NettyChannelBuilder.forAddress(endpoint.getAddr(), endpoint.getPort());
+
+        if (this.opts.getTlsOptions().isEmpty()) {
+            innerChannelBuilder.usePlaintext();
+        } else {
+            innerChannelBuilder.useTransportSecurity().sslContext(newSslContext(this.opts.getTlsOptions().get()));
+        }
+
+        ManagedChannel innerChannel = innerChannelBuilder.executor(this.asyncPool) //
                 .intercept(this.interceptors) //
                 .maxInboundMessageSize(this.opts.getMaxInboundMessageSize()) //
                 .flowControlWindow(this.opts.getFlowControlWindow()) //
