@@ -48,6 +48,7 @@ import io.grpc.ClientInterceptor;
 import io.grpc.ConnectivityState;
 import io.grpc.ManagedChannel;
 import io.grpc.MethodDescriptor;
+import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.netty.shaded.io.netty.channel.ChannelOption;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
@@ -548,7 +549,7 @@ public class GrpcClient implements RpcClient {
     private SslContext newSslContext(TlsOptions tlsOptions) {
 
         try {
-            SslContextBuilder builder = SslContextBuilder.forClient();
+            SslContextBuilder builder = GrpcSslContexts.forClient();
 
             if (tlsOptions.getClientCertChain().isPresent() && tlsOptions.getPrivateKey().isPresent()) {
                 if (tlsOptions.getPrivateKeyPassword().isPresent()) {
