@@ -26,13 +26,13 @@ import java.util.Optional;
  */
 public class TlsOptions implements Copiable<TlsOptions> {
 
-    private Optional<File> clientCertChain;
+    private Optional<File> clientCertChain = Optional.empty();
 
-    private Optional<File> privateKey;
+    private Optional<File> privateKey = Optional.empty();
 
-    private Optional<String> privateKeyPassword;
+    private Optional<String> privateKeyPassword = Optional.empty();
 
-    private Optional<File> rootCerts;
+    private Optional<File> rootCerts = Optional.empty();
 
     @Override
     public TlsOptions copy() {
