@@ -85,6 +85,8 @@ public class TestConnector {
                 .router(null)
                 // Sets authentication information. If the DB is not required to authenticate, we can ignore this.
                 .authInfo(AuthInfo.noAuthorization())
+                // Enable TLS connection when remote port is secured by TLS
+                // .tlsOptions(new TlsOptions())
                 // A good start ^_^
                 .build();
 

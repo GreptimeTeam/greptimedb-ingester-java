@@ -22,6 +22,7 @@ import io.greptime.common.util.Ensures;
 import io.greptime.limit.LimitedPolicy;
 import io.greptime.models.AuthInfo;
 import io.greptime.rpc.RpcOptions;
+import io.greptime.rpc.TlsOptions;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -276,6 +277,18 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
          */
         public Builder router(Router<Void, Endpoint> router) {
             this.router = router;
+            return this;
+        }
+
+        /**
+         * Set `TlsOptions` to use secure connection between client and server. Set to `null` to use
+         * plaintext connection instead.
+         *
+         * @param tlsOptions for configure secure connection, set to null to use plaintext
+         * @return this builder
+         */
+        public Builder tlsOptions(TlsOptions tlsOptions) {
+            this.rpcOptions.setTlsOptions(tlsOptions);
             return this;
         }
 
