@@ -144,6 +144,9 @@ public class TableSchema {
                         "Invalid timestamp data type: %s, only support `DataType.TimestampXXX`", dataType);
             }
 
+            // trim leading and trailing spaces
+            name = name.trim();
+
             this.columnNames.add(name);
             this.semanticTypes.add(semanticType.toProtoValue());
             this.dataTypes.add(dataType.toProtoValue());

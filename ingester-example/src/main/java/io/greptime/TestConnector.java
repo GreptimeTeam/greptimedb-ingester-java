@@ -47,6 +47,8 @@ public class TestConnector {
                 //
                 // Sets the RPC options, in general, the default configuration is fine.
                 .rpcOptions(RpcOptions.newDefault())
+                // Enable TLS connection when remote port is secured by TLS
+                // .tlsOptions(null)
                 // Optional, the default value is fine.
                 //
                 // In some case of failure, a retry of write can be attempted.
@@ -85,8 +87,6 @@ public class TestConnector {
                 .router(null)
                 // Sets authentication information. If the DB is not required to authenticate, we can ignore this.
                 .authInfo(AuthInfo.noAuthorization())
-                // Enable TLS connection when remote port is secured by TLS
-                // .tlsOptions(new TlsOptions())
                 // A good start ^_^
                 .build();
 

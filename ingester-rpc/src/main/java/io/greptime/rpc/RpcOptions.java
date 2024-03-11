@@ -105,14 +105,14 @@ public class RpcOptions implements Copiable<RpcOptions> {
      * Set `TlsOptions` to use secure connection between client and server. Set to `null` to use
      * plaintext connection instead.
      */
-    private Optional<TlsOptions> tlsOptions = Optional.empty();
+    private TlsOptions tlsOptions;
 
-    public Optional<TlsOptions> getTlsOptions() {
+    public TlsOptions getTlsOptions() {
         return tlsOptions;
     }
 
     public void setTlsOptions(TlsOptions tlsOptions) {
-        this.tlsOptions = Optional.ofNullable(tlsOptions);
+        this.tlsOptions = tlsOptions;
     }
 
     public boolean isUseRpcSharedPool() {
