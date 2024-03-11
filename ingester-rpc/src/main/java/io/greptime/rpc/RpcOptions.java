@@ -16,7 +16,6 @@
 package io.greptime.rpc;
 
 import io.greptime.common.Copiable;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 /**

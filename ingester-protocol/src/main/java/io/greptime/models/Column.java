@@ -29,6 +29,13 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface Column {
 
+    /**
+     * The name of the column in the table.
+     * <p>
+     * It is strongly recommended to use snake case naming convention and avoid
+     * using camel case. This is because GreptimeDB treats column names as
+     * case-insensitive, which can cause confusion when querying with camel case.
+     */
     String name();
 
     boolean tag() default false;
