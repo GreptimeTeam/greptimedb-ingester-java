@@ -4,7 +4,7 @@
     <parent>
         <artifactId>greptimedb-ingester</artifactId>
         <groupId>io.greptime</groupId>
-        <version>0.7.2</version>
+        <version>0.7.3</version>
     </parent>
 
     <artifactId>ingester-common</artifactId>
