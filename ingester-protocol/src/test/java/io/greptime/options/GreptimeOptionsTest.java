@@ -20,6 +20,7 @@ import io.greptime.common.Endpoint;
 import io.greptime.limit.LimitedPolicy;
 import io.greptime.models.AuthInfo;
 import io.greptime.rpc.RpcOptions;
+import io.greptime.rpc.TlsOptions;
 import org.junit.Assert;
 import org.junit.Test;
 import java.util.List;
@@ -44,10 +45,12 @@ public class GreptimeOptionsTest {
         long routeTableRefreshPeriodSeconds = 99;
         AuthInfo authInfo = new AuthInfo("user", "password");
         Router<Void, Endpoint> router = createTestRouter();
+        TlsOptions tlsOptions = new TlsOptions();
 
         GreptimeOptions opts = GreptimeOptions.newBuilder(endpoints, database) //
                 .asyncPool(asyncPool) //
                 .rpcOptions(rpcOptions) //
+                .tlsOptions(tlsOptions) //
                 .writeMaxRetries(writeMaxRetries) //
                 .maxInFlightWritePoints(maxInFlightWritePoints) //
                 .writeLimitedPolicy(limitedPolicy) //
@@ -60,6 +63,7 @@ public class GreptimeOptionsTest {
         Assert.assertEquals(database, opts.getDatabase());
         Assert.assertArrayEquals(endpoints, opts.getEndpoints().stream().map(Endpoint::toString).toArray());
         Assert.assertEquals(rpcOptions, opts.getRpcOptions());
+        Assert.assertEquals(tlsOptions, opts.getRpcOptions().getTlsOptions());
 
         RouterOptions routerOptions = opts.getRouterOptions();
         Assert.assertNotNull(routerOptions);

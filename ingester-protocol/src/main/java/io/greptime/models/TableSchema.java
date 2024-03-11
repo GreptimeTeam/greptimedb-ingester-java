@@ -77,6 +77,10 @@ public class TableSchema {
 
         /**
          * Add tag schema.
+         * <p>
+         * It is strongly recommended to use snake case naming convention and avoid
+         * using camel case. This is because GreptimeDB treats column names as
+         * case-insensitive, which can cause confusion when querying with camel case.
          *
          * @param name the name of this tag
          * @param dataType the data type of this tag
@@ -88,6 +92,10 @@ public class TableSchema {
 
         /**
          * Add timestamp schema.
+         * <p>
+         * It is strongly recommended to use snake case naming convention and avoid
+         * using camel case. This is because GreptimeDB treats column names as
+         * case-insensitive, which can cause confusion when querying with camel case.
          *
          * @param name the name of this timestamp
          * @param dataType the data type of this timestamp
@@ -101,6 +109,10 @@ public class TableSchema {
 
         /**
          * Add field schema.
+         * <p>
+         * It is strongly recommended to use snake case naming convention and avoid
+         * using camel case. This is because GreptimeDB treats column names as
+         * case-insensitive, which can cause confusion when querying with camel case.
          *
          * @param name the name of this field
          * @param dataType the data type of this field
@@ -112,6 +124,10 @@ public class TableSchema {
 
         /**
          * Add column schema.
+         * <p>
+         * It is strongly recommended to use snake case naming convention and avoid
+         * using camel case. This is because GreptimeDB treats column names as
+         * case-insensitive, which can cause confusion when querying with camel case.
          *
          * @param name the name of this column
          * @param semanticType the semantic type of this column (`Tag`, `Field` or `Timestamp`)
@@ -124,6 +140,10 @@ public class TableSchema {
 
         /**
          * Add column schema.
+         * <p>
+         * It is strongly recommended to use snake case naming convention and avoid
+         * using camel case. This is because GreptimeDB treats column names as
+         * case-insensitive, which can cause confusion when querying with camel case.
          *
          * @param name the name of this column
          * @param semanticType the semantic type of this column (`Tag`, `Field` or `Timestamp`)
@@ -144,7 +164,7 @@ public class TableSchema {
                         "Invalid timestamp data type: %s, only support `DataType.TimestampXXX`", dataType);
             }
 
-            // trim leading and trailing spaces
+            // Trim leading and trailing spaces
             name = name.trim();
 
             this.columnNames.add(name);
