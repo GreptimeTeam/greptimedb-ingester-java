@@ -26,73 +26,65 @@ import java.util.Optional;
  */
 public class TlsOptions implements Copiable<TlsOptions> {
 
-    private Optional<File> clientCertChain = Optional.empty();
+    private File clientCertChain;
 
-    private Optional<File> privateKey = Optional.empty();
+    private File privateKey;
 
-    private Optional<String> privateKeyPassword = Optional.empty();
+    private String privateKeyPassword;
 
-    private Optional<File> rootCerts = Optional.empty();
+    private File rootCerts;
 
     @Override
     public TlsOptions copy() {
         TlsOptions that = new TlsOptions();
 
-        that.setClientCertChain(this.getClientCertChain());
-        that.setPrivateKey(this.getPrivateKey());
-        that.setPrivateKeyPassword(this.getPrivateKeyPassword());
-        that.setRootCerts(this.getRootCerts());
+        that.setClientCertChain(this.clientCertChain);
+        that.setPrivateKey(this.privateKey);
+        that.setPrivateKeyPassword(this.privateKeyPassword);
+        that.setRootCerts(this.rootCerts);
 
         return that;
     }
 
     public Optional<File> getClientCertChain() {
-        return clientCertChain;
+        return Optional.ofNullable(this.clientCertChain);
     }
 
-    public void setClientCertChain(Optional<File> clientCertChain) {
+    public void setClientCertChain(File clientCertChain) {
         this.clientCertChain = clientCertChain;
     }
 
     public Optional<File> getPrivateKey() {
-        return privateKey;
+        return Optional.ofNullable(this.privateKey);
     }
 
-    public void setPrivateKey(Optional<File> privateKey) {
+    public void setPrivateKey(File privateKey) {
         this.privateKey = privateKey;
     }
 
     public Optional<String> getPrivateKeyPassword() {
-        return privateKeyPassword;
+        return Optional.ofNullable(this.privateKeyPassword);
     }
 
-    public void setPrivateKeyPassword(Optional<String> privateKeyPassword) {
+    public void setPrivateKeyPassword(String privateKeyPassword) {
         this.privateKeyPassword = privateKeyPassword;
     }
 
     public Optional<File> getRootCerts() {
-        return rootCerts;
+        return Optional.ofNullable(this.rootCerts);
     }
 
-    public void setRootCerts(Optional<File> rootCerts) {
+    public void setRootCerts(File rootCerts) {
         this.rootCerts = rootCerts;
     }
 
     @Override
     public String toString() {
-        return "TlsOptions{"
-                + //
-                "clientCertChain="
-                + this.clientCertChain
-                + //
-                ", privateKey="
-                + this.privateKey
-                + //
-                ", privateKeyPassword="
-                + this.privateKeyPassword.map((v) -> "****")
-                + //
-                ", rootCerts="
-                + this.rootCerts
-                + '}';
+        return "TlsOptions{" + //
+                "clientCertChain=" + clientCertChain + //
+                ", privateKey=" + privateKey + //
+                ", privateKeyPassword='" + getPrivateKeyPassword().map((v) -> "****") + '\'' + //
+                ", rootCerts=" + rootCerts + //
+                '}';
     }
 }

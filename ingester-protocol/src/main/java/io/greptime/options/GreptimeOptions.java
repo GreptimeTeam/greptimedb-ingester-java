@@ -145,6 +145,8 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         private Executor asyncPool;
         // Rpc options, in general the default configuration is fine.
         private RpcOptions rpcOptions = RpcOptions.newDefault();
+        // GreptimeDB secure connection options
+        private TlsOptions tlsOptions;
         private int writeMaxRetries = 1;
         // Write flow limit: maximum number of data points in-flight.
         private int maxInFlightWritePoints = 10 * 65536;
@@ -188,6 +190,18 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
          */
         public Builder rpcOptions(RpcOptions rpcOptions) {
             this.rpcOptions = rpcOptions;
+            return this;
+        }
+
+        /**
+         * Set `TlsOptions` to use secure connection between client and server. Set to `null` to use
+         * plaintext connection instead.
+         *
+         * @param tlsOptions for configure secure connection, set to null to use plaintext
+         * @return this builder
+         */
+        public Builder tlsOptions(TlsOptions tlsOptions) {
+            this.tlsOptions = tlsOptions;
             return this;
         }
 
@@ -281,23 +295,15 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         }
 
         /**
-         * Set `TlsOptions` to use secure connection between client and server. Set to `null` to use
-         * plaintext connection instead.
-         *
-         * @param tlsOptions for configure secure connection, set to null to use plaintext
-         * @return this builder
-         */
-        public Builder tlsOptions(TlsOptions tlsOptions) {
-            this.rpcOptions.setTlsOptions(tlsOptions);
-            return this;
-        }
-
-        /**
          * A good start, happy coding.
          *
          * @return nice things
          */
         public GreptimeOptions build() {
+            // Set tls options to rpc options if tls options is not null
+            if (this.tlsOptions != null && this.rpcOptions != null) {
+                this.rpcOptions.setTlsOptions(this.tlsOptions);
+            }
             GreptimeOptions opts = new GreptimeOptions();
             opts.setEndpoints(this.endpoints);
             opts.setRpcOptions(this.rpcOptions);

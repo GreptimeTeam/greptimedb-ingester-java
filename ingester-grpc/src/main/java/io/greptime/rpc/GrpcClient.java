@@ -58,8 +58,10 @@ import io.grpc.stub.ClientCalls;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.io.File;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -547,22 +549,23 @@ public class GrpcClient implements RpcClient {
     }
 
     private SslContext newSslContext(TlsOptions tlsOptions) {
-
         try {
             SslContextBuilder builder = GrpcSslContexts.forClient();
 
-            if (tlsOptions.getClientCertChain().isPresent() && tlsOptions.getPrivateKey().isPresent()) {
-                if (tlsOptions.getPrivateKeyPassword().isPresent()) {
-                    builder.keyManager(tlsOptions.getClientCertChain().get(), tlsOptions.getPrivateKey().get(),
-                            tlsOptions.getPrivateKeyPassword().get());
+            Optional<File> clientCertChain = tlsOptions.getClientCertChain();
+            Optional<File> privateKey = tlsOptions.getPrivateKey();
+            Optional<String> privateKeyPassword = tlsOptions.getPrivateKeyPassword();
+
+            if (clientCertChain.isPresent() && privateKey.isPresent()) {
+                if (privateKeyPassword.isPresent()) {
+                    builder.keyManager(clientCertChain.get(), privateKey.get(),
+                            privateKeyPassword.get());
                 } else {
-                    builder.keyManager(tlsOptions.getClientCertChain().get(), tlsOptions.getPrivateKey().get());
+                    builder.keyManager(clientCertChain.get(), privateKey.get());
                 }
             }
 
-            if (tlsOptions.getRootCerts().isPresent()) {
-                builder.trustManager(tlsOptions.getRootCerts().get());
-            }
+            tlsOptions.getRootCerts().ifPresent(builder::trustManager);
 
             return builder.build();
         } catch (SSLException e) {
@@ -574,8 +577,9 @@ public class GrpcClient implements RpcClient {
         NettyChannelBuilder innerChannelBuilder =
                 NettyChannelBuilder.forAddress(endpoint.getAddr(), endpoint.getPort());
 
-        if (this.opts.getTlsOptions().isPresent()) {
-            innerChannelBuilder.useTransportSecurity().sslContext(newSslContext(this.opts.getTlsOptions().get()));
+        TlsOptions tlsOptions = this.opts.getTlsOptions();
+        if (tlsOptions != null) {
+            innerChannelBuilder.useTransportSecurity().sslContext(newSslContext(tlsOptions));
         } else {
             innerChannelBuilder.usePlaintext();
         }
