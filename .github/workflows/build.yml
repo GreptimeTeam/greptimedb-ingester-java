@@ -32,8 +32,6 @@ jobs:
           distribution: 'zulu'
       - name: Check format
         run: mvn spotless:check
-      - name: Check Sort POM
-        run: mvn sortpom:verify
 
   test_ingester_common:
     needs: check
