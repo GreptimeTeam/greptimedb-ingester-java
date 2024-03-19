@@ -40,7 +40,7 @@ import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 /**
- * @author jiachun.fjc
+ *
  */
 @RunWith(value = MockitoJUnitRunner.class)
 public class WriteClientTest {

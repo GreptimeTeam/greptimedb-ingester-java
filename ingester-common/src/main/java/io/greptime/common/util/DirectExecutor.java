@@ -22,7 +22,7 @@ import java.util.concurrent.Executor;
 /**
  * A direct executor.
  *
- * @author jiachun.fjc
+ *
  */
 public class DirectExecutor implements Executor {
     private final String name;

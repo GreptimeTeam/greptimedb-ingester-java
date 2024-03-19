@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 /**
  * GreptimeDB client options.
  *
- * @author jiachun.fjc
+ *
  */
 public class GreptimeOptions implements Copiable<GreptimeOptions> {
     private List<Endpoint> endpoints;

@@ -21,7 +21,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
- * @author jiachun.fjc
+ *
  */
 public class WriteTables {
     private final Collection<Table> tables;

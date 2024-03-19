@@ -24,7 +24,7 @@ import java.util.concurrent.CompletableFuture;
  * the stream needs to be closed(Call `StreamWriter#completed()`),
  * and the write result can be obtained from the database server.
  *
- * @author jiachun.fjc
+ *
  */
 public interface StreamWriter<V, R> {
 

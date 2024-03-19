@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 /**
  * A signal handler that can show help info.
  *
- * @author jiachun.fjc
+ *
  */
 @SPI(priority = 99)
 public class ShowHelpSignalHandler implements SignalHandler {

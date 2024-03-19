@@ -25,7 +25,7 @@ import java.util.concurrent.Executor;
 /**
  * Write options.
  *
- * @author jiachun.fjc
+ *
  */
 public class WriteOptions implements Copiable<WriteOptions> {
     private String database;

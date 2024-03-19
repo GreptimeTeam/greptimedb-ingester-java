@@ -25,7 +25,7 @@ import java.nio.file.StandardOpenOption;
 /**
  * File utilities.
  *
- * @author jiachun.fjc
+ *
  */
 public class Files {
 

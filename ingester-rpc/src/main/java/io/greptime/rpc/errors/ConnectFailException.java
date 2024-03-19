@@ -19,7 +19,7 @@ package io.greptime.rpc.errors;
 /**
  * Connect failed error.
  *
- * @author jiachun.fjc
+ *
  */
 public class ConnectFailException extends RuntimeException {
 

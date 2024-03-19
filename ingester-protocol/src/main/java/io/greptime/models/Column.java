@@ -24,7 +24,7 @@ import java.lang.annotation.Target;
 /**
  * This annotation is used to mapping POJO class into {@link Table}.
  *
- * @author jiachun.fjc
+ *
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

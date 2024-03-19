@@ -22,7 +22,7 @@ import java.io.Serializable;
 /**
  * An IP address with port.
  *
- * @author jiachun.fjc
+ *
  */
 public class Endpoint implements Serializable {
 

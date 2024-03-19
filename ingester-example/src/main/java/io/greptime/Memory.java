@@ -21,7 +21,7 @@ import io.greptime.models.DataType;
 import io.greptime.models.Metric;
 
 /**
- * @author jiachun.fjc
+ *
  */
 @Metric(name = "mem_metric")
 public class Memory {

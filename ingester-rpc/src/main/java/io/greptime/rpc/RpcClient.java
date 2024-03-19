@@ -23,7 +23,7 @@ import io.greptime.common.Lifecycle;
 /**
  * A common RPC client interface.
  *
- * @author jiachun.fjc
+ *
  */
 public interface RpcClient extends Lifecycle<RpcOptions>, Display {
 

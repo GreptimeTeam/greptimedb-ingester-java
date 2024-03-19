@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * RPC client options.
  *
- * @author jiachun.fjc
+ *
  */
 @SuppressWarnings("unused")
 public class RpcOptions implements Copiable<RpcOptions> {

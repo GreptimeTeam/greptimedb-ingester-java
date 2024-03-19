@@ -21,7 +21,7 @@ import io.greptime.v1.Common;
 /**
  * The semantic type.
  *
- * @author jiachun.fjc
+ *
  */
 public enum SemanticType {
     Tag,

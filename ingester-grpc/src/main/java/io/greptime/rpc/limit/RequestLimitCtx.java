@@ -18,7 +18,7 @@ package io.greptime.rpc.limit;
 
 /**
  *
- * @author jiachun.fjc
+ *
  */
 public interface RequestLimitCtx {
 

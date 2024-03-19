@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * Converts POJO objects into {@link Table} objects
  *
- * @author jiachun.fjc
+ *
  */
 public interface PojoObjectMapper {
 

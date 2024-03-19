@@ -19,7 +19,7 @@ package io.greptime.rpc;
 /**
  * GreptimeDB's RPC service factory.
  *
- * @author jiachun.fjc
+ *
  */
 @SuppressWarnings("unused")
 public interface RpcFactory {

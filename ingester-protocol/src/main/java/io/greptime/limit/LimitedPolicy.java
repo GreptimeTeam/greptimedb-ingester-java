@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * A limited policy using a given {@code Limiter}.
  *
- * @author jiachun.fjc
+ *
  */
 public interface LimitedPolicy {
 

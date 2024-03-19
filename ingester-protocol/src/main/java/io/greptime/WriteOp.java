@@ -17,7 +17,7 @@
 package io.greptime;
 
 /**
- * @author jiachun.fjc
+ *
  */
 public enum WriteOp {
     Insert,

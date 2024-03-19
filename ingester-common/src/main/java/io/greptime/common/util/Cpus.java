@@ -21,7 +21,7 @@ import io.greptime.common.Keys;
 /**
  * Utility for cpu.
  *
- * @author jiachun.fjc
+ *
  */
 public class Cpus {
 

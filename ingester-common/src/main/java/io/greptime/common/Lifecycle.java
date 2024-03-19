@@ -19,7 +19,7 @@ package io.greptime.common;
 /**
  * Service life cycle mark interface.
  *
- * @author jiachun.fjc
+ *
  */
 public interface Lifecycle<T> {
 

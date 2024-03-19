@@ -22,8 +22,6 @@ import java.util.Optional;
 
 /**
  * GreptimeDB secure connection options
- *
- * @author Ning Sun<sunning@greptime.com>
  */
 public class TlsOptions implements Copiable<TlsOptions> {
 

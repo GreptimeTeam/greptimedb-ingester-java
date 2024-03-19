@@ -29,7 +29,7 @@ import java.util.List;
  * as the `Ingester` client should strive to avoid managing the cache and excessive
  * memory consumption.
  *
- * @author jiachun.fjc
+ *
  */
 public class TableSchema {
 

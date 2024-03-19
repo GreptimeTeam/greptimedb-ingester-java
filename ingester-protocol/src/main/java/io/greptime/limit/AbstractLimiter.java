@@ -31,7 +31,7 @@ import java.util.function.Supplier;
  * that the available permits are equal to the maximum number of permits,
  * i.e., there are no in-flight requests.
  *
- * @author jiachun.fjc
+ *
  */
 public abstract class AbstractLimiter<In, Out> {
 

@@ -28,7 +28,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Write API: writes data to the database.
  *
- * @author jiachun.fjc
+ *
  */
 public interface Write {
     /**

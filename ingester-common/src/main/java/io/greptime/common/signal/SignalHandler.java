@@ -19,7 +19,7 @@ package io.greptime.common.signal;
 /**
  * This is the signal handler interface.
  *
- * @author jiachun.fjc
+ *
  */
 public interface SignalHandler {
 

@@ -22,7 +22,7 @@ import io.greptime.v1.Common;
 /**
  * GreptimeDB's data type.
  *
- * @author jiachun.fjc
+ *
  */
 public enum DataType {
     Bool, //

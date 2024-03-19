@@ -19,7 +19,7 @@ package io.greptime.common.util;
 /**
  * An object pool.
  *
- * @author jiachun.fjc
+ *
  */
 public interface ObjectPool<T> {
 

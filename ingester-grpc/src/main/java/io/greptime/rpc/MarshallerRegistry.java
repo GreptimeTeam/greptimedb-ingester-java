@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 /**
  * Marshaller registry for grpc service.
  *
- * @author jiachun.fjc
+ *
  */
 public interface MarshallerRegistry {
 

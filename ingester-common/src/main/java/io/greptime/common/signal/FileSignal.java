@@ -25,7 +25,7 @@ import java.util.Optional;
  * with the Client process and implement signal transmission, achieve the
  * purpose of controlling the process to output specified content through this.
  *
- * @author jiachun.fjc
+ *
  */
 public enum FileSignal {
     RwLogging("rw_logging.sig", "How to open or close read/write log(The second execution means close)"), //

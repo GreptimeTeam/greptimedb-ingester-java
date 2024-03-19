@@ -37,8 +37,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Util for GreptimeDB Ingester.
- *
- * @author jiachun
  */
 public final class Util {
     private static final AtomicBoolean RW_LOGGING;

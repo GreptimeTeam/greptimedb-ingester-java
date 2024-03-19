@@ -23,7 +23,7 @@ import org.junit.Test;
 
 /**
  *
- * @author jiachun.fjc
+ *
  */
 public class RcObjectPoolTest {
 

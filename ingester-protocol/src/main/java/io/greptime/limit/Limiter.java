@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * A rate limiter.
  *
- * @author jiachun.fjc
+ *
  */
 public interface Limiter {
 

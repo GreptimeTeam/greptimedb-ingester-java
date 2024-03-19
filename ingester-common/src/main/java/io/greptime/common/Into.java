@@ -19,7 +19,7 @@ package io.greptime.common;
 /**
  * A value-to-value conversion.
  *
- * @author jiachun.fjc
+ *
  */
 public interface Into<Output> {
     Output into();

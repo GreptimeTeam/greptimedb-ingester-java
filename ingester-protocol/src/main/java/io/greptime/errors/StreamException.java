@@ -19,7 +19,7 @@ package io.greptime.errors;
 /**
  * Error about stream-write.
  *
- * @author jiachun.fjc
+ *
  */
 public class StreamException extends RuntimeException {
 

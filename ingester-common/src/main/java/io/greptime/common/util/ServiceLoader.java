@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
 /**
  * A simple service-provider loading facility (SPI).
  *
- * @author jiachun.fjc
+ *
  */
 @SuppressWarnings("unused")
 public final class ServiceLoader<S> implements Iterable<S> {

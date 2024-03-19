@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
  * <p>
  * Do not support windows.
  *
- * @author jiachun.fjc
+ *
  */
 public class SignalHandlersLoader {
 

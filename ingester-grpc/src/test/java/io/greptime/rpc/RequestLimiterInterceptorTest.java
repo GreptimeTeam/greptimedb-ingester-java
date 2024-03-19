@@ -42,7 +42,7 @@ import org.junit.Test;
 /**
  * Refer to `concurrency-limit-grpc's test`
  *
- * @author jiachun.fjc
+ *
  */
 public class RequestLimiterInterceptorTest {
 

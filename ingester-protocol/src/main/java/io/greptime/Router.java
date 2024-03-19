@@ -22,7 +22,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * RPC router for GreptimeDB.
  *
- * @author jiachun.fjc
+ *
  */
 public interface Router<R, E> {
 

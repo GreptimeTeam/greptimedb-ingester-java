@@ -22,7 +22,7 @@ import java.util.Map;
 /**
  * Common status code for public API.
  *
- * @author jiachun.fjc
+ *
  */
 public enum Status {
     // ====== Begin of common status code ==============

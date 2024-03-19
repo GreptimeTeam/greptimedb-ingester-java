@@ -39,7 +39,7 @@ import java.util.function.Function;
  * <p>
  * Refer to `concurrency-limit-grpc`
  *
- * @author jiachun.fjc
+ *
  */
 public class ClientRequestLimitInterceptor implements ClientInterceptor {
 

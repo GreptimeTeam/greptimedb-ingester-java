@@ -23,7 +23,7 @@ import io.greptime.options.GreptimeOptions;
 import io.greptime.rpc.RpcOptions;
 
 /**
- * @author jiachun.fjc
+ *
  */
 public class TestConnector {
 

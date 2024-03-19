@@ -79,7 +79,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Grpc client implementation.
  *
- * @author jiachun.fjc
+ *
  */
 public class GrpcClient implements RpcClient {
 

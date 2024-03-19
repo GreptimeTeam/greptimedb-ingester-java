@@ -28,7 +28,7 @@ import java.util.Date;
 /**
  * File output helper.
  *
- * @author jiachun.fjc
+ *
  */
 public final class FileOutputHelper {
 

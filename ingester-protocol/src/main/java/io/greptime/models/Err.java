@@ -21,7 +21,7 @@ import io.greptime.common.Endpoint;
 /**
  * Contains the write/query error value.
  *
- * @author jiachun.fjc
+ *
  */
 public class Err {
     // error code from server

@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * In-flight limiter.
  *
- * @author jiachun.fjc
+ *
  */
 public class InFlightLimiter implements Limiter {
 

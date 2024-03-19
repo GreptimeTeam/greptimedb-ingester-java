@@ -21,8 +21,6 @@ import io.greptime.v1.Common;
 
 /**
  * Greptime authentication information
- *
- * @author sunng87
  */
 public class AuthInfo implements Into<Common.AuthHeader> {
 

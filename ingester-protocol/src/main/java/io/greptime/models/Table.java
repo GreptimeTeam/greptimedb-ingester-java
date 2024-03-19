@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * Data in row format, ready to be written to the DB.
  *
- * @author jiachun.fjc
+ *
  */
 public interface Table {
 

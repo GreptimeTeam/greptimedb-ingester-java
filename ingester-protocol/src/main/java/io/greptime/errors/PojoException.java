@@ -17,7 +17,7 @@
 package io.greptime.errors;
 
 /**
- * @author jiachun.fjc
+ *
  */
 public class PojoException extends RuntimeException {
 

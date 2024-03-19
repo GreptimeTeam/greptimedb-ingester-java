@@ -22,7 +22,7 @@ import io.greptime.common.SPI;
 /**
  * GreptimeDB grpc impl service factory.
  *
- * @author jiachun.fjc
+ *
  */
 @SPI
 public class GrpcFactory implements RpcFactory {

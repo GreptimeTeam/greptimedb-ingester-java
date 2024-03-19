@@ -19,7 +19,7 @@ package io.greptime.common;
 /**
  * Constant string keys.
  *
- * @author jiachun.fjc
+ *
  */
 public final class Keys {
     public static final String DB_NAME = "GreptimeDB";

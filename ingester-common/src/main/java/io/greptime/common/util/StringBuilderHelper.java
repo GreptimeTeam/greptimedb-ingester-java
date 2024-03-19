@@ -21,7 +21,7 @@ package io.greptime.common.util;
  * <p>
  * Be careful that do not to nest in the same thread.
  *
- * @author jiachun.fjc
+ *
  */
 public class StringBuilderHelper {
 

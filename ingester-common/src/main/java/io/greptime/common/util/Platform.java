@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Platform utilities.
  *
- * @author jiachun.fjc
+ *
  */
 public class Platform {
 

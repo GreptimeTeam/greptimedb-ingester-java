@@ -23,7 +23,7 @@ import io.greptime.v1.RowData;
 /**
  * A utility that handles some processing of row based data.
  *
- * @author jiachun.fjc
+ *
  */
 public final class RowHelper {
 

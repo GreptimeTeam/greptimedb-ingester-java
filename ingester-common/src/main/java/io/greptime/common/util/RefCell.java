@@ -19,7 +19,7 @@ package io.greptime.common.util;
 /**
  * A reference cell.
  *
- * @author jiachun.fjc
+ *
  */
 public class RefCell<T> {
 

@@ -23,7 +23,7 @@ import java.util.function.Supplier;
 /**
  * For tracking metrics in the limiters.
  *
- * @author jiachun.fjc
+ *
  */
 public class LimitMetricRegistry implements MetricRegistry {
 

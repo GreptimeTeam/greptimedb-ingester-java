@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Resource holder with ref count.
  *
- * @author jiachun.fjc
+ *
  */
 public class RcResourceHolder<T> {
 

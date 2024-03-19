@@ -23,7 +23,7 @@ import io.greptime.v1.Database;
 import java.util.Collection;
 
 /**
- * @author jiachun.fjc
+ *
  */
 public class TableHelper {
 

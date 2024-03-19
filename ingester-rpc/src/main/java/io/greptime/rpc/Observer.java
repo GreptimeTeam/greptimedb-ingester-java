@@ -21,7 +21,7 @@ import java.util.concurrent.Executor;
 /**
  * Receives notifications from an observable stream of messages.
  *
- * @author jiachun.fjc
+ *
  */
 public interface Observer<V> {
 

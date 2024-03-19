@@ -20,7 +20,7 @@ import io.greptime.common.Into;
 import io.greptime.v1.Common;
 
 /**
- * @author jiachun.fjc
+ *
  */
 public class IntervalMonthDayNano implements Into<Common.IntervalMonthDayNano> {
     private final int months;

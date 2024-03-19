@@ -25,7 +25,7 @@ import java.util.Set;
  * Invoke context, it can pass some additional information to the
  * database server in the form of KV.
  *
- * @author jiachun.fjc
+ *
  */
 @SuppressWarnings({"unchecked", "unused"})
 public class Context implements Copiable<Context> {

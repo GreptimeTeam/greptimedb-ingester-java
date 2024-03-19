@@ -37,7 +37,7 @@ import java.util.Map;
  * This utility class converts POJO objects into {@link Table} objects,
  * inspired by <a href="https://github.com/influxdata/influxdb-client-java/blob/master/client/src/main/java/com/influxdb/client/internal/MeasurementMapper.java">InfluxDB client-java</a>.
  *
- * @author jiachun.fjc
+ *
  */
 @SPI(priority = 9)
 public class CachedPojoObjectMapper implements PojoObjectMapper {

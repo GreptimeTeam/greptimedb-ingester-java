@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 /**
  * A signal helper, provides ANSI/ISO C signal support.
  *
- * @author jiachun.fjc
+ *
  */
 public final class SignalHelper {
 

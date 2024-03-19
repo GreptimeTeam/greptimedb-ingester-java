@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Executor service shutdown helper.
  *
- * @author jiachun.fjc
+ *
  */
 public final class ExecutorServiceHelper {
 

@@ -22,7 +22,7 @@ import java.util.function.Function;
 /**
  * `Result` is a type that represents either success ([`Ok`]) or failure ([`Err`]).
  *
- * @author jiachun.fjc
+ *
  */
 public final class Result<Ok, Err> {
 

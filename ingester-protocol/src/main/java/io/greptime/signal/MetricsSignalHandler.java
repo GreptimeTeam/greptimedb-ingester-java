@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 /**
  * A signal handle that can write the metrics into a file.
  *
- * @author jiachun.fjc
+ *
  */
 @SPI(priority = 97)
 public class MetricsSignalHandler implements SignalHandler {

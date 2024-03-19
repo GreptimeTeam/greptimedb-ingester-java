@@ -21,7 +21,7 @@ import io.greptime.common.util.ServiceLoader;
 /**
  * A factory to create {@link RpcClient} based on SPI.
  *
- * @author jiachun.fjc
+ *
  */
 public class RpcFactoryProvider {
 
