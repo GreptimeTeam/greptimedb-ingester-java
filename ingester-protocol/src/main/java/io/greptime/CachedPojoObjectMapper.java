@@ -115,7 +115,7 @@ public class CachedPojoObjectMapper implements PojoObjectMapper {
             return metricAnnotation.name();
         } else {
             String err = String.format(
-                    "Unable to determine Metric for '%s'." + " Does it have a @Metric annotation?", metricType);
+                    "Unable to determine Metric for '%s'. Does it have a @Metric annotation?", metricType);
             throw new PojoException(err);
         }
     }

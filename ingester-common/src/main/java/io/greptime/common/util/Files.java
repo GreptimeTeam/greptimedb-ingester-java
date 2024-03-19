@@ -56,7 +56,7 @@ public class Files {
         if (dir.exists()) {
             if (!dir.isDirectory()) {
                 throw new IOException(
-                        "File " + dir + " exists and is " + "not a directory. Unable to create directory.");
+                        "File " + dir + " exists and is not a directory. Unable to create directory.");
             }
         } else if (!dir.mkdirs() && !dir.isDirectory()) {
             // Double-check that some other thread or process hasn't made
