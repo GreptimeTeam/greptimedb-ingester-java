@@ -27,6 +27,7 @@ target
 
 # dev tools
 .idea
+*.iml
 
 *.bak
 .vscode/*
