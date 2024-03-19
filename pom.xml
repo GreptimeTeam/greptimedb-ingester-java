@@ -231,6 +231,7 @@
                             <spaces>true</spaces>
                             <spacesPerTab>4</spacesPerTab>
                         </indent>
+                        <toggleOffOn/>
                     </java>
                 </configuration>
             </plugin>
