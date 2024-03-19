@@ -49,15 +49,15 @@ public class CachedPojoObjectMapper implements PojoObjectMapper {
     }
 
     public CachedPojoObjectMapper(int maxCachedPOJOs) {
-        this.classFieldCache =
-                CacheBuilder.newBuilder().maximumSize(maxCachedPOJOs)
-                        .build(new CacheLoader<Class<?>, Map<String, Field>>() {
-                            @SuppressWarnings("NullableProblems")
-                            @Override
-                            public Map<String, Field> load(Class<?> key) {
-                                return createMetricClass(key);
-                            }
-                        });
+        this.classFieldCache = CacheBuilder.newBuilder()
+                .maximumSize(maxCachedPOJOs)
+                .build(new CacheLoader<Class<?>, Map<String, Field>>() {
+                    @SuppressWarnings("NullableProblems")
+                    @Override
+                    public Map<String, Field> load(Class<?> key) {
+                        return createMetricClass(key);
+                    }
+                });
     }
 
     @Override
@@ -116,9 +116,8 @@ public class CachedPojoObjectMapper implements PojoObjectMapper {
         if (metricAnnotation != null) {
             return metricAnnotation.name();
         } else {
-            String err =
-                    String.format("Unable to determine Metric for '%s'." + " Does it have a @Metric annotation?",
-                            metricType);
+            String err = String.format(
+                    "Unable to determine Metric for '%s'." + " Does it have a @Metric annotation?", metricType);
             throw new PojoException(err);
         }
     }

@@ -57,8 +57,6 @@ import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import io.grpc.protobuf.ProtoUtils;
 import io.grpc.stub.ClientCalls;
 import io.grpc.stub.StreamObserver;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
@@ -75,6 +73,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import javax.net.ssl.SSLException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Grpc client implementation.
@@ -85,8 +85,8 @@ public class GrpcClient implements RpcClient {
 
     private static final Logger LOG = LoggerFactory.getLogger(GrpcClient.class);
 
-    private static final SharedThreadPool SHARED_ASYNC_POOL = new SharedThreadPool(
-            new ObjectPool.Resource<ExecutorService>() {
+    private static final SharedThreadPool SHARED_ASYNC_POOL =
+            new SharedThreadPool(new ObjectPool.Resource<ExecutorService>() {
 
                 @Override
                 public ExecutorService create() {
@@ -169,20 +169,15 @@ public class GrpcClient implements RpcClient {
 
     @Override
     public <Req, Resp> void invokeAsync(
-            Endpoint endpoint,
-            Req request,
-            Context ctx,
-            Observer<Resp> observer,
-            long timeoutMs) {
+            Endpoint endpoint, Req request, Context ctx, Observer<Resp> observer, long timeoutMs) {
         checkArgs(endpoint, request, ctx, observer);
         ContextToHeadersInterceptor.setCurrentCtx(ctx);
 
-        MethodDescriptor<Message, Message> method = getCallMethod(request,
-            MethodDescriptor.MethodType.UNARY);
+        MethodDescriptor<Message, Message> method = getCallMethod(request, MethodDescriptor.MethodType.UNARY);
         long timeout = calcTimeout(timeoutMs);
         CallOptions callOpts = CallOptions.DEFAULT //
-            .withDeadlineAfter(timeout, TimeUnit.MILLISECONDS) //
-            .withExecutor(getObserverExecutor(observer));
+                .withDeadlineAfter(timeout, TimeUnit.MILLISECONDS) //
+                .withExecutor(getObserverExecutor(observer));
 
         String methodName = method.getFullMethodName();
         String address = endpoint.toString();
@@ -206,7 +201,6 @@ public class GrpcClient implements RpcClient {
             public void onNext(Message value) {
                 onReceived(false);
                 observer.onNext((Resp) value);
-
             }
 
             @Override
@@ -238,15 +232,12 @@ public class GrpcClient implements RpcClient {
 
     @Override
     public <Req, Resp> void invokeServerStreaming(
-            Endpoint endpoint,
-            Req request,
-            Context ctx,
-            Observer<Resp> observer) {
+            Endpoint endpoint, Req request, Context ctx, Observer<Resp> observer) {
         checkArgs(endpoint, request, ctx, observer);
         ContextToHeadersInterceptor.setCurrentCtx(ctx);
 
-        MethodDescriptor<Message, Message> method = getCallMethod(request,
-            MethodDescriptor.MethodType.SERVER_STREAMING);
+        MethodDescriptor<Message, Message> method =
+                getCallMethod(request, MethodDescriptor.MethodType.SERVER_STREAMING);
         CallOptions callOpts = CallOptions.DEFAULT.withExecutor(getObserverExecutor(observer));
 
         String methodName = method.getFullMethodName();
@@ -264,39 +255,36 @@ public class GrpcClient implements RpcClient {
 
         String target = target(ch, address);
 
-        ClientCalls.asyncServerStreamingCall(ch.newCall(method, callOpts), (Message) request,
-            new StreamObserver<Message>() {
+        ClientCalls.asyncServerStreamingCall(
+                ch.newCall(method, callOpts), (Message) request, new StreamObserver<Message>() {
 
-                @SuppressWarnings("unchecked")
-                @Override
-                public void onNext(Message value) {
-                    observer.onNext((Resp) value);
-                }
+                    @SuppressWarnings("unchecked")
+                    @Override
+                    public void onNext(Message value) {
+                        observer.onNext((Resp) value);
+                    }
 
-                @Override
-                public void onError(Throwable err) {
-                    attachErrMsg(err, SERVER_STREAMING_CALL, methodName, target, startCall, -1, ctx);
-                    observer.onError(err);
-                }
+                    @Override
+                    public void onError(Throwable err) {
+                        attachErrMsg(err, SERVER_STREAMING_CALL, methodName, target, startCall, -1, ctx);
+                        observer.onError(err);
+                    }
 
-                @Override
-                public void onCompleted() {
-                    observer.onCompleted();
-                }
-            });
+                    @Override
+                    public void onCompleted() {
+                        observer.onCompleted();
+                    }
+                });
     }
 
     @Override
     public <Req, Resp> Observer<Req> invokeClientStreaming(
-            Endpoint endpoint,
-            Req defaultReqIns,
-            Context ctx,
-            Observer<Resp> respObserver) {
+            Endpoint endpoint, Req defaultReqIns, Context ctx, Observer<Resp> respObserver) {
         checkArgs(endpoint, defaultReqIns, ctx, respObserver);
         ContextToHeadersInterceptor.setCurrentCtx(ctx);
 
-        MethodDescriptor<Message, Message> method = getCallMethod(defaultReqIns,
-            MethodDescriptor.MethodType.CLIENT_STREAMING);
+        MethodDescriptor<Message, Message> method =
+                getCallMethod(defaultReqIns, MethodDescriptor.MethodType.CLIENT_STREAMING);
         CallOptions callOpts = CallOptions.DEFAULT.withExecutor(getObserverExecutor(respObserver));
 
         String methodName = method.getFullMethodName();
@@ -316,26 +304,26 @@ public class GrpcClient implements RpcClient {
 
         String target = target(ch, address);
 
-        StreamObserver<Message> gRpcObs = ClientCalls.asyncClientStreamingCall(ch.newCall(method, callOpts),
-            new StreamObserver<Message>() {
+        StreamObserver<Message> gRpcObs =
+                ClientCalls.asyncClientStreamingCall(ch.newCall(method, callOpts), new StreamObserver<Message>() {
 
-                @SuppressWarnings("unchecked")
-                @Override
-                public void onNext(Message value) {
-                    respObserver.onNext((Resp) value);
-                }
+                    @SuppressWarnings("unchecked")
+                    @Override
+                    public void onNext(Message value) {
+                        respObserver.onNext((Resp) value);
+                    }
 
-                @Override
-                public void onError(Throwable err) {
-                    attachErrMsg(err, CLIENT_STREAMING_CALL, methodName, target, startCall, -1, ctx);
-                    respObserver.onError(err);
-                }
+                    @Override
+                    public void onError(Throwable err) {
+                        attachErrMsg(err, CLIENT_STREAMING_CALL, methodName, target, startCall, -1, ctx);
+                        respObserver.onError(err);
+                    }
 
-                @Override
-                public void onCompleted() {
-                    respObserver.onCompleted();
-                }
-            });
+                    @Override
+                    public void onCompleted() {
+                        respObserver.onCompleted();
+                    }
+                });
 
         return new Observer<Req>() {
 
@@ -423,12 +411,13 @@ public class GrpcClient implements RpcClient {
             Ensures.ensure(Math.abs(sum - 1.0) < 0.1, "the total percent sum of partitions must be near 100%");
             methodsLimitPercent.forEach(limiterBuilder::partition);
 
-            return new ClientRequestLimitInterceptor(limiterBuilder.partitionByMethod().build(), methodsLimitPercent::containsKey);
+            return new ClientRequestLimitInterceptor(
+                    limiterBuilder.partitionByMethod().build(), methodsLimitPercent::containsKey);
         }
     }
 
-    private void attachErrMsg(Throwable err, String callType, String method, String target, long startCall,
-            long duration, Context ctx) {
+    private void attachErrMsg(
+            Throwable err, String callType, String method, String target, long startCall, long duration, Context ctx) {
         StringBuilder buf = StringBuilderHelper.get() //
                 .append("Grpc ") //
                 .append(callType) //
@@ -499,8 +488,10 @@ public class GrpcClient implements RpcClient {
             return false;
         }
 
-        LOG.warn("Channel {} in [INACTIVE] state {} times, it has been removed from the pool.",
-                target(removedCh, endpoint), c);
+        LOG.warn(
+                "Channel {} in [INACTIVE] state {} times, it has been removed from the pool.",
+                target(removedCh, endpoint),
+                c);
 
         if (removedCh != ch) {
             // Now that it's removed, close it
@@ -513,7 +504,9 @@ public class GrpcClient implements RpcClient {
     }
 
     private int incConnFailuresCount(Endpoint endpoint) {
-        return this.transientFailures.computeIfAbsent(endpoint, ep -> new AtomicInteger()).incrementAndGet();
+        return this.transientFailures
+                .computeIfAbsent(endpoint, ep -> new AtomicInteger())
+                .incrementAndGet();
     }
 
     private void clearConnFailuresCount(Endpoint endpoint) {
@@ -559,8 +552,7 @@ public class GrpcClient implements RpcClient {
 
             if (clientCertChain.isPresent() && privateKey.isPresent()) {
                 if (privateKeyPassword.isPresent()) {
-                    builder.keyManager(clientCertChain.get(), privateKey.get(),
-                            privateKeyPassword.get());
+                    builder.keyManager(clientCertChain.get(), privateKey.get(), privateKeyPassword.get());
                 } else {
                     builder.keyManager(clientCertChain.get(), privateKey.get());
                 }
@@ -585,7 +577,8 @@ public class GrpcClient implements RpcClient {
             innerChannelBuilder.usePlaintext();
         }
 
-        ManagedChannel innerChannel = innerChannelBuilder.executor(this.asyncPool) //
+        ManagedChannel innerChannel = innerChannelBuilder
+                .executor(this.asyncPool) //
                 .intercept(this.interceptors) //
                 .maxInboundMessageSize(this.opts.getMaxInboundMessageSize()) //
                 .flowControlWindow(this.opts.getFlowControlWindow()) //
@@ -655,7 +648,7 @@ public class GrpcClient implements RpcClient {
 
     @Override
     public void display(Printer out) {
-        out.println("--- GrpcClient ---")//
+        out.println("--- GrpcClient ---") //
                 .print("started=") //
                 .println(this.started) //
                 .print("opts=") //
@@ -693,7 +686,8 @@ public class GrpcClient implements RpcClient {
         return -1;
     }
 
-    private static void checkArgs(Endpoint endpoint, //
+    private static void checkArgs(
+            Endpoint endpoint, //
             Object request, //
             Context ctx, //
             Observer<?> observer) {
@@ -730,8 +724,11 @@ public class GrpcClient implements RpcClient {
 
         @Override
         public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-            LOG.error("Thread poll {} is busy, the caller thread {} will run this task {}.", this.name,
-                    Thread.currentThread(), r);
+            LOG.error(
+                    "Thread poll {} is busy, the caller thread {} will run this task {}.",
+                    this.name,
+                    Thread.currentThread(),
+                    r);
             if (!executor.isShutdown()) {
                 r.run();
             }

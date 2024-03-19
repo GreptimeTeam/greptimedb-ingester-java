@@ -82,7 +82,9 @@ public class ValueUtil {
     }
 
     static Common.IntervalMonthDayNano getIntervalMonthDayNanoValue(Object value) {
-        Ensures.ensure(value instanceof IntervalMonthDayNano, "Expected type: `IntervalMonthDayNano`, actual: %s",
+        Ensures.ensure(
+                value instanceof IntervalMonthDayNano,
+                "Expected type: `IntervalMonthDayNano`, actual: %s",
                 value.getClass());
         return ((IntervalMonthDayNano) value).into();
     }
@@ -90,9 +92,9 @@ public class ValueUtil {
     static Common.Decimal128 getDecimal128Value(Common.ColumnDataTypeExtension dataTypeExtension, Object value) {
         Ensures.ensure(value instanceof BigDecimal, "Expected type: `BigDecimal`, actual: %s", value.getClass());
         Ensures.ensureNonNull(dataTypeExtension, "Null `dataTypeExtension`");
-        Common.DecimalTypeExtension decimalTypeExtension =
-                dataTypeExtension.hasDecimalType() ? dataTypeExtension.getDecimalType()
-                        : DataType.DecimalTypeExtension.DEFAULT.into();
+        Common.DecimalTypeExtension decimalTypeExtension = dataTypeExtension.hasDecimalType()
+                ? dataTypeExtension.getDecimalType()
+                : DataType.DecimalTypeExtension.DEFAULT.into();
         BigDecimal decimal = (BigDecimal) value;
         BigDecimal converted = decimal.setScale(decimalTypeExtension.getScale(), RoundingMode.HALF_UP);
 

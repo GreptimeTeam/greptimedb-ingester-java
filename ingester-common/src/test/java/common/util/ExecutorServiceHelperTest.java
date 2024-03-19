@@ -19,10 +19,10 @@ package common.util;
 import io.greptime.common.util.ExecutorServiceHelper;
 import io.greptime.common.util.NamedThreadFactory;
 import io.greptime.common.util.ThreadPoolUtil;
-import org.junit.Assert;
-import org.junit.Test;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * @author jiachun.fjc
@@ -36,7 +36,8 @@ public class ExecutorServiceHelperTest {
 
     @Test
     public void shutdownNotStart() {
-        ExecutorService e = ThreadPoolUtil.newBuilder().poolName("test_shutdown") //
+        ExecutorService e = ThreadPoolUtil.newBuilder()
+                .poolName("test_shutdown") //
                 .coreThreads(1) //
                 .maximumThreads(1) //
                 .keepAliveSeconds(100L) //

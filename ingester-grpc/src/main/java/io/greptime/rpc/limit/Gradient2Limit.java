@@ -23,11 +23,10 @@ import com.netflix.concurrency.limits.internal.Preconditions;
 import com.netflix.concurrency.limits.limit.AbstractLimit;
 import com.netflix.concurrency.limits.limit.measurement.ExpAvgMeasurement;
 import com.netflix.concurrency.limits.limit.measurement.Measurement;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Concurrency limit algorithm that adjusts the limit based on the gradient of change of the current average RTT and
@@ -228,6 +227,7 @@ public class Gradient2Limit extends AbstractLimit {
      * Maximum allowed limit providing an upper bound failsafe
      */
     private final int maxLimit;
+
     private final int minLimit;
     private final Function<Integer, Integer> queueSize;
     private final double smoothing;
@@ -283,7 +283,7 @@ public class Gradient2Limit extends AbstractLimit {
 
         // Rtt could be higher than rtt_noload because of smoothing rtt noload updates
         // so set to 1.0 to indicate no queuing.  Otherwise calculate the slope and don't
-        // allow it to be reduced by more than half to avoid aggressive load-shedding due to 
+        // allow it to be reduced by more than half to avoid aggressive load-shedding due to
         // outliers.
         double gradient = Math.max(0.5, Math.min(1.0, this.tolerance * longRtt / shortRtt));
         double newLimit = currLimit * gradient + queueSize;
@@ -291,7 +291,8 @@ public class Gradient2Limit extends AbstractLimit {
         newLimit = Math.max(this.minLimit, Math.min(this.maxLimit, newLimit));
 
         if (this.logOnLimitChange && (int) currLimit != (int) newLimit) {
-            LOG.info("New limit={}, previous limit={}, shortRtt={} ms, longRtt={} ms, queueSize={}, gradient={}.",
+            LOG.info(
+                    "New limit={}, previous limit={}, shortRtt={} ms, longRtt={} ms, queueSize={}, gradient={}.",
                     (int) newLimit,
                     (int) currLimit,
                     getLastRtt(TimeUnit.MICROSECONDS) / 1000.0,

@@ -16,8 +16,6 @@
 
 package io.greptime.common.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -26,6 +24,8 @@ import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A {@link java.util.concurrent.ExecutorService} that witch can print
@@ -41,7 +41,8 @@ public class LogThreadPoolExecutor extends ThreadPoolExecutor {
     private final int maximumPoolSize;
     private final String name;
 
-    public LogThreadPoolExecutor(int corePoolSize, //
+    public LogThreadPoolExecutor(
+            int corePoolSize, //
             int maximumPoolSize, //
             long keepAliveTime, //
             TimeUnit unit, //
@@ -90,9 +91,13 @@ public class LogThreadPoolExecutor extends ThreadPoolExecutor {
     @Override
     public String toString() {
         return "ThreadPoolExecutor{" + //
-                "corePoolSize=" + corePoolSize + //
-                ", maximumPoolSize=" + maximumPoolSize + //
-                ", name='" + name + '\'' + //
-                "} " + super.toString();
+                "corePoolSize="
+                + corePoolSize + //
+                ", maximumPoolSize="
+                + maximumPoolSize + //
+                ", name='"
+                + name + '\'' + //
+                "} "
+                + super.toString();
     }
 }

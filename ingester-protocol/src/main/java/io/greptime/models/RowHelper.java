@@ -27,7 +27,8 @@ import io.greptime.v1.RowData;
  */
 public final class RowHelper {
 
-    public static void addValue(RowData.Row.Builder builder, //
+    public static void addValue(
+            RowData.Row.Builder builder, //
             Common.ColumnDataType dataType, //
             Common.ColumnDataTypeExtension dataTypeExtension, //
             Object value) {

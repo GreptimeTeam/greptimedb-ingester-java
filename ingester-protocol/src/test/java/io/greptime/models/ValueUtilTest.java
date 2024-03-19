@@ -18,8 +18,6 @@ package io.greptime.models;
 
 import io.greptime.TestUtil;
 import io.greptime.v1.Common;
-import org.junit.Assert;
-import org.junit.Test;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
@@ -27,6 +25,8 @@ import java.time.LocalDate;
 import java.util.Calendar;
 import java.util.Random;
 import java.util.TimeZone;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * @author jiachun.fjc
@@ -80,8 +80,8 @@ public class ValueUtilTest {
             ValueUtil.getIntervalMonthDayNanoValue(1);
             Assert.fail();
         } catch (IllegalArgumentException e) {
-            Assert.assertEquals("Expected type: `IntervalMonthDayNano`, actual: class java.lang.Integer",
-                    e.getMessage());
+            Assert.assertEquals(
+                    "Expected type: `IntervalMonthDayNano`, actual: class java.lang.Integer", e.getMessage());
         }
     }
 

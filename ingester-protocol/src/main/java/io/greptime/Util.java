@@ -26,7 +26,6 @@ import io.greptime.common.util.SystemPropertyUtil;
 import io.greptime.common.util.ThreadPoolUtil;
 import io.greptime.models.Err;
 import io.greptime.rpc.Observer;
-
 import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
@@ -42,8 +41,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author jiachun
  */
 public final class Util {
-    private static final AtomicBoolean            RW_LOGGING;
-    private static final int                      REPORT_PERIOD_MIN;
+    private static final AtomicBoolean RW_LOGGING;
+    private static final int REPORT_PERIOD_MIN;
     private static final ScheduledExecutorService DISPLAY;
 
     static {
@@ -57,7 +56,8 @@ public final class Util {
                 .rejectedHandler(new ThreadPoolExecutor.DiscardOldestPolicy()) //
                 .build();
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> ExecutorServiceHelper.shutdownAndAwaitTermination(DISPLAY)));
+        Runtime.getRuntime()
+                .addShutdownHook(new Thread(() -> ExecutorServiceHelper.shutdownAndAwaitTermination(DISPLAY)));
     }
 
     /**
@@ -139,7 +139,6 @@ public final class Util {
     public static <U> CompletableFuture<U> completedCf(U value) {
         return CompletableFuture.completedFuture(value);
     }
-
 
     public static <V> Observer<V> toObserver(CompletableFuture<V> future) {
         return new Observer<V>() {

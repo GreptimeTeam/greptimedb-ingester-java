@@ -37,7 +37,8 @@ public final class StringMarshaller implements Marshaller<String> {
     @Override
     public String parse(InputStream stream) {
         try {
-            return toStringBuilder((new InputStreamReader(stream, StandardCharsets.UTF_8))).toString();
+            return toStringBuilder((new InputStreamReader(stream, StandardCharsets.UTF_8)))
+                    .toString();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

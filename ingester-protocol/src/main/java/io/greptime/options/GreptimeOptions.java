@@ -103,11 +103,16 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
     @Override
     public String toString() {
         return "GreptimeOptions{" + //
-                "endpoints=" + endpoints + //
-                ", rpcOptions=" + rpcOptions + //
-                ", routerOptions=" + routerOptions + //
-                ", writeOptions=" + writeOptions + //
-                ", database='" + database + '\'' + //
+                "endpoints="
+                + endpoints + //
+                ", rpcOptions="
+                + rpcOptions + //
+                ", routerOptions="
+                + routerOptions + //
+                ", writeOptions="
+                + writeOptions + //
+                ", database='"
+                + database + '\'' + //
                 '}';
     }
 

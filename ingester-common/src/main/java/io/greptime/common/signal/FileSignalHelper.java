@@ -26,7 +26,9 @@ public class FileSignalHelper {
     private static final String[] EMPTY_ARRAY = new String[0];
 
     public static boolean ignoreSignal(FileSignal fileSignal) {
-        return !Paths.get(FileOutputHelper.getOutDir(), fileSignal.getFilename()).toFile().exists();
+        return !Paths.get(FileOutputHelper.getOutDir(), fileSignal.getFilename())
+                .toFile()
+                .exists();
     }
 
     public static boolean ignoreFileOutputSignal() {

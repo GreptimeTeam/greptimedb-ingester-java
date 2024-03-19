@@ -27,7 +27,8 @@ import java.util.Collection;
  */
 public class TableHelper {
 
-    public static Database.GreptimeRequest toGreptimeRequest(WriteTables writeTables, String database, AuthInfo authInfo) {
+    public static Database.GreptimeRequest toGreptimeRequest(
+            WriteTables writeTables, String database, AuthInfo authInfo) {
         Common.RequestHeader.Builder headerBuilder = Common.RequestHeader.newBuilder();
         if (database != null) {
             headerBuilder.setDbname(database);

@@ -27,6 +27,9 @@ import io.greptime.models.WriteOk;
 import io.greptime.options.WriteOptions;
 import io.greptime.v1.Common;
 import io.greptime.v1.Database;
+import java.math.BigDecimal;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -35,9 +38,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
-import java.math.BigDecimal;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
 
 /**
  * @author jiachun.fjc
@@ -45,6 +45,7 @@ import java.util.concurrent.ForkJoinPool;
 @RunWith(value = MockitoJUnitRunner.class)
 public class WriteClientTest {
     private WriteClient writeClient;
+
     @Mock
     private RouterClient routerClient;
 
@@ -99,18 +100,96 @@ public class WriteClientTest {
         Table table = Table.from(schema);
         long ts = System.currentTimeMillis();
 
-        Object[] row1 =
-                new Object[] {"tag1", ts, 1, 2, 3, 4L, 5, 6, 7, 8L, 0.9F, 0.10D, true, new byte[0], 13L, 14L, 15L, 16L,
-                        17L, 18L, 19L, 20L, 21L, 22L, 23, 24L, new IntervalMonthDayNano(1, 2, 3),
-                        BigDecimal.valueOf(123.456)};
-        Object[] row2 =
-                new Object[] {"tag2", ts, 1, 2, 3, 4L, 5, 6, 7, 8L, 0.9F, 0.10D, true, new byte[0], 13L, 14L, 15L, 16L,
-                        17L, 18L, 19L, 20L, 21L, 22L, 23, 24L, new IntervalMonthDayNano(4, 5, 6),
-                        BigDecimal.valueOf(123.456)};
-        Object[] row3 =
-                new Object[] {"tag3", ts, 1, 2, 3, 4L, 5, 6, 7, 8L, 0.9F, 0.10D, true, new byte[0], 13L, 14L, 15L, 16L,
-                        17L, 18L, 19L, 20L, 21L, 22L, 23, 24L, new IntervalMonthDayNano(7, 8, 9),
-                        BigDecimal.valueOf(123.456)};
+        Object[] row1 = new Object[] {
+            "tag1",
+            ts,
+            1,
+            2,
+            3,
+            4L,
+            5,
+            6,
+            7,
+            8L,
+            0.9F,
+            0.10D,
+            true,
+            new byte[0],
+            13L,
+            14L,
+            15L,
+            16L,
+            17L,
+            18L,
+            19L,
+            20L,
+            21L,
+            22L,
+            23,
+            24L,
+            new IntervalMonthDayNano(1, 2, 3),
+            BigDecimal.valueOf(123.456)
+        };
+        Object[] row2 = new Object[] {
+            "tag2",
+            ts,
+            1,
+            2,
+            3,
+            4L,
+            5,
+            6,
+            7,
+            8L,
+            0.9F,
+            0.10D,
+            true,
+            new byte[0],
+            13L,
+            14L,
+            15L,
+            16L,
+            17L,
+            18L,
+            19L,
+            20L,
+            21L,
+            22L,
+            23,
+            24L,
+            new IntervalMonthDayNano(4, 5, 6),
+            BigDecimal.valueOf(123.456)
+        };
+        Object[] row3 = new Object[] {
+            "tag3",
+            ts,
+            1,
+            2,
+            3,
+            4L,
+            5,
+            6,
+            7,
+            8L,
+            0.9F,
+            0.10D,
+            true,
+            new byte[0],
+            13L,
+            14L,
+            15L,
+            16L,
+            17L,
+            18L,
+            19L,
+            20L,
+            21L,
+            22L,
+            23,
+            24L,
+            new IntervalMonthDayNano(7, 8, 9),
+            BigDecimal.valueOf(123.456)
+        };
         table.addRow(row1);
         table.addRow(row2);
         table.addRow(row3);

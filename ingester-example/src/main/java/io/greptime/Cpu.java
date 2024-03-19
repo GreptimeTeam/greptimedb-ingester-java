@@ -33,6 +33,7 @@ public class Cpu {
 
     @Column(name = "cpu_user", dataType = DataType.Float64)
     private double cpuUser;
+
     @Column(name = "cpu_sys", dataType = DataType.Float64)
     private double cpuSys;
 

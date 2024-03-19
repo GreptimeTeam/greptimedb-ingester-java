@@ -45,8 +45,8 @@ public class MetricInterceptor implements ClientInterceptor {
     private static final Counter RESP_BYTES = MetricsUtil.counter(RESP_TYPE, BYTES);
 
     @Override
-    public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
-            CallOptions callOpts, Channel next) {
+    public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
+            MethodDescriptor<ReqT, RespT> method, CallOptions callOpts, Channel next) {
         String methodName = method.getFullMethodName();
         MetricsUtil.meter(REQ_TYPE, QPS, methodName).mark();
 
@@ -54,25 +54,29 @@ public class MetricInterceptor implements ClientInterceptor {
 
             @Override
             public void start(Listener<RespT> respListener, Metadata headers) {
-                super.start(new ForwardingClientCallListener.SimpleForwardingClientCallListener<RespT>(respListener) {
+                super.start(
+                        new ForwardingClientCallListener.SimpleForwardingClientCallListener<RespT>(respListener) {
 
-                    @Override
-                    public void onMessage(RespT msg) {
-                        if (msg instanceof MessageLite) {
-                            int size = ((MessageLite) msg).getSerializedSize();
-                            MetricsUtil.histogram(RESP_TYPE, SERIALIZED_BYTES, methodName).update(size);
-                            RESP_BYTES.inc(size);
-                        }
-                        super.onMessage(msg);
-                    }
-                }, headers);
+                            @Override
+                            public void onMessage(RespT msg) {
+                                if (msg instanceof MessageLite) {
+                                    int size = ((MessageLite) msg).getSerializedSize();
+                                    MetricsUtil.histogram(RESP_TYPE, SERIALIZED_BYTES, methodName)
+                                            .update(size);
+                                    RESP_BYTES.inc(size);
+                                }
+                                super.onMessage(msg);
+                            }
+                        },
+                        headers);
             }
 
             @Override
             public void sendMessage(ReqT msg) {
                 if (msg instanceof MessageLite) {
                     int size = ((MessageLite) msg).getSerializedSize();
-                    MetricsUtil.histogram(REQ_TYPE, SERIALIZED_BYTES, methodName).update(size);
+                    MetricsUtil.histogram(REQ_TYPE, SERIALIZED_BYTES, methodName)
+                            .update(size);
                     REQ_BYTES.inc(size);
                 }
                 super.sendMessage(msg);

@@ -29,7 +29,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class MetricThreadPoolExecutor extends LogThreadPoolExecutor {
 
-    public MetricThreadPoolExecutor(int corePoolSize, //
+    public MetricThreadPoolExecutor(
+            int corePoolSize, //
             int maximumPoolSize, //
             long keepAliveTime, //
             TimeUnit unit, //

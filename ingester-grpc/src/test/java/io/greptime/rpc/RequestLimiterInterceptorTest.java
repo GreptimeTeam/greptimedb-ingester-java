@@ -31,13 +31,13 @@ import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.ClientCalls;
 import io.grpc.stub.ServerCalls;
-import org.junit.Ignore;
-import org.junit.Test;
 import java.io.IOException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /**
  * Refer to `concurrency-limit-grpc's test`
@@ -91,9 +91,12 @@ public class RequestLimiterInterceptorTest {
                 .build();
 
         AtomicLong counter = new AtomicLong();
-        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
-                () -> System.out.println(" " + counter.getAndSet(0) + " : " + limiter.toString()), 1, 1, TimeUnit.SECONDS
-        );
+        Executors.newSingleThreadScheduledExecutor()
+                .scheduleAtFixedRate(
+                        () -> System.out.println(" " + counter.getAndSet(0) + " : " + limiter.toString()),
+                        1,
+                        1,
+                        TimeUnit.SECONDS);
 
         for (int i = 0; i < 10000000; i++) {
             counter.incrementAndGet();

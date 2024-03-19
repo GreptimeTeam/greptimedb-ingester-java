@@ -57,8 +57,8 @@ public class Files {
         File dir = Paths.get(path).toFile().getAbsoluteFile();
         if (dir.exists()) {
             if (!dir.isDirectory()) {
-                throw new IOException("File " + dir + " exists and is "
-                        + "not a directory. Unable to create directory.");
+                throw new IOException(
+                        "File " + dir + " exists and is " + "not a directory. Unable to create directory.");
             }
         } else if (!dir.mkdirs() && !dir.isDirectory()) {
             // Double-check that some other thread or process hasn't made

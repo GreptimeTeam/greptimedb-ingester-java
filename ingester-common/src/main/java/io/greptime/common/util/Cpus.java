@@ -25,8 +25,8 @@ import io.greptime.common.Keys;
  */
 public class Cpus {
 
-    private static final int CPUS = SystemPropertyUtil.getInt(Keys.AVAILABLE_CPUS, Runtime.getRuntime()
-            .availableProcessors());
+    private static final int CPUS =
+            SystemPropertyUtil.getInt(Keys.AVAILABLE_CPUS, Runtime.getRuntime().availableProcessors());
 
     /**
      * The configured number of available processors. The default is

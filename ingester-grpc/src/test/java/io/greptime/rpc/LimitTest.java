@@ -19,11 +19,11 @@ package io.greptime.rpc;
 import com.netflix.concurrency.limits.Limit;
 import io.greptime.rpc.limit.Gradient2Limit;
 import io.greptime.rpc.limit.VegasLimit;
+import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author jiachun.fjc

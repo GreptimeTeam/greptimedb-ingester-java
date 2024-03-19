@@ -23,12 +23,12 @@ import io.greptime.common.signal.SignalHandler;
 import io.greptime.common.util.Files;
 import io.greptime.common.util.MetricReporter;
 import io.greptime.common.util.MetricsUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A signal handle that can write the metrics into a file.
@@ -51,7 +51,9 @@ public class MetricsSignalHandler implements SignalHandler {
         try {
             File file = FileOutputHelper.getOutputFile(BASE_NAME);
 
-            LOG.info("Printing GreptimeDB clients metrics triggered by signal: {} to file: {}.", signalName,
+            LOG.info(
+                    "Printing GreptimeDB clients metrics triggered by signal: {} to file: {}.",
+                    signalName,
                     file.getAbsoluteFile());
 
             try (PrintStream out = new PrintStream(new FileOutputStream(file, true))) {

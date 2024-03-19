@@ -103,8 +103,10 @@ public class TableSchema {
          * @return this builder
          */
         public Builder addTimestamp(String name, DataType dataType) {
-            Ensures.ensure(dataType.isTimestamp(),
-                    "Invalid timestamp data type: %s, only support `DataType.TimestampXXX`", dataType);
+            Ensures.ensure(
+                    dataType.isTimestamp(),
+                    "Invalid timestamp data type: %s, only support `DataType.TimestampXXX`",
+                    dataType);
             return addColumn(name, SemanticType.Timestamp, dataType);
         }
 
@@ -152,7 +154,8 @@ public class TableSchema {
          * @param decimalTypeExtension the decimal type extension of this column(only for `DataType.Decimal128`)
          * @return this builder
          */
-        public Builder addColumn(String name, //
+        public Builder addColumn(
+                String name, //
                 SemanticType semanticType, //
                 DataType dataType, //
                 DataType.DecimalTypeExtension decimalTypeExtension) {
@@ -161,8 +164,10 @@ public class TableSchema {
             Ensures.ensureNonNull(dataType, "Null data type");
 
             if (semanticType == SemanticType.Timestamp) {
-                Ensures.ensure(dataType.isTimestamp(),
-                        "Invalid timestamp data type: %s, only support `DataType.TimestampXXX`", dataType);
+                Ensures.ensure(
+                        dataType.isTimestamp(),
+                        "Invalid timestamp data type: %s, only support `DataType.TimestampXXX`",
+                        dataType);
             }
 
             // Trim leading and trailing spaces
@@ -197,10 +202,11 @@ public class TableSchema {
             int columnCount = this.columnNames.size();
 
             Ensures.ensure(columnCount > 0, "Empty column names");
-            Ensures.ensure(columnCount == this.semanticTypes.size(),
-                    "Column names size not equal to semantic types size");
+            Ensures.ensure(
+                    columnCount == this.semanticTypes.size(), "Column names size not equal to semantic types size");
             Ensures.ensure(columnCount == this.dataTypes.size(), "Column names size not equal to data types size");
-            Ensures.ensure(columnCount == this.dataTypeExtensions.size(),
+            Ensures.ensure(
+                    columnCount == this.dataTypeExtensions.size(),
                     "Column names size not equal to data type extensions size");
 
             TableSchema tableSchema = new TableSchema();

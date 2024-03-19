@@ -96,8 +96,8 @@ public enum Status {
     AccessDenied(7005),
     // User is not authorized to perform the operation
     PermissionDenied(7006),
-    // ====== End of auth related status code =====
-    ;
+// ====== End of auth related status code =====
+;
 
     private static final Map<Integer, Status> DICT = new HashMap<>();
 

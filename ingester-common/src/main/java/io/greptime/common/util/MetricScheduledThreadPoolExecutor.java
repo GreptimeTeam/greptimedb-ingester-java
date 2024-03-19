@@ -29,7 +29,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class MetricScheduledThreadPoolExecutor extends LogScheduledThreadPoolExecutor {
 
-    public MetricScheduledThreadPoolExecutor(int corePoolSize, //
+    public MetricScheduledThreadPoolExecutor(
+            int corePoolSize, //
             ThreadFactory threadFactory, //
             RejectedExecutionHandler handler, //
             String name) {

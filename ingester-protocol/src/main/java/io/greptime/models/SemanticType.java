@@ -24,7 +24,9 @@ import io.greptime.v1.Common;
  * @author jiachun.fjc
  */
 public enum SemanticType {
-    Tag, Field, Timestamp;
+    Tag,
+    Field,
+    Timestamp;
 
     /**
      * Converts to the corresponding proto value.

@@ -108,8 +108,10 @@ public class IdChannel extends ManagedChannel {
     @Override
     public String toString() {
         return "IdChannel{" + //
-                "channelId=" + channelId + //
-                ", channel=" + channel + //
+                "channelId="
+                + channelId + //
+                ", channel="
+                + channel + //
                 '}';
     }
 }

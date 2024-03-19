@@ -74,9 +74,12 @@ public class MethodDescriptor {
     @Override
     public String toString() {
         return "MethodDescriptor{" + //
-                "name='" + name + '\'' + //
-                ", type=" + type + //
-                ", limitPercent=" + limitPercent + //
+                "name='"
+                + name + '\'' + //
+                ", type="
+                + type + //
+                ", limitPercent="
+                + limitPercent + //
                 '}';
     }
 

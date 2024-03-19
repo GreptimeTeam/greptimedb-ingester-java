@@ -21,7 +21,6 @@ import io.greptime.common.util.Ensures;
 import io.greptime.v1.Common;
 import io.greptime.v1.Database;
 import io.greptime.v1.RowData;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -108,17 +107,20 @@ public interface Table {
             Ensures.ensure(columnCount > 0, "Empty column names");
             Ensures.ensure(columnCount == semanticTypes.size(), "Column names size not equal to semantic types size");
             Ensures.ensure(columnCount == dataTypes.size(), "Column names size not equal to data types size");
-            Ensures.ensure(columnCount == dataTypeExtensions.size(), "Column names size not equal to data type extensions size");
+            Ensures.ensure(
+                    columnCount == dataTypeExtensions.size(),
+                    "Column names size not equal to data type extensions size");
 
             return buildTable(tableName, columnCount, columnNames, semanticTypes, dataTypes, dataTypeExtensions);
         }
 
-        private static Table buildTable(String tableName, //
-                                        int columnCount, //
-                                        List<String> columnNames, //
-                                        List<Common.SemanticType> semanticTypes, //
-                                        List<Common.ColumnDataType> dataTypes, //
-                                        List<Common.ColumnDataTypeExtension> dataTypeExtensions) {
+        private static Table buildTable(
+                String tableName, //
+                int columnCount, //
+                List<String> columnNames, //
+                List<Common.SemanticType> semanticTypes, //
+                List<Common.ColumnDataType> dataTypes, //
+                List<Common.ColumnDataTypeExtension> dataTypeExtensions) {
             RowBasedTable table = new RowBasedTable();
             table.tableName = tableName;
             table.columnSchemas = new ArrayList<>(columnCount);

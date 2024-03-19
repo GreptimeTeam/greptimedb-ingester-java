@@ -82,10 +82,14 @@ public class TlsOptions implements Copiable<TlsOptions> {
     @Override
     public String toString() {
         return "TlsOptions{" + //
-                "clientCertChain=" + clientCertChain + //
-                ", privateKey=" + privateKey + //
-                ", privateKeyPassword='" + getPrivateKeyPassword().map((v) -> "****") + '\'' + //
-                ", rootCerts=" + rootCerts + //
+                "clientCertChain="
+                + clientCertChain + //
+                ", privateKey="
+                + privateKey + //
+                ", privateKeyPassword='"
+                + getPrivateKeyPassword().map((v) -> "****") + '\'' + //
+                ", rootCerts="
+                + rootCerts + //
                 '}';
     }
 }

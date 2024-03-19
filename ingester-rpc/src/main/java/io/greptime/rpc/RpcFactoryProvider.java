@@ -28,7 +28,8 @@ public class RpcFactoryProvider {
     /**
      * SPI RPC factory, default is GrpcFactory
      */
-    private static final RpcFactory RPC_FACTORY = ServiceLoader.load(RpcFactory.class).first();
+    private static final RpcFactory RPC_FACTORY =
+            ServiceLoader.load(RpcFactory.class).first();
 
     /**
      * Gets the {@link RpcFactory} impl, base on SPI.

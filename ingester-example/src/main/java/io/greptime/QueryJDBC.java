@@ -16,8 +16,6 @@
 
 package io.greptime;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -29,6 +27,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author jiachun.fjc
@@ -50,7 +50,8 @@ public class QueryJDBC {
             ResultSet rs = statement.executeQuery("DESC cpu_metric");
             LOG.info("Column | Type | Key | Null | Default | Semantic Type ");
             while (rs.next()) {
-                LOG.info("{} | {} | {} | {} | {} | {}", //
+                LOG.info(
+                        "{} | {} | {} | {} | {} | {}", //
                         rs.getString(1), //
                         rs.getString(2), //
                         rs.getString(3), //
@@ -69,7 +70,8 @@ public class QueryJDBC {
             rs = statement.executeQuery("SELECT * FROM cpu_metric ORDER BY ts DESC LIMIT 5");
             LOG.info("host | ts | cpu_user | cpu_sys");
             while (rs.next()) {
-                LOG.info("{} | {} | {} | {}", //
+                LOG.info(
+                        "{} | {} | {} | {}", //
                         rs.getString("host"), //
                         rs.getTimestamp("ts"), //
                         rs.getDouble("cpu_user"), //

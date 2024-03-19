@@ -20,11 +20,11 @@ import io.greptime.models.Column;
 import io.greptime.models.DataType;
 import io.greptime.models.Metric;
 import io.greptime.models.Table;
-import org.junit.Assert;
-import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * @author jiachun.fjc
@@ -41,7 +41,6 @@ public class PojoObjectMapperTest {
         Table tp1 = new CachedPojoObjectMapper().mapToTable(pojos1);
         Assert.assertEquals("pojo1", tp1.tableName());
         Assert.assertEquals(50, tp1.pointCount());
-
 
         List<Pojo2Test> pojos2 = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
@@ -73,28 +72,32 @@ public class PojoObjectMapperTest {
     }
 }
 
-
 @Metric(name = "pojo1")
 class Pojo1Test {
     @Column(name = "a", dataType = DataType.String, tag = true)
     String a;
+
     @Column(name = "b", dataType = DataType.Int8)
     int b;
+
     @Column(name = "c", dataType = DataType.Int64)
     long c;
+
     @Column(name = "d", dataType = DataType.Float64)
     double d;
+
     @Column(name = "ts", dataType = DataType.TimestampMillisecond, timestamp = true)
     long ts;
 }
-
 
 @Metric(name = "pojo2")
 class Pojo2Test {
     @Column(name = "pojo2", dataType = DataType.String, tag = true)
     String name;
+
     @Column(name = "a", dataType = DataType.String)
     String a;
+
     @Column(name = "ts", dataType = DataType.TimestampMillisecond, timestamp = true)
     long ts;
 }

@@ -32,10 +32,7 @@ public interface RpcFactory {
      * @param defaultReqIns  default request instance
      * @param defaultRespIns default response instance
      */
-    void register(MethodDescriptor method,
-                  Class<?> reqCls,
-                  Object defaultReqIns,
-                  Object defaultRespIns);
+    void register(MethodDescriptor method, Class<?> reqCls, Object defaultReqIns, Object defaultRespIns);
 
     /**
      * Creates a RPC client.

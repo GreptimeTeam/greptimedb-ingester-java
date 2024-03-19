@@ -22,12 +22,12 @@ import io.greptime.models.Result;
 import io.greptime.models.Table;
 import io.greptime.models.TableSchema;
 import io.greptime.models.WriteOk;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author jiachun.fjc
@@ -87,7 +87,8 @@ public class LowLevelApiWriteQuickStart {
         }
 
         List<Table> delete_objs = Arrays.asList(cpuMetric.subRange(0, 5), memMetric.subRange(0, 5));
-        Result<WriteOk, Err> deletes = greptimeDB.write(delete_objs, WriteOp.Delete).get();
+        Result<WriteOk, Err> deletes =
+                greptimeDB.write(delete_objs, WriteOp.Delete).get();
 
         if (deletes.isOk()) {
             LOG.info("Delete result: {}", result.getOk());

@@ -55,7 +55,9 @@ public enum DataType {
     ;
 
     public boolean isTimestamp() {
-        return this == TimestampSecond || this == TimestampMillisecond || this == TimestampMicrosecond
+        return this == TimestampSecond
+                || this == TimestampMillisecond
+                || this == TimestampMicrosecond
                 || this == TimestampNanosecond;
     }
 
@@ -127,8 +129,8 @@ public enum DataType {
         // The default scale for [Decimal128] values
         static final int DEFAULT_DECIMAL128_SCALE = 10;
 
-        public static final DecimalTypeExtension DEFAULT = new DecimalTypeExtension(MAX_DECIMAL128_PRECISION,
-                DEFAULT_DECIMAL128_SCALE);
+        public static final DecimalTypeExtension DEFAULT =
+                new DecimalTypeExtension(MAX_DECIMAL128_PRECISION, DEFAULT_DECIMAL128_SCALE);
 
         private final int precision;
         private final int scale;

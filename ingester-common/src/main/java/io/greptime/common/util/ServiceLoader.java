@@ -17,8 +17,6 @@
 package io.greptime.common.util;
 
 import io.greptime.common.SPI;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,6 +32,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.ServiceConfigurationError;
 import java.util.function.Supplier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A simple service-provider loading facility (SPI).
@@ -175,8 +175,8 @@ public final class ServiceLoader<S> implements Iterable<S> {
 
     // parse a single line from the given configuration file, adding the name
     // on the line to the names list.
-    private int parseLine(Class<?> service, URL u, BufferedReader r, int lc, List<String> names) throws IOException,
-            ServiceConfigurationError {
+    private int parseLine(Class<?> service, URL u, BufferedReader r, int lc, List<String> names)
+            throws IOException, ServiceConfigurationError {
 
         String ln = r.readLine();
         if (ln == null) {
@@ -215,7 +215,8 @@ public final class ServiceLoader<S> implements Iterable<S> {
                 BufferedReader r = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
             int lc = 1;
             // noinspection StatementWithEmptyBody
-            while ((lc = parseLine(service, url, r, lc, names)) >= 0);
+            while ((lc = parseLine(service, url, r, lc, names)) >= 0)
+                ;
         } catch (IOException x) {
             throw fail(service, "error reading configuration file", x);
         }
@@ -227,7 +228,8 @@ public final class ServiceLoader<S> implements Iterable<S> {
     public Iterator<S> iterator() {
         return new Iterator<S>() {
 
-            final Iterator<Map.Entry<String, S>> knownProviders = ServiceLoader.this.providers.entrySet().iterator();
+            final Iterator<Map.Entry<String, S>> knownProviders =
+                    ServiceLoader.this.providers.entrySet().iterator();
 
             @Override
             public boolean hasNext() {
@@ -253,7 +255,8 @@ public final class ServiceLoader<S> implements Iterable<S> {
     public Iterator<Class<S>> classIterator() {
         return new Iterator<Class<S>>() {
 
-            final Iterator<Map.Entry<String, S>> knownProviders = ServiceLoader.this.providers.entrySet().iterator();
+            final Iterator<Map.Entry<String, S>> knownProviders =
+                    ServiceLoader.this.providers.entrySet().iterator();
 
             @Override
             public boolean hasNext() {

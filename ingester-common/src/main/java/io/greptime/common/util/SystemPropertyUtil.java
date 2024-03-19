@@ -16,10 +16,10 @@
 
 package io.greptime.common.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A collection of utility methods to retrieve and
@@ -161,7 +161,10 @@ public final class SystemPropertyUtil {
             // ignored
         }
 
-        LOG.warn("Unable to parse the long integer system property '{}':{} - using the default value: {}.", key, value,
+        LOG.warn(
+                "Unable to parse the long integer system property '{}':{} - using the default value: {}.",
+                key,
+                value,
                 def);
 
         return def;

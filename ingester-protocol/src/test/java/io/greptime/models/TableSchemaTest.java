@@ -18,9 +18,9 @@ package io.greptime.models;
 
 import io.greptime.TestUtil;
 import io.greptime.v1.RowData;
+import java.math.BigDecimal;
 import org.junit.Assert;
 import org.junit.Test;
-import java.math.BigDecimal;
 
 /**
  * @author jiachun.fjc
@@ -33,7 +33,8 @@ public class TableSchemaTest {
                 .addTag("col1", DataType.String) //
                 .addTag("col2", DataType.String) //
                 .addField("col3", DataType.Int32) //
-                .addColumn("col4", SemanticType.Field, DataType.Decimal128, new DataType.DecimalTypeExtension(39, 9)) //
+                .addColumn(
+                        "col4", SemanticType.Field, DataType.Decimal128, new DataType.DecimalTypeExtension(39, 9)) //
                 .build();
 
         Table.RowBasedTable table = (Table.RowBasedTable) Table.from(schema);
@@ -46,11 +47,14 @@ public class TableSchemaTest {
         Assert.assertEquals(111, rawRows.getRows(0).getValues(2).getI32Value());
         Assert.assertEquals(222, rawRows.getRows(1).getValues(2).getI32Value());
         Assert.assertEquals(333, rawRows.getRows(2).getValues(2).getI32Value());
-        Assert.assertEquals(new BigDecimal("0.100000000"),
+        Assert.assertEquals(
+                new BigDecimal("0.100000000"),
                 TestUtil.getDecimal(rawRows.getRows(0).getValues(3).getDecimal128Value(), 9));
-        Assert.assertEquals(new BigDecimal("0.200000000"),
+        Assert.assertEquals(
+                new BigDecimal("0.200000000"),
                 TestUtil.getDecimal(rawRows.getRows(1).getValues(3).getDecimal128Value(), 9));
-        Assert.assertEquals(new BigDecimal("0.300000000"),
+        Assert.assertEquals(
+                new BigDecimal("0.300000000"),
                 TestUtil.getDecimal(rawRows.getRows(2).getValues(3).getDecimal128Value(), 9));
     }
 
@@ -74,7 +78,6 @@ public class TableSchemaTest {
         Assert.assertFalse(rawRows.getRows(2).getValues(2).hasI32Value());
         Assert.assertFalse(rawRows.getRows(1).getValues(1).hasStringValue());
     }
-
 
     @Test
     public void testNotSupportTimestamp() {
