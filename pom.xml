@@ -206,26 +206,10 @@
                 <configuration>
                     <nrOfIndentSpace>4</nrOfIndentSpace>
                     <keepBlankLines>true</keepBlankLines>
-                    <sortProperties>true</sortProperties>
+                    <expandEmptyElements>false</expandEmptyElements>
                     <encoding>${project.build.sourceEncoding}</encoding>
+                    <verifyFail>Stop</verifyFail>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>sort</id>
-                        <goals>
-                            <goal>sort</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>verify</id>
-                        <goals>
-                            <goal>verify</goal>
-                        </goals>
-                        <configuration>
-                            <verifyFail>Stop</verifyFail>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>com.diffplug.spotless</groupId>
