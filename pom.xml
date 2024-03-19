@@ -71,29 +71,32 @@
     </distributionManagement>
 
     <properties>
+        <!-- setup -->
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
+        <!-- libs -->
         <guava.version>32.0.1-jre</guava.version>
+        <protobuf.version>3.21.12</protobuf.version>
+        <slf4j.version>1.7.36</slf4j.version>
+
+        <!-- tests -->
+        <mockito.version>1.9.5</mockito.version>
         <jmh.version>1.20</jmh.version>
         <junit.dep.version>4.8.2</junit.dep.version>
         <junit.version>4.13.1</junit.version>
         <log4j.version>2.17.1</log4j.version>
 
+        <!-- plugins -->
         <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
         <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
         <maven-javadoc-plugin.version>2.9.1</maven-javadoc-plugin.version>
         <maven-source-plugin.version>3.0.1</maven-source-plugin.version>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
-
-        <mockito.version>1.9.5</mockito.version>
-
         <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
         <palantir-java-format.version>2.41.0</palantir-java-format.version>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <protobuf.version>3.21.12</protobuf.version>
-        <slf4j.version>1.7.36</slf4j.version>
         <sortpom-maven-plugin.version>3.4.1</sortpom-maven-plugin.version>
-        <spotless.version>2.43.0</spotless.version>
+        <spotless-plugin.version>2.43.0</spotless-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -208,16 +211,26 @@
                 </configuration>
                 <executions>
                     <execution>
+                        <id>sort</id>
                         <goals>
                             <goal>sort</goal>
                         </goals>
+                    </execution>
+                    <execution>
+                        <id>verify</id>
+                        <goals>
+                            <goal>verify</goal>
+                        </goals>
+                        <configuration>
+                            <verifyFail>Stop</verifyFail>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
             <plugin>
                 <groupId>com.diffplug.spotless</groupId>
                 <artifactId>spotless-maven-plugin</artifactId>
-                <version>${spotless.version}</version>
+                <version>${spotless-plugin.version}</version>
                 <configuration>
                     <java>
                         <palantirJavaFormat>
@@ -227,9 +240,9 @@
                         <importOrder>
                             <order>\#|</order>
                         </importOrder>
-                        <removeUnusedImports></removeUnusedImports>
-                        <trimTrailingWhitespace></trimTrailingWhitespace>
-                        <endWithNewline></endWithNewline>
+                        <removeUnusedImports/>
+                        <trimTrailingWhitespace/>
+                        <endWithNewline/>
                         <indent>
                             <spaces>true</spaces>
                             <spacesPerTab>4</spacesPerTab>
@@ -243,9 +256,6 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven-compiler-plugin.version}</version>
                 <configuration>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
-                    <encoding>${project.build.sourceEncoding}</encoding>
                     <showDeprecation>true</showDeprecation>
                     <showWarnings>true</showWarnings>
                 </configuration>
