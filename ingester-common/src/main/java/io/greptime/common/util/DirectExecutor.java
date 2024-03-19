@@ -21,8 +21,6 @@ import java.util.concurrent.Executor;
 
 /**
  * A direct executor.
- *
- *
  */
 public class DirectExecutor implements Executor {
     private final String name;

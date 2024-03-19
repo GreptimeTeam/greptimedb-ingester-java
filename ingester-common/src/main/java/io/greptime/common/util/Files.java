@@ -24,8 +24,6 @@ import java.nio.file.StandardOpenOption;
 
 /**
  * File utilities.
- *
- *
  */
 public class Files {
 

@@ -18,8 +18,6 @@ package io.greptime.errors;
 
 /**
  * A flow control exception that can be thrown by AbortPolicy.
- *
- *
  */
 public class LimitedException extends RuntimeException {
 

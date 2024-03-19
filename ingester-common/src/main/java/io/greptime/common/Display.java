@@ -22,8 +22,6 @@ import java.io.PrintWriter;
  * Components that implement this interface need to be able to display
  * their own state and output state information via the {@code display}
  * method.
- *
- *
  */
 public interface Display {
 

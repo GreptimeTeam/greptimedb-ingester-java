@@ -17,8 +17,6 @@
 package io.greptime.rpc.limit;
 
 /**
- *
- *
  */
 public interface RequestLimitCtx {
 

@@ -26,8 +26,6 @@ import java.util.List;
 
 /**
  * Data in row format, ready to be written to the DB.
- *
- *
  */
 public interface Table {
 

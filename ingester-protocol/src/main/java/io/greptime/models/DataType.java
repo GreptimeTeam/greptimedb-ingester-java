@@ -21,8 +21,6 @@ import io.greptime.v1.Common;
 
 /**
  * GreptimeDB's data type.
- *
- *
  */
 public enum DataType {
     Bool,

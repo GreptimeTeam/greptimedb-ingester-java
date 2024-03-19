@@ -18,8 +18,6 @@ package io.greptime.common.util;
 
 /**
  * An object pool.
- *
- *
  */
 public interface ObjectPool<T> {
 

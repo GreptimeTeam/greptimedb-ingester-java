@@ -27,8 +27,6 @@ import io.grpc.MethodDescriptor;
 
 /**
  * Add RPC context to gRPC headers.
- *
- *
  */
 public class ContextToHeadersInterceptor implements ClientInterceptor {
 

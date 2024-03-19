@@ -30,8 +30,6 @@ import org.slf4j.LoggerFactory;
  * A tool class for loading and registering all signals.
  * <p>
  * Do not support windows.
- *
- *
  */
 public class SignalHandlersLoader {
 

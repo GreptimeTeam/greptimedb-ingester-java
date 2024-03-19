@@ -21,8 +21,6 @@ import io.greptime.common.SPI;
 
 /**
  * GreptimeDB grpc impl service factory.
- *
- *
  */
 @SPI
 public class GrpcFactory implements RpcFactory {

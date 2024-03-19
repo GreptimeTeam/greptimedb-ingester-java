@@ -20,8 +20,6 @@ import io.greptime.v1.Common;
 
 /**
  * The semantic type.
- *
- *
  */
 public enum SemanticType {
     Tag,

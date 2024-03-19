@@ -26,8 +26,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * A managed channel that has a channel id.
- *
- *
  */
 public class IdChannel extends ManagedChannel {
 

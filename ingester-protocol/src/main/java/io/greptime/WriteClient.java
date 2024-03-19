@@ -55,8 +55,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Default Write API impl.
- *
- *
  */
 public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
 

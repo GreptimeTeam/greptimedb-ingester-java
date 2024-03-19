@@ -20,8 +20,6 @@ import io.greptime.common.Keys;
 
 /**
  * Utility for cpu.
- *
- *
  */
 public class Cpus {
 

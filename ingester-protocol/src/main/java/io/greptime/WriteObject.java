@@ -27,8 +27,6 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * Write POJO object API: writes data in POJO object format to the DB.
- *
- *
  */
 public interface WriteObject {
     /**

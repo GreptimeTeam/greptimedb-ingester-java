@@ -18,8 +18,6 @@ package io.greptime.common.util;
 
 /**
  * An shared object pool with ref count.
- *
- *
  */
 public class RcObjectPool<T> implements ObjectPool<T> {
 

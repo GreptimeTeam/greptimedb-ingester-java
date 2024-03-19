@@ -22,8 +22,6 @@ import java.util.List;
 /**
  * Static utility methods pertaining to {@code String} or {@code CharSequence}
  * instances.
- *
- *
  */
 public final class Strings {
 

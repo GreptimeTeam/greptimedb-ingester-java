@@ -18,8 +18,6 @@ package io.greptime.rpc.errors;
 
 /**
  * Connect failed error.
- *
- *
  */
 public class ConnectFailException extends RuntimeException {
 

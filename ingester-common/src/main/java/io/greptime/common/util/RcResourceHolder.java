@@ -23,8 +23,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Resource holder with ref count.
- *
- *
  */
 public class RcResourceHolder<T> {
 

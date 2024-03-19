@@ -18,8 +18,6 @@ package io.greptime.errors;
 
 /**
  * Error about stream-write.
- *
- *
  */
 public class StreamException extends RuntimeException {
 

@@ -20,8 +20,6 @@ import java.util.concurrent.Executor;
 
 /**
  * Receives notifications from an observable stream of messages.
- *
- *
  */
 public interface Observer<V> {
 

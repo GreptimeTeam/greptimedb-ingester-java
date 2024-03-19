@@ -30,8 +30,6 @@ import java.util.function.Supplier;
  * total number of permits, we will allow this request under the condition
  * that the available permits are equal to the maximum number of permits,
  * i.e., there are no in-flight requests.
- *
- *
  */
 public abstract class AbstractLimiter<In, Out> {
 

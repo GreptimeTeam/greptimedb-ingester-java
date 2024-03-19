@@ -23,8 +23,6 @@ import java.lang.annotation.Target;
 
 /**
  * This annotation is used to mapping POJO class into {@link Table}.
- *
- *
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

@@ -26,8 +26,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  * A signal handler that can reset RW_LOGGING by {@link Util#resetRwLogging()}.
- *
- *
  */
 @SPI(priority = 95)
 public class RwLoggingSignalHandler implements SignalHandler {

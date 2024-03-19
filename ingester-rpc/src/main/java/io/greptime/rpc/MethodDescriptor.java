@@ -20,8 +20,6 @@ import java.util.Objects;
 
 /**
  * Description of a remote method.
- *
- *
  */
 public class MethodDescriptor {
     private final String name;

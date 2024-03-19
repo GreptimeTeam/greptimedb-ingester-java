@@ -23,8 +23,6 @@ import java.util.concurrent.CompletableFuture;
  * typically used in data import scenarios. After completion,
  * the stream needs to be closed(Call `StreamWriter#completed()`),
  * and the write result can be obtained from the database server.
- *
- *
  */
 public interface StreamWriter<V, R> {
 

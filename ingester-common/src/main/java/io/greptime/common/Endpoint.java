@@ -21,8 +21,6 @@ import java.io.Serializable;
 
 /**
  * An IP address with port.
- *
- *
  */
 public class Endpoint implements Serializable {
 

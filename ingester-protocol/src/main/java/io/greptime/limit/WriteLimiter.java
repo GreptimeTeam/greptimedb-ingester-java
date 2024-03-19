@@ -24,8 +24,6 @@ import java.util.Collection;
 
 /**
  * Like rust: pub type WriteLimiter = AbstractLimiter<WriteRowsWriteRows, Result<WriteOk, Err>>
- *
- *
  */
 public abstract class WriteLimiter extends AbstractLimiter<Collection<Table>, Result<WriteOk, Err>> {
 

@@ -30,8 +30,6 @@ import org.slf4j.LoggerFactory;
 /**
  * A {@link java.util.concurrent.ExecutorService} that witch can print
  * error message for failed execution.
- *
- *
  */
 public class LogThreadPoolExecutor extends ThreadPoolExecutor {
 

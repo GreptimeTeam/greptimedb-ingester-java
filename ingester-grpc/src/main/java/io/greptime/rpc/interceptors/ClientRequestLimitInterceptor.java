@@ -38,8 +38,6 @@ import java.util.function.Function;
  * reached.
  * <p>
  * Refer to `concurrency-limit-grpc`
- *
- *
  */
 public class ClientRequestLimitInterceptor implements ClientInterceptor {
 

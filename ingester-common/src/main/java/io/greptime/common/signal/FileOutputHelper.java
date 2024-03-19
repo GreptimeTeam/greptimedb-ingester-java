@@ -27,8 +27,6 @@ import java.util.Date;
 
 /**
  * File output helper.
- *
- *
  */
 public final class FileOutputHelper {
 

@@ -21,8 +21,6 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * A limited policy using a given {@code Limiter}.
- *
- *
  */
 public interface LimitedPolicy {
 

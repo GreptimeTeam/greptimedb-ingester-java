@@ -29,8 +29,6 @@ import org.slf4j.LoggerFactory;
  * A {@link java.util.concurrent.ThreadPoolExecutor} that can additionally
  * schedule tasks to run after a given delay with a logger witch can print
  * error message for failed execution.
- *
- *
  */
 public class LogScheduledThreadPoolExecutor extends ScheduledThreadPoolExecutor {
 

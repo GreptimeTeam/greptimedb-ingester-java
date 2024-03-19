@@ -33,8 +33,6 @@ import java.util.stream.Collectors;
 
 /**
  * GreptimeDB client options.
- *
- *
  */
 public class GreptimeOptions implements Copiable<GreptimeOptions> {
     private List<Endpoint> endpoints;

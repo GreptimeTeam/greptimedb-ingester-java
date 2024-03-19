@@ -18,8 +18,6 @@ package io.greptime.common.signal;
 
 /**
  * This is the signal handler interface.
- *
- *
  */
 public interface SignalHandler {
 

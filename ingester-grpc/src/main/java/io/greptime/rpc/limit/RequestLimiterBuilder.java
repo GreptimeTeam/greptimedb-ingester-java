@@ -23,8 +23,6 @@ import java.time.Duration;
 
 /**
  * Refer to `concurrency-limit-grpc`
- *
- *
  */
 public class RequestLimiterBuilder extends AbstractPartitionedLimiter.Builder<RequestLimiterBuilder, RequestLimitCtx> {
 

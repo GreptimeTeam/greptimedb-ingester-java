@@ -23,8 +23,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Executor service shutdown helper.
- *
- *
  */
 public final class ExecutorServiceHelper {
 

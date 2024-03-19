@@ -21,8 +21,6 @@ import java.util.function.Function;
 
 /**
  * `Result` is a type that represents either success ([`Ok`]) or failure ([`Err`]).
- *
- *
  */
 public final class Result<Ok, Err> {
 

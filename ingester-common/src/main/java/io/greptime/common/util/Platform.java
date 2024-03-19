@@ -23,8 +23,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Platform utilities.
- *
- *
  */
 public class Platform {
 

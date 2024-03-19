@@ -18,8 +18,6 @@ package io.greptime.common;
 
 /**
  * Service life cycle mark interface.
- *
- *
  */
 public interface Lifecycle<T> {
 

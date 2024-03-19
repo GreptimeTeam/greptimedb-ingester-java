@@ -23,8 +23,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  * A signal helper, provides ANSI/ISO C signal support.
- *
- *
  */
 public final class SignalHelper {
 

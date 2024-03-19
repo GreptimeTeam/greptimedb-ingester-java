@@ -18,8 +18,6 @@ package io.greptime.rpc.errors;
 
 /**
  * Takes some additional error message, no stack trace, can be added to an exists Exception.
- *
- *
  */
 public class OnlyErrorMessage extends Exception {
 

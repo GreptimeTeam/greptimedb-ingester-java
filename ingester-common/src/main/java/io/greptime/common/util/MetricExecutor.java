@@ -22,8 +22,6 @@ import java.util.concurrent.Executor;
 /**
  * A {@link Executor} that with a timer metric
  * which aggregates timing durations and provides duration statistics.
- *
- *
  */
 public class MetricExecutor implements Executor {
     private final Executor pool;

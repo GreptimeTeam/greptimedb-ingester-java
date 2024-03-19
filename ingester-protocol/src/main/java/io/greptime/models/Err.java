@@ -20,8 +20,6 @@ import io.greptime.common.Endpoint;
 
 /**
  * Contains the write/query error value.
- *
- *
  */
 public class Err {
     // error code from server

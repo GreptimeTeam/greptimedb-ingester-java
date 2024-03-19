@@ -22,8 +22,6 @@ import io.greptime.v1.RowData;
 
 /**
  * A utility that handles some processing of row based data.
- *
- *
  */
 public final class RowHelper {
 

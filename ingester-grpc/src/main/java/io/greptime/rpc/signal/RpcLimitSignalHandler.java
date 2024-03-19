@@ -26,8 +26,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  * A signal handler that can reset LIMIT_SWITCH by {@link ClientRequestLimitInterceptor#resetLimitSwitch()}.
- *
- *
  */
 @SPI(priority = 89)
 public class RpcLimitSignalHandler implements SignalHandler {

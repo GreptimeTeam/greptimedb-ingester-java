@@ -52,8 +52,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  * The GreptimeDB client.
- *
- *
  */
 public class GreptimeDB implements Write, WriteObject, Lifecycle<GreptimeOptions>, Display {
 

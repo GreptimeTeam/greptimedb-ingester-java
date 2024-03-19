@@ -24,8 +24,6 @@ import java.util.concurrent.TimeUnit;
  * A {@link java.util.concurrent.ThreadPoolExecutor} that can additionally
  * schedule tasks to run after a given delay with a timer metric
  * which aggregates timing durations and provides duration statistics.
- *
- *
  */
 public class MetricScheduledThreadPoolExecutor extends LogScheduledThreadPoolExecutor {
 

@@ -28,8 +28,6 @@ import java.util.List;
  * to prevent redundant creation. The responsibility of caching lies with the user,
  * as the `Ingester` client should strive to avoid managing the cache and excessive
  * memory consumption.
- *
- *
  */
 public class TableSchema {
 

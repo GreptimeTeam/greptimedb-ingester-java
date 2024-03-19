@@ -37,8 +37,6 @@ import org.slf4j.LoggerFactory;
 /**
  * A route rpc client which cached the routing table information locally
  * and will auto refresh.
- *
- *
  */
 public class RouterClient implements Lifecycle<RouterOptions>, Display {
 

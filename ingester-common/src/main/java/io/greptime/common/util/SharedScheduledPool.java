@@ -20,8 +20,6 @@ import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * Like rust: pub type SharedScheduledPool = RcObjectPool<ScheduledExecutorService>
- *
- *
  */
 public class SharedScheduledPool extends RcObjectPool<ScheduledExecutorService> {
 

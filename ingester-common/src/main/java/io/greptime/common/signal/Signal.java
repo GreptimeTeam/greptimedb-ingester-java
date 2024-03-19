@@ -18,8 +18,6 @@ package io.greptime.common.signal;
 
 /**
  * Signal types.
- *
- *
  */
 public enum Signal {
     SIG_USR2("USR2");

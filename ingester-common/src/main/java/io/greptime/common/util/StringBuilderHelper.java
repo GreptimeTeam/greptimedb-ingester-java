@@ -20,8 +20,6 @@ package io.greptime.common.util;
  * Reuse {@link StringBuilder} based on {@link ThreadLocal}.
  * <p>
  * Be careful that do not to nest in the same thread.
- *
- *
  */
 public class StringBuilderHelper {
 

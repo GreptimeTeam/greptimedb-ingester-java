@@ -18,8 +18,6 @@ package io.greptime.models;
 
 /**
  * Contains the success value of write.
- *
- *
  */
 public class WriteOk {
 

@@ -20,8 +20,6 @@ import java.util.concurrent.ExecutorService;
 
 /**
  * Like rust: pub type SharedThreadPool = RcObjectPool<ExecutorService>
- *
- *
  */
 public class SharedThreadPool extends RcObjectPool<ExecutorService> {
 

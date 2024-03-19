@@ -35,8 +35,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  * A signal handler that can display all client instance's memory state.
- *
- *
  */
 @SPI(priority = 98)
 public class DisplaySignalHandler implements SignalHandler {

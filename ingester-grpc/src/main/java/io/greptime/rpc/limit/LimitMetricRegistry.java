@@ -22,8 +22,6 @@ import java.util.function.Supplier;
 
 /**
  * For tracking metrics in the limiters.
- *
- *
  */
 public class LimitMetricRegistry implements MetricRegistry {
 

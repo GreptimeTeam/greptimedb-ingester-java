@@ -30,8 +30,6 @@ import io.grpc.MethodDescriptor;
 
 /**
  * Request method metric interceptor.
- *
- *
  */
 public class MetricInterceptor implements ClientInterceptor {
 

@@ -18,8 +18,6 @@ package io.greptime.common.util;
 
 /**
  * A reference cell.
- *
- *
  */
 public class RefCell<T> {
 

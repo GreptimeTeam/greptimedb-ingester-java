@@ -18,8 +18,6 @@ package com.google.protobuf;
 
 /**
  * A {@code ByteString} helper, avoid some memory copying to improve performance.
- *
- *
  */
 public class ByteStringHelper {
 

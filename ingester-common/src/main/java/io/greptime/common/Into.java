@@ -18,8 +18,6 @@ package io.greptime.common;
 
 /**
  * A value-to-value conversion.
- *
- *
  */
 public interface Into<Output> {
     Output into();

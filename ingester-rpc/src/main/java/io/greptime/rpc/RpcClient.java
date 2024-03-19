@@ -22,8 +22,6 @@ import io.greptime.common.Lifecycle;
 
 /**
  * A common RPC client interface.
- *
- *
  */
 public interface RpcClient extends Lifecycle<RpcOptions>, Display {
 

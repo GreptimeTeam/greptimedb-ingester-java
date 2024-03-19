@@ -18,8 +18,6 @@ package io.greptime.common.util;
 
 /**
  * A clock implementation which default returns the current millis.
- *
- *
  */
 public abstract class Clock {
 

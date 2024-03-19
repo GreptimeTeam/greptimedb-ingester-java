@@ -31,8 +31,6 @@ import org.slf4j.LoggerFactory;
 /**
  * In GreptimeDB client, metrics are required. As for whether to output (log) metrics
  * results, you decide.
- *
- *
  */
 public final class MetricsUtil {
 

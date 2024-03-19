@@ -22,8 +22,6 @@ import io.greptime.v1.Database;
 
 /**
  * The RPC service register.
- *
- *
  */
 public class RpcServiceRegister {
 

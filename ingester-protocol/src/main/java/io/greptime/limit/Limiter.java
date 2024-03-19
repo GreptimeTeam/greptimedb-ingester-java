@@ -20,8 +20,6 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * A rate limiter.
- *
- *
  */
 public interface Limiter {
 

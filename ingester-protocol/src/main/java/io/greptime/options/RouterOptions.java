@@ -24,8 +24,6 @@ import java.util.List;
 
 /**
  * Router options.
- *
- *
  */
 public class RouterOptions implements Copiable<RouterOptions> {
 

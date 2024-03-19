@@ -23,8 +23,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Named thread factory.
- *
- *
  */
 @SuppressWarnings("unused")
 public class NamedThreadFactory implements ThreadFactory {

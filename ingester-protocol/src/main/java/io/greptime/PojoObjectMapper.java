@@ -21,8 +21,6 @@ import java.util.List;
 
 /**
  * Converts POJO objects into {@link Table} objects
- *
- *
  */
 public interface PojoObjectMapper {
 
