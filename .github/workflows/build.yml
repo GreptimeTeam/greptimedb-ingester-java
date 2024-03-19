@@ -28,7 +28,7 @@ jobs:
       - uses: korandoru/hawkeye@v4
       - uses: actions/setup-java@v4
         with:
-          java-version: 1.8
+          java-version: '8'
           distribution: 'zulu'
       - name: Check format
         run: mvn spotless:check
@@ -42,7 +42,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
-          java-version: 1.8
+          java-version: '8'
           distribution: 'zulu'
       - name: Maven Test
         run: mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
@@ -57,7 +57,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
-          java-version: 1.8
+          java-version: '8'
           distribution: 'zulu'
       - name: Maven Test
         run: mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
@@ -72,7 +72,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
-          java-version: 1.8
+          java-version: '8'
           distribution: 'zulu'
       - name: Maven Test
         run: mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
