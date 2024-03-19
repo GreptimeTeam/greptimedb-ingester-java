@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime;
 
 import io.greptime.models.Column;
@@ -20,7 +21,7 @@ import io.greptime.models.DataType;
 import io.greptime.models.Metric;
 
 /**
- * @author jiachun.fjc
+ *
  */
 @Metric(name = "cpu_metric")
 public class Cpu {
@@ -32,6 +33,7 @@ public class Cpu {
 
     @Column(name = "cpu_user", dataType = DataType.Float64)
     private double cpuUser;
+
     @Column(name = "cpu_sys", dataType = DataType.Float64)
     private double cpuSys;
 

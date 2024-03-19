@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.models;
 
 import io.greptime.common.Endpoint;
 
 /**
  * Contains the write/query error value.
- *
- * @author jiachun.fjc
  */
 public class Err {
     // error code from server
@@ -60,11 +59,7 @@ public class Err {
 
     @Override
     public String toString() {
-        return "Err{" + //
-                "code=" + code + //
-                ", error='" + error + '\'' + //
-                ", errTo=" + errTo + //
-                '}';
+        return "Err{" + "code=" + code + ", error='" + error + '\'' + ", errTo=" + errTo + '}';
     }
 
     /**

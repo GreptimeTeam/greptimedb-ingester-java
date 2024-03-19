@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.common.util;
 
 import java.util.concurrent.BlockingQueue;
@@ -23,18 +24,17 @@ import java.util.concurrent.TimeUnit;
 /**
  * A {@link java.util.concurrent.ExecutorService} that with a timer metric
  * which aggregates timing durations and provides duration statistics.
- *
- * @author jiachun.fjc
  */
 public class MetricThreadPoolExecutor extends LogThreadPoolExecutor {
 
-    public MetricThreadPoolExecutor(int corePoolSize, //
-            int maximumPoolSize, //
-            long keepAliveTime, //
-            TimeUnit unit, //
-            BlockingQueue<Runnable> workQueue, //
-            ThreadFactory threadFactory, //
-            RejectedExecutionHandler handler, //
+    public MetricThreadPoolExecutor(
+            int corePoolSize,
+            int maximumPoolSize,
+            long keepAliveTime,
+            TimeUnit unit,
+            BlockingQueue<Runnable> workQueue,
+            ThreadFactory threadFactory,
+            RejectedExecutionHandler handler,
             String name) {
         super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, threadFactory, handler, name);
     }
@@ -47,8 +47,8 @@ public class MetricThreadPoolExecutor extends LogThreadPoolExecutor {
 
     @Override
     protected void afterExecute(Runnable r, Throwable t) {
-        ThreadPoolMetricRegistry.metricRegistry() //
-                .timer("thread_pool." + getName()) //
+        ThreadPoolMetricRegistry.metricRegistry()
+                .timer("thread_pool." + getName())
                 .update(ThreadPoolMetricRegistry.finish(), TimeUnit.MILLISECONDS);
         super.afterExecute(r, t);
     }

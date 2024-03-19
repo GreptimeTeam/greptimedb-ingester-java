@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime;
 
 import java.util.HashMap;
@@ -20,8 +21,6 @@ import java.util.Map;
 
 /**
  * Common status code for public API.
- *
- * @author jiachun.fjc
  */
 public enum Status {
     // ====== Begin of common status code ==============
@@ -57,14 +56,12 @@ public enum Status {
     // ====== Begin of catalog related status code =====
     // Table already exists.
     TableAlreadyExists(4000),
-    //
     TableNotFound(4001),
-    //
-    TableColumnNotFound(4002), //
-    TableColumnExists(4003), //
-    DatabaseNotFound(4004), //
-    RegionNotFound(4005), //
-    RegionAlreadyExists(4006), //
+    TableColumnNotFound(4002),
+    TableColumnExists(4003),
+    DatabaseNotFound(4004),
+    RegionNotFound(4005),
+    RegionAlreadyExists(4006),
     RegionReadonly(4007),
     // ====== End of catalog related status code =======
 
@@ -95,8 +92,8 @@ public enum Status {
     AccessDenied(7005),
     // User is not authorized to perform the operation
     PermissionDenied(7006),
-    // ====== End of auth related status code =====
-    ;
+// ====== End of auth related status code =====
+;
 
     private static final Map<Integer, Status> DICT = new HashMap<>();
 

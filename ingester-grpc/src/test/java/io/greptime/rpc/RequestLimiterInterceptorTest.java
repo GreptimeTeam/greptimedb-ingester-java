@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.rpc;
 
 import com.netflix.concurrency.limits.Limiter;
@@ -30,29 +31,27 @@ import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.ClientCalls;
 import io.grpc.stub.ServerCalls;
-import org.junit.Ignore;
-import org.junit.Test;
 import java.io.IOException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /**
  * Refer to `concurrency-limit-grpc's test`
- *
- * @author jiachun.fjc
  */
 public class RequestLimiterInterceptorTest {
 
     private static final MethodDescriptor<String, String> METHOD_DESCRIPTOR;
 
     static {
-        METHOD_DESCRIPTOR = MethodDescriptor.<String, String>newBuilder() //
-                .setType(MethodDescriptor.MethodType.UNARY) //
-                .setFullMethodName("service/method") //
-                .setRequestMarshaller(StringMarshaller.INSTANCE) //
-                .setResponseMarshaller(StringMarshaller.INSTANCE) //
+        METHOD_DESCRIPTOR = MethodDescriptor.<String, String>newBuilder()
+                .setType(MethodDescriptor.MethodType.UNARY)
+                .setFullMethodName("service/method")
+                .setRequestMarshaller(StringMarshaller.INSTANCE)
+                .setResponseMarshaller(StringMarshaller.INSTANCE)
                 .build();
     }
 
@@ -80,19 +79,22 @@ public class RequestLimiterInterceptorTest {
 
         Limiter<RequestLimitCtx> limiter = RequestLimiterBuilder.newBuilder()
                 .named("limit_simulation")
-                .metricRegistry(new LimitMetricRegistry()) //
-                .blockOnLimit(true, 1000) //
+                .metricRegistry(new LimitMetricRegistry())
+                .blockOnLimit(true, 1000)
                 .build();
 
         Channel channel = NettyChannelBuilder.forTarget("localhost:" + server.getPort())
-                .usePlaintext() //
-                .intercept(new ClientRequestLimitInterceptor(limiter)) //
+                .usePlaintext()
+                .intercept(new ClientRequestLimitInterceptor(limiter))
                 .build();
 
         AtomicLong counter = new AtomicLong();
-        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
-                () -> System.out.println(" " + counter.getAndSet(0) + " : " + limiter.toString()), 1, 1, TimeUnit.SECONDS
-        );
+        Executors.newSingleThreadScheduledExecutor()
+                .scheduleAtFixedRate(
+                        () -> System.out.println(" " + counter.getAndSet(0) + " : " + limiter.toString()),
+                        1,
+                        1,
+                        TimeUnit.SECONDS);
 
         for (int i = 0; i < 10000000; i++) {
             counter.incrementAndGet();

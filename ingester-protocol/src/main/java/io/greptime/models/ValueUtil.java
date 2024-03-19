@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.models;
 
 import io.greptime.common.util.Ensures;
@@ -25,7 +26,7 @@ import java.time.LocalDate;
 import java.util.Date;
 
 /**
- * @author jiachun.fjc
+ *
  */
 public class ValueUtil {
 
@@ -81,7 +82,9 @@ public class ValueUtil {
     }
 
     static Common.IntervalMonthDayNano getIntervalMonthDayNanoValue(Object value) {
-        Ensures.ensure(value instanceof IntervalMonthDayNano, "Expected type: `IntervalMonthDayNano`, actual: %s",
+        Ensures.ensure(
+                value instanceof IntervalMonthDayNano,
+                "Expected type: `IntervalMonthDayNano`, actual: %s",
                 value.getClass());
         return ((IntervalMonthDayNano) value).into();
     }
@@ -89,9 +92,9 @@ public class ValueUtil {
     static Common.Decimal128 getDecimal128Value(Common.ColumnDataTypeExtension dataTypeExtension, Object value) {
         Ensures.ensure(value instanceof BigDecimal, "Expected type: `BigDecimal`, actual: %s", value.getClass());
         Ensures.ensureNonNull(dataTypeExtension, "Null `dataTypeExtension`");
-        Common.DecimalTypeExtension decimalTypeExtension =
-                dataTypeExtension.hasDecimalType() ? dataTypeExtension.getDecimalType()
-                        : DataType.DecimalTypeExtension.DEFAULT.into();
+        Common.DecimalTypeExtension decimalTypeExtension = dataTypeExtension.hasDecimalType()
+                ? dataTypeExtension.getDecimalType()
+                : DataType.DecimalTypeExtension.DEFAULT.into();
         BigDecimal decimal = (BigDecimal) value;
         BigDecimal converted = decimal.setScale(decimalTypeExtension.getScale(), RoundingMode.HALF_UP);
 
@@ -99,9 +102,6 @@ public class ValueUtil {
         long high64Bits = unscaledValue.shiftRight(64).longValue();
         long low64Bits = unscaledValue.longValue();
 
-        return Common.Decimal128.newBuilder() //
-                .setHi(high64Bits) //
-                .setLo(low64Bits) //
-                .build();
+        return Common.Decimal128.newBuilder().setHi(high64Bits).setLo(low64Bits).build();
     }
 }

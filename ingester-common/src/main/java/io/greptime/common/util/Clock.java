@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.common.util;
 
 /**
  * A clock implementation which default returns the current millis.
- *
- * @author jiachun.fjc
  */
 public abstract class Clock {
 

@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.rpc;
 
 /**
  * GreptimeDB's RPC service factory.
- *
- * @author jiachun.fjc
  */
 @SuppressWarnings("unused")
 public interface RpcFactory {
@@ -31,10 +30,7 @@ public interface RpcFactory {
      * @param defaultReqIns  default request instance
      * @param defaultRespIns default response instance
      */
-    void register(MethodDescriptor method,
-                  Class<?> reqCls,
-                  Object defaultReqIns,
-                  Object defaultRespIns);
+    void register(MethodDescriptor method, Class<?> reqCls, Object defaultReqIns, Object defaultRespIns);
 
     /**
      * Creates a RPC client.

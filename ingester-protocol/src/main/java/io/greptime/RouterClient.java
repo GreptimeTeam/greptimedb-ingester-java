@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime;
 
 import io.greptime.common.Display;
@@ -24,20 +25,18 @@ import io.greptime.options.RouterOptions;
 import io.greptime.rpc.Context;
 import io.greptime.rpc.Observer;
 import io.greptime.rpc.RpcClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A route rpc client which cached the routing table information locally
  * and will auto refresh.
- *
- * @author jiachun.fjc
  */
 public class RouterClient implements Lifecycle<RouterOptions>, Display {
 
@@ -71,7 +70,9 @@ public class RouterClient implements Lifecycle<RouterOptions>, Display {
                             LOG.debug("Router cache refresh {}.", r ? "success" : "failed");
                         }
                     }),
-                    Util.randomInitialDelay(180), refreshPeriod, TimeUnit.SECONDS);
+                    Util.randomInitialDelay(180),
+                    refreshPeriod,
+                    TimeUnit.SECONDS);
 
             LOG.info("Router cache refresher started.");
         }
@@ -120,18 +121,23 @@ public class RouterClient implements Lifecycle<RouterOptions>, Display {
         CompletableFuture<Resp> future = new CompletableFuture<>();
 
         try {
-            this.rpcClient.invokeAsync(endpoint, request, ctx, new Observer<Resp>() {
+            this.rpcClient.invokeAsync(
+                    endpoint,
+                    request,
+                    ctx,
+                    new Observer<Resp>() {
 
-                @Override
-                public void onNext(Resp value) {
-                    future.complete(value);
-                }
+                        @Override
+                        public void onNext(Resp value) {
+                            future.complete(value);
+                        }
 
-                @Override
-                public void onError(Throwable err) {
-                    future.completeExceptionally(err);
-                }
-            }, timeoutMs);
+                        @Override
+                        public void onError(Throwable err) {
+                            future.completeExceptionally(err);
+                        }
+                    },
+                    timeoutMs);
 
         } catch (Exception e) {
             future.completeExceptionally(e);
@@ -151,7 +157,8 @@ public class RouterClient implements Lifecycle<RouterOptions>, Display {
      * @param <Resp> the response type
      */
     @SuppressWarnings("unused")
-    public <Req, Resp> void invokeServerStreaming(Endpoint endpoint, Req request, Context ctx, Observer<Resp> observer) {
+    public <Req, Resp> void invokeServerStreaming(
+            Endpoint endpoint, Req request, Context ctx, Observer<Resp> observer) {
         try {
             this.rpcClient.invokeServerStreaming(endpoint, request, ctx, observer);
         } catch (Exception e) {
@@ -170,8 +177,8 @@ public class RouterClient implements Lifecycle<RouterOptions>, Display {
      * @param <Req> the request type
      * @param <Resp> the response type
      */
-    public <Req, Resp> Observer<Req> invokeClientStreaming(Endpoint endpoint, Req defaultReqIns, Context ctx,
-            Observer<Resp> respObserver) {
+    public <Req, Resp> Observer<Req> invokeClientStreaming(
+            Endpoint endpoint, Req defaultReqIns, Context ctx, Observer<Resp> respObserver) {
         try {
             return this.rpcClient.invokeClientStreaming(endpoint, defaultReqIns, ctx, respObserver);
         } catch (Exception e) {
@@ -182,9 +189,7 @@ public class RouterClient implements Lifecycle<RouterOptions>, Display {
 
     @Override
     public void display(Printer out) {
-        out.println("--- RouterClient ---") //
-                .print("opts=") //
-                .println(this.opts);
+        out.println("--- RouterClient ---").print("opts=").println(this.opts);
 
         if (this.rpcClient != null) {
             out.println("");
@@ -196,11 +201,7 @@ public class RouterClient implements Lifecycle<RouterOptions>, Display {
 
     @Override
     public String toString() {
-        return "RouterClient{" + //
-                "refresher=" + refresher + //
-                ", opts=" + opts + //
-                ", rpcClient=" + rpcClient + //
-                '}';
+        return "RouterClient{" + "refresher=" + refresher + ", opts=" + opts + ", rpcClient=" + rpcClient + '}';
     }
 
     /**

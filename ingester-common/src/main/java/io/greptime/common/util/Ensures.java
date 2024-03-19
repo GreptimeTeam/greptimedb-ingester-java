@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.common.util;
 
 /**
  * Simple static methods to be called at the start of your own methods to verify
  * correct arguments and state.
- *
- * @author jiachun.fjc
  */
 public final class Ensures {
 

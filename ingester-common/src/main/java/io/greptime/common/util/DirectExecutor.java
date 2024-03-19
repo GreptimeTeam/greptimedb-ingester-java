@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.common.util;
 
 import com.codahale.metrics.Timer;
@@ -20,8 +21,6 @@ import java.util.concurrent.Executor;
 
 /**
  * A direct executor.
- *
- * @author jiachun.fjc
  */
 public class DirectExecutor implements Executor {
     private final String name;

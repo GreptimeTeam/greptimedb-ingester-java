@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime;
 
 import io.greptime.errors.LimitedException;
@@ -22,16 +23,16 @@ import io.greptime.models.Err;
 import io.greptime.models.Result;
 import io.greptime.models.Table;
 import io.greptime.models.WriteOk;
-import org.junit.Assert;
-import org.junit.Test;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
- * @author jiachun.fjc
+ *
  */
 public class WriteLimitTest {
 
@@ -91,15 +92,16 @@ public class WriteLimitTest {
     @Test
     public void blockingTimeoutWriteLimitTest() throws ExecutionException, InterruptedException {
         int timeoutSecs = 2;
-        WriteLimiter limiter = new WriteClient.DefaultWriteLimiter(1,
-                new LimitedPolicy.BlockingTimeoutPolicy(timeoutSecs, TimeUnit.SECONDS));
+        WriteLimiter limiter = new WriteClient.DefaultWriteLimiter(
+                1, new LimitedPolicy.BlockingTimeoutPolicy(timeoutSecs, TimeUnit.SECONDS));
         Collection<Table> rows = TestUtil.testTable("test1", 1);
 
         // consume the permits
         limiter.acquireAndDo(rows, CompletableFuture::new);
 
         final long start = System.nanoTime();
-        final Result<WriteOk, Err> ret = limiter.acquireAndDo(rows, this::emptyOk).get();
+        final Result<WriteOk, Err> ret =
+                limiter.acquireAndDo(rows, this::emptyOk).get();
         Assert.assertEquals(timeoutSecs, TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - start), 0.3);
 
         Assert.assertFalse(ret.isOk());
@@ -109,8 +111,8 @@ public class WriteLimitTest {
     @Test(expected = LimitedException.class)
     public void abortOnBlockingTimeoutWriteLimitTest() throws ExecutionException, InterruptedException {
         int timeoutSecs = 2;
-        WriteLimiter limiter = new WriteClient.DefaultWriteLimiter(1,
-                new LimitedPolicy.AbortOnBlockingTimeoutPolicy(timeoutSecs, TimeUnit.SECONDS));
+        WriteLimiter limiter = new WriteClient.DefaultWriteLimiter(
+                1, new LimitedPolicy.AbortOnBlockingTimeoutPolicy(timeoutSecs, TimeUnit.SECONDS));
         Collection<Table> rows = TestUtil.testTable("test1", 1);
 
         // consume the permits

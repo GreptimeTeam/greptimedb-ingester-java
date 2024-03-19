@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.common.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A {@link java.util.concurrent.ThreadPoolExecutor} that can additionally
  * schedule tasks to run after a given delay with a logger witch can print
  * error message for failed execution.
- *
- * @author jiachun.fjc
  */
 public class LogScheduledThreadPoolExecutor extends ScheduledThreadPoolExecutor {
 
@@ -38,10 +37,8 @@ public class LogScheduledThreadPoolExecutor extends ScheduledThreadPoolExecutor 
     private final int corePoolSize;
     private final String name;
 
-    public LogScheduledThreadPoolExecutor(int corePoolSize, //
-            ThreadFactory threadFactory, //
-            RejectedExecutionHandler handler, //
-            String name) {
+    public LogScheduledThreadPoolExecutor(
+            int corePoolSize, ThreadFactory threadFactory, RejectedExecutionHandler handler, String name) {
         super(corePoolSize, threadFactory, handler);
         this.corePoolSize = corePoolSize;
         this.name = name;
@@ -81,9 +78,9 @@ public class LogScheduledThreadPoolExecutor extends ScheduledThreadPoolExecutor 
 
     @Override
     public String toString() {
-        return "ScheduledThreadPoolExecutor {" + //
-                "corePoolSize=" + corePoolSize + //
-                ", name='" + name + '\'' + //
-                "} " + super.toString();
+        return "ScheduledThreadPoolExecutor {" + "corePoolSize="
+                + corePoolSize + ", name='"
+                + name + '\'' + "} "
+                + super.toString();
     }
 }

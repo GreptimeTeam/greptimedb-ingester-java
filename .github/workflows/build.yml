@@ -1,3 +1,17 @@
+# Copyright 2023 Greptime Team
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 name: build
 
 on:
@@ -7,27 +21,27 @@ on:
     branches: [ main ]
 
 jobs:
-  check_format:
+  check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up JDK 1.8
-        uses: actions/setup-java@v1
+      - uses: actions/checkout@v4
+      - uses: korandoru/hawkeye@v4
+      - uses: actions/setup-java@v4
         with:
-          java-version: 1.8
+          java-version: '21'
+          distribution: 'zulu'
       - name: Check format
-        run: mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
-          && sh ./tools/check_format.sh
+        run: mvn spotless:check
 
   test_ingester_common:
-    needs: check_format
+    needs: check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up JDK 1.8
-        uses: actions/setup-java@v1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
-          java-version: 1.8
+          java-version: '8'
+          distribution: 'zulu'
       - name: Maven Test
         run: mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
           && (mvn --projects ingester-common test
@@ -35,14 +49,14 @@ jobs:
             || mvn --projects ingester-common test)
 
   test_ingester_grpc:
-    needs: check_format
+    needs: check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up JDK 1.8
-        uses: actions/setup-java@v1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
-          java-version: 1.8
+          java-version: '8'
+          distribution: 'zulu'
       - name: Maven Test
         run: mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
           && (mvn --projects ingester-grpc test
@@ -50,14 +64,14 @@ jobs:
             || mvn --projects ingester-grpc test)
 
   test_ingester_protocol:
-    needs: check_format
+    needs: check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up JDK 1.8
-        uses: actions/setup-java@v1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
-          java-version: 1.8
+          java-version: '8'
+          distribution: 'zulu'
       - name: Maven Test
         run: mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
           && (mvn --projects ingester-protocol test

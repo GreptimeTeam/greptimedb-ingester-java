@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.common;
 
 import java.io.PrintWriter;
@@ -21,8 +22,6 @@ import java.io.PrintWriter;
  * Components that implement this interface need to be able to display
  * their own state and output state information via the {@code display}
  * method.
- *
- * @author jiachun.fjc
  */
 public interface Display {
 

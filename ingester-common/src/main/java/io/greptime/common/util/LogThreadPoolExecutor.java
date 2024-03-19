@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.common.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -25,12 +24,12 @@ import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A {@link java.util.concurrent.ExecutorService} that witch can print
  * error message for failed execution.
- *
- * @author jiachun.fjc
  */
 public class LogThreadPoolExecutor extends ThreadPoolExecutor {
 
@@ -40,13 +39,14 @@ public class LogThreadPoolExecutor extends ThreadPoolExecutor {
     private final int maximumPoolSize;
     private final String name;
 
-    public LogThreadPoolExecutor(int corePoolSize, //
-            int maximumPoolSize, //
-            long keepAliveTime, //
-            TimeUnit unit, //
-            BlockingQueue<Runnable> workQueue, //
-            ThreadFactory threadFactory, //
-            RejectedExecutionHandler handler, //
+    public LogThreadPoolExecutor(
+            int corePoolSize,
+            int maximumPoolSize,
+            long keepAliveTime,
+            TimeUnit unit,
+            BlockingQueue<Runnable> workQueue,
+            ThreadFactory threadFactory,
+            RejectedExecutionHandler handler,
             String name) {
         super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, threadFactory, handler);
         this.corePoolSize = corePoolSize;
@@ -88,10 +88,10 @@ public class LogThreadPoolExecutor extends ThreadPoolExecutor {
 
     @Override
     public String toString() {
-        return "ThreadPoolExecutor{" + //
-                "corePoolSize=" + corePoolSize + //
-                ", maximumPoolSize=" + maximumPoolSize + //
-                ", name='" + name + '\'' + //
-                "} " + super.toString();
+        return "ThreadPoolExecutor{" + "corePoolSize="
+                + corePoolSize + ", maximumPoolSize="
+                + maximumPoolSize + ", name='"
+                + name + '\'' + "} "
+                + super.toString();
     }
 }

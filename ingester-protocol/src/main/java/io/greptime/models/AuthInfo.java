@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.models;
 
 import io.greptime.common.Into;
@@ -20,8 +21,6 @@ import io.greptime.v1.Common;
 
 /**
  * Greptime authentication information
- *
- * @author sunng87
  */
 public class AuthInfo implements Into<Common.AuthHeader> {
 
@@ -42,12 +41,10 @@ public class AuthInfo implements Into<Common.AuthHeader> {
 
     @Override
     public Common.AuthHeader into() {
-        Common.Basic basic = Common.Basic.newBuilder() //
-                .setUsername(this.username) //
-                .setPassword(this.password) //
+        Common.Basic basic = Common.Basic.newBuilder()
+                .setUsername(this.username)
+                .setPassword(this.password)
                 .build();
-        return Common.AuthHeader.newBuilder() //
-                .setBasic(basic) //
-                .build();
+        return Common.AuthHeader.newBuilder().setBasic(basic).build();
     }
 }

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.common.util;
 
 import java.io.File;
@@ -23,8 +24,6 @@ import java.nio.file.StandardOpenOption;
 
 /**
  * File utilities.
- *
- * @author jiachun.fjc
  */
 public class Files {
 
@@ -56,8 +55,7 @@ public class Files {
         File dir = Paths.get(path).toFile().getAbsoluteFile();
         if (dir.exists()) {
             if (!dir.isDirectory()) {
-                throw new IOException("File " + dir + " exists and is "
-                        + "not a directory. Unable to create directory.");
+                throw new IOException("File " + dir + " exists and is not a directory. Unable to create directory.");
             }
         } else if (!dir.mkdirs() && !dir.isDirectory()) {
             // Double-check that some other thread or process hasn't made

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime;
 
 import io.greptime.models.Err;
@@ -20,15 +21,12 @@ import io.greptime.models.Result;
 import io.greptime.models.Table;
 import io.greptime.models.WriteOk;
 import io.greptime.rpc.Context;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 /**
  * Write API: writes data to the database.
- *
- * @author jiachun.fjc
  */
 public interface Write {
     /**

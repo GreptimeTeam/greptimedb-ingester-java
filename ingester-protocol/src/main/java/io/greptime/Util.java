@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime;
 
 import io.greptime.common.Display;
@@ -25,7 +26,6 @@ import io.greptime.common.util.SystemPropertyUtil;
 import io.greptime.common.util.ThreadPoolUtil;
 import io.greptime.models.Err;
 import io.greptime.rpc.Observer;
-
 import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
@@ -37,26 +37,25 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Util for GreptimeDB Ingester.
- *
- * @author jiachun
  */
 public final class Util {
-    private static final AtomicBoolean            RW_LOGGING;
-    private static final int                      REPORT_PERIOD_MIN;
+    private static final AtomicBoolean RW_LOGGING;
+    private static final int REPORT_PERIOD_MIN;
     private static final ScheduledExecutorService DISPLAY;
 
     static {
         RW_LOGGING = new AtomicBoolean(SystemPropertyUtil.getBool(Keys.RW_LOGGING, false));
         REPORT_PERIOD_MIN = SystemPropertyUtil.getInt(Keys.REPORT_PERIOD, 30);
         DISPLAY = ThreadPoolUtil.newScheduledBuilder()
-                .poolName("display_self") //
-                .coreThreads(1) //
-                .enableMetric(true) //
-                .threadFactory(new NamedThreadFactory("display_self", true)) //
-                .rejectedHandler(new ThreadPoolExecutor.DiscardOldestPolicy()) //
+                .poolName("display_self")
+                .coreThreads(1)
+                .enableMetric(true)
+                .threadFactory(new NamedThreadFactory("display_self", true))
+                .rejectedHandler(new ThreadPoolExecutor.DiscardOldestPolicy())
                 .build();
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> ExecutorServiceHelper.shutdownAndAwaitTermination(DISPLAY)));
+        Runtime.getRuntime()
+                .addShutdownHook(new Thread(() -> ExecutorServiceHelper.shutdownAndAwaitTermination(DISPLAY)));
     }
 
     /**
@@ -110,12 +109,12 @@ public final class Util {
 
             @Override
             public ScheduledExecutorService create() {
-                return ThreadPoolUtil.newScheduledBuilder() //
-                        .poolName(name) //
-                        .coreThreads(workers) //
-                        .enableMetric(true) //
-                        .threadFactory(new NamedThreadFactory(name, true)) //
-                        .rejectedHandler(new ThreadPoolExecutor.DiscardOldestPolicy()) //
+                return ThreadPoolUtil.newScheduledBuilder()
+                        .poolName(name)
+                        .coreThreads(workers)
+                        .enableMetric(true)
+                        .threadFactory(new NamedThreadFactory(name, true))
+                        .rejectedHandler(new ThreadPoolExecutor.DiscardOldestPolicy())
                         .build();
             }
 
@@ -138,7 +137,6 @@ public final class Util {
     public static <U> CompletableFuture<U> completedCf(U value) {
         return CompletableFuture.completedFuture(value);
     }
-
 
     public static <V> Observer<V> toObserver(CompletableFuture<V> future) {
         return new Observer<V>() {
@@ -178,7 +176,7 @@ public final class Util {
      */
     public static String clientVersion() {
         try {
-            return loadProps(Util.class.getClassLoader(), "client_version.properties") //
+            return loadProps(Util.class.getClassLoader(), "client_version.properties")
                     .getProperty(Keys.VERSION_KEY, "Unknown version");
         } catch (Exception ignored) {
             return "Unknown version(err)";

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.options;
 
 import io.greptime.Router;
@@ -23,8 +24,6 @@ import java.util.List;
 
 /**
  * Router options.
- *
- * @author jiachun.fjc
  */
 public class RouterOptions implements Copiable<RouterOptions> {
 
@@ -81,10 +80,9 @@ public class RouterOptions implements Copiable<RouterOptions> {
 
     @Override
     public String toString() {
-        return "RouterOptions{" + //
-                "endpoints=" + endpoints + //
-                ", refreshPeriodSeconds=" + refreshPeriodSeconds + //
-                ", router=" + router + //
-                '}';
+        return "RouterOptions{" + "endpoints="
+                + endpoints + ", refreshPeriodSeconds="
+                + refreshPeriodSeconds + ", router="
+                + router + '}';
     }
 }

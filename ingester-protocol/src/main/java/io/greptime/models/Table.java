@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.models;
 
 import io.greptime.common.Into;
@@ -20,14 +21,11 @@ import io.greptime.common.util.Ensures;
 import io.greptime.v1.Common;
 import io.greptime.v1.Database;
 import io.greptime.v1.RowData;
-
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Data in row format, ready to be written to the DB.
- *
- * @author jiachun.fjc
  */
 public interface Table {
 
@@ -107,26 +105,29 @@ public interface Table {
             Ensures.ensure(columnCount > 0, "Empty column names");
             Ensures.ensure(columnCount == semanticTypes.size(), "Column names size not equal to semantic types size");
             Ensures.ensure(columnCount == dataTypes.size(), "Column names size not equal to data types size");
-            Ensures.ensure(columnCount == dataTypeExtensions.size(), "Column names size not equal to data type extensions size");
+            Ensures.ensure(
+                    columnCount == dataTypeExtensions.size(),
+                    "Column names size not equal to data type extensions size");
 
             return buildTable(tableName, columnCount, columnNames, semanticTypes, dataTypes, dataTypeExtensions);
         }
 
-        private static Table buildTable(String tableName, //
-                                        int columnCount, //
-                                        List<String> columnNames, //
-                                        List<Common.SemanticType> semanticTypes, //
-                                        List<Common.ColumnDataType> dataTypes, //
-                                        List<Common.ColumnDataTypeExtension> dataTypeExtensions) {
+        private static Table buildTable(
+                String tableName,
+                int columnCount,
+                List<String> columnNames,
+                List<Common.SemanticType> semanticTypes,
+                List<Common.ColumnDataType> dataTypes,
+                List<Common.ColumnDataTypeExtension> dataTypeExtensions) {
             RowBasedTable table = new RowBasedTable();
             table.tableName = tableName;
             table.columnSchemas = new ArrayList<>(columnCount);
 
             for (int i = 0; i < columnCount; i++) {
                 RowData.ColumnSchema.Builder builder = RowData.ColumnSchema.newBuilder();
-                builder.setColumnName(columnNames.get(i)) //
-                        .setSemanticType(semanticTypes.get(i)) //
-                        .setDatatype(dataTypes.get(i)) //
+                builder.setColumnName(columnNames.get(i))
+                        .setSemanticType(semanticTypes.get(i))
+                        .setDatatype(dataTypes.get(i))
                         .setDatatypeExtension(dataTypeExtensions.get(i));
                 table.columnSchemas.add(builder.build());
             }
@@ -189,25 +190,25 @@ public interface Table {
 
         @Override
         public Database.RowInsertRequest intoRowInsertRequest() {
-            return Database.RowInsertRequest.newBuilder() //
-                    .setTableName(this.tableName) //
-                    .setRows(into()) //
+            return Database.RowInsertRequest.newBuilder()
+                    .setTableName(this.tableName)
+                    .setRows(into())
                     .build();
         }
 
         @Override
         public Database.RowDeleteRequest intoRowDeleteRequest() {
-            return Database.RowDeleteRequest.newBuilder() //
-                    .setTableName(this.tableName) //
-                    .setRows(into()) //
+            return Database.RowDeleteRequest.newBuilder()
+                    .setTableName(this.tableName)
+                    .setRows(into())
                     .build();
         }
 
         @Override
         public RowData.Rows into() {
-            return RowData.Rows.newBuilder() //
-                    .addAllSchema(this.columnSchemas) //
-                    .addAllRows(this.rows) //
+            return RowData.Rows.newBuilder()
+                    .addAllSchema(this.columnSchemas)
+                    .addAllRows(this.rows)
                     .build();
         }
     }

@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.rpc;
 
 import io.greptime.common.util.ServiceLoader;
 
 /**
  * A factory to create {@link RpcClient} based on SPI.
- *
- * @author jiachun.fjc
  */
 public class RpcFactoryProvider {
 
     /**
      * SPI RPC factory, default is GrpcFactory
      */
-    private static final RpcFactory RPC_FACTORY = ServiceLoader.load(RpcFactory.class).first();
+    private static final RpcFactory RPC_FACTORY =
+            ServiceLoader.load(RpcFactory.class).first();
 
     /**
      * Gets the {@link RpcFactory} impl, base on SPI.

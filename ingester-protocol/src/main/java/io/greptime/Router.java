@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime;
 
 import java.util.List;
@@ -20,8 +21,6 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * RPC router for GreptimeDB.
- *
- * @author jiachun.fjc
  */
 public interface Router<R, E> {
 

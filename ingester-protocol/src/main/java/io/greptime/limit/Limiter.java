@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.limit;
 
 import java.util.concurrent.TimeUnit;
 
 /**
  * A rate limiter.
- *
- * @author jiachun.fjc
  */
 public interface Limiter {
 

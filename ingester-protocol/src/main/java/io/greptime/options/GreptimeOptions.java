@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.options;
 
 import io.greptime.Router;
@@ -32,8 +33,6 @@ import java.util.stream.Collectors;
 
 /**
  * GreptimeDB client options.
- *
- * @author jiachun.fjc
  */
 public class GreptimeOptions implements Copiable<GreptimeOptions> {
     private List<Endpoint> endpoints;
@@ -101,13 +100,12 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
 
     @Override
     public String toString() {
-        return "GreptimeOptions{" + //
-                "endpoints=" + endpoints + //
-                ", rpcOptions=" + rpcOptions + //
-                ", routerOptions=" + routerOptions + //
-                ", writeOptions=" + writeOptions + //
-                ", database='" + database + '\'' + //
-                '}';
+        return "GreptimeOptions{" + "endpoints="
+                + endpoints + ", rpcOptions="
+                + rpcOptions + ", routerOptions="
+                + routerOptions + ", writeOptions="
+                + writeOptions + ", database='"
+                + database + '\'' + '}';
     }
 
     public static GreptimeOptions checkSelf(GreptimeOptions opts) {

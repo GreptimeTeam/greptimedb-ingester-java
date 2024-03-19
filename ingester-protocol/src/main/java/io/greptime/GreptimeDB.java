@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime;
 
 import com.codahale.metrics.Counter;
@@ -36,8 +37,6 @@ import io.greptime.rpc.Context;
 import io.greptime.rpc.RpcClient;
 import io.greptime.rpc.RpcFactoryProvider;
 import io.greptime.rpc.RpcOptions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -48,11 +47,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The GreptimeDB client.
- *
- * @author jiachun.fjc
  */
 public class GreptimeDB implements Write, WriteObject, Lifecycle<GreptimeOptions>, Display {
 
@@ -140,8 +139,8 @@ public class GreptimeDB implements Write, WriteObject, Lifecycle<GreptimeOptions
     }
 
     @Override
-    public CompletableFuture<Result<WriteOk, Err>> writeObjects(Collection<List<?>> objects, WriteOp writeOp,
-            Context ctx) {
+    public CompletableFuture<Result<WriteOk, Err>> writeObjects(
+            Collection<List<?>> objects, WriteOp writeOp, Context ctx) {
         List<Table> rows = new ArrayList<>(objects.size());
         for (List<?> pojo : objects) {
             rows.add(POJO_OBJECT_MAPPER.mapToTable(pojo));
@@ -180,16 +179,16 @@ public class GreptimeDB implements Write, WriteObject, Lifecycle<GreptimeOptions
 
     @Override
     public void display(Printer out) {
-        out.println("--- GreptimeDB Client ---") //
-                .print("id=") //
-                .println(this.id) //
-                .print("version=") //
-                .println(VERSION) //
-                .print("endpoints=") //
-                .println(this.opts.getEndpoints()) //
-                .print("database=") //
-                .println(this.opts.getDatabase()) //
-                .print("rpcOptions=") //
+        out.println("--- GreptimeDB Client ---")
+                .print("id=")
+                .println(this.id)
+                .print("version=")
+                .println(VERSION)
+                .print("endpoints=")
+                .println(this.opts.getEndpoints())
+                .print("database=")
+                .println(this.opts.getDatabase())
+                .print("rpcOptions=")
                 .println(this.opts.getRpcOptions());
 
         if (this.routerClient != null) {
@@ -207,19 +206,18 @@ public class GreptimeDB implements Write, WriteObject, Lifecycle<GreptimeOptions
 
     @Override
     public String toString() {
-        return "GreptimeDB{" + //
-                "id=" + id + //
-                "version=" + VERSION + //
-                ", opts=" + opts + //
-                ", routerClient=" + routerClient + //
-                ", writeClient=" + writeClient + //
-                '}';
+        return "GreptimeDB{" + "id="
+                + id + "version="
+                + VERSION + ", opts="
+                + opts + ", routerClient="
+                + routerClient + ", writeClient="
+                + writeClient + '}';
     }
 
     private Context attachCtx(Context ctx) {
         Context newCtx = ctx == null ? Context.newDefault() : ctx;
-        return newCtx.with(Keys.VERSION_KEY, VERSION) //
-                .with(Keys.NODE_KEY, NODE_ID) //
+        return newCtx.with(Keys.VERSION_KEY, VERSION)
+                .with(Keys.NODE_KEY, NODE_ID)
                 .with(Keys.ID_KEY, this.id);
     }
 

@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.common.util;
 
 import com.codahale.metrics.MetricRegistry;
 
 /**
  * A global timer metric registry for thread pool, use threadLocal to pass timer context.
- *
- * @author jiachun.fjc
  */
 public class ThreadPoolMetricRegistry {
 
-    private static final ThreadLocal<Long> TIME_THREAD_LOCAL = ThreadLocal.withInitial(() -> Clock.defaultClock().getTick());
+    private static final ThreadLocal<Long> TIME_THREAD_LOCAL =
+            ThreadLocal.withInitial(() -> Clock.defaultClock().getTick());
 
     /**
      * Return the global registry of metric instances.

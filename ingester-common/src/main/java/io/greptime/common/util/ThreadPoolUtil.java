@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.common.util;
 
 import java.util.concurrent.BlockingQueue;
@@ -25,8 +26,6 @@ import java.util.concurrent.TimeUnit;
 /**
  * Factory and utility methods for creating {@link ThreadPoolExecutor} and
  * {@link ScheduledThreadPoolExecutor}.
- *
- * @author jiachun.fjc
  */
 public final class ThreadPoolUtil {
 
@@ -69,21 +68,36 @@ public final class ThreadPoolUtil {
      * @throws NullPointerException if {@code workQueue}
      *         or {@code threadFactory} or {@code handler} is null
      */
-    public static ThreadPoolExecutor newThreadPool(String poolName, //
-            boolean enableMetric, //
-            int coreThreads, //
-            int maximumThreads, //
-            long keepAliveSeconds, //
-            BlockingQueue<Runnable> workQueue, //
-            ThreadFactory threadFactory, //
+    public static ThreadPoolExecutor newThreadPool(
+            String poolName,
+            boolean enableMetric,
+            int coreThreads,
+            int maximumThreads,
+            long keepAliveSeconds,
+            BlockingQueue<Runnable> workQueue,
+            ThreadFactory threadFactory,
             RejectedExecutionHandler rejectedHandler) {
         TimeUnit unit = TimeUnit.SECONDS;
         if (enableMetric) {
-            return new MetricThreadPoolExecutor(coreThreads, maximumThreads, keepAliveSeconds, unit, workQueue,
-                    threadFactory, rejectedHandler, poolName);
+            return new MetricThreadPoolExecutor(
+                    coreThreads,
+                    maximumThreads,
+                    keepAliveSeconds,
+                    unit,
+                    workQueue,
+                    threadFactory,
+                    rejectedHandler,
+                    poolName);
         } else {
-            return new LogThreadPoolExecutor(coreThreads, maximumThreads, keepAliveSeconds, unit, workQueue,
-                    threadFactory, rejectedHandler, poolName);
+            return new LogThreadPoolExecutor(
+                    coreThreads,
+                    maximumThreads,
+                    keepAliveSeconds,
+                    unit,
+                    workQueue,
+                    threadFactory,
+                    rejectedHandler,
+                    poolName);
         }
     }
 
@@ -105,10 +119,11 @@ public final class ThreadPoolUtil {
      *         {@code handler} is null
      * @return a new ScheduledThreadPoolExecutor
      */
-    public static ScheduledThreadPoolExecutor newScheduledThreadPool(String poolName, //
-            boolean enableMetric, //
-            int coreThreads, //
-            ThreadFactory threadFactory, //
+    public static ScheduledThreadPoolExecutor newScheduledThreadPool(
+            String poolName,
+            boolean enableMetric,
+            int coreThreads,
+            ThreadFactory threadFactory,
             RejectedExecutionHandler rejectedHandler) {
         if (enableMetric) {
             return new MetricScheduledThreadPoolExecutor(coreThreads, threadFactory, rejectedHandler, poolName);
@@ -179,8 +194,15 @@ public final class ThreadPoolUtil {
             Ensures.ensureNonNull(this.threadFactory, "null `threadFactory`");
             Ensures.ensureNonNull(this.handler, "null `handler`");
 
-            return ThreadPoolUtil.newThreadPool(this.poolName, this.enableMetric, this.coreThreads,
-                    this.maximumThreads, this.keepAliveSeconds, this.workQueue, this.threadFactory, this.handler);
+            return ThreadPoolUtil.newThreadPool(
+                    this.poolName,
+                    this.enableMetric,
+                    this.coreThreads,
+                    this.maximumThreads,
+                    this.keepAliveSeconds,
+                    this.workQueue,
+                    this.threadFactory,
+                    this.handler);
         }
     }
 
@@ -223,8 +245,8 @@ public final class ThreadPoolUtil {
             Ensures.ensureNonNull(this.threadFactory, "null `threadFactory`");
             Ensures.ensureNonNull(this.handler, "null `handler`");
 
-            return ThreadPoolUtil.newScheduledThreadPool(this.poolName, this.enableMetric, this.coreThreads,
-                    this.threadFactory, this.handler);
+            return ThreadPoolUtil.newScheduledThreadPool(
+                    this.poolName, this.enableMetric, this.coreThreads, this.threadFactory, this.handler);
         }
     }
 }

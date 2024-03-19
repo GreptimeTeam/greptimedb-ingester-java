@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.common;
 
 import java.lang.annotation.Documented;
@@ -23,8 +24,6 @@ import java.lang.annotation.Target;
 
 /**
  * Service provide interface annotation.
- *
- * @author jiachun.fjc
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

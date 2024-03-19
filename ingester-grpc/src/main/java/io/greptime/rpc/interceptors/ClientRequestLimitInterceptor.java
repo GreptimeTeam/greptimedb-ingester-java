@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.rpc.interceptors;
 
 import com.netflix.concurrency.limits.Limiter;
@@ -37,8 +38,6 @@ import java.util.function.Function;
  * reached.
  * <p>
  * Refer to `concurrency-limit-grpc`
- *
- * @author jiachun.fjc
  */
 public class ClientRequestLimitInterceptor implements ClientInterceptor {
 
@@ -59,9 +58,8 @@ public class ClientRequestLimitInterceptor implements ClientInterceptor {
     }
 
     @Override
-    public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method, //
-                                                               CallOptions callOpts, //
-                                                               Channel next) {
+    public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
+            MethodDescriptor<ReqT, RespT> method, CallOptions callOpts, Channel next) {
         if (shouldNotUseLimiter(method.getType()) || !this.filter.apply(method.getFullMethodName())) {
             return next.newCall(method, callOpts);
         }
@@ -70,44 +68,49 @@ public class ClientRequestLimitInterceptor implements ClientInterceptor {
 
         return MetricsUtil.timer(LimitMetricRegistry.RPC_LIMITER, "acquire_time", methodName)
                 .timeSupplier(() -> this.limiter.acquire(() -> methodName))
-                .map(listener -> (ClientCall<ReqT, RespT>) new ForwardingClientCall.SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOpts)) {
+                .map(listener -> (ClientCall<ReqT, RespT>)
+                        new ForwardingClientCall.SimpleForwardingClientCall<ReqT, RespT>(
+                                next.newCall(method, callOpts)) {
 
-                    private final AtomicBoolean done = new AtomicBoolean(false);
-
-                    @Override
-                    public void start(Listener<RespT> respListener, Metadata headers) {
-                        super.start(new ForwardingClientCallListener.SimpleForwardingClientCallListener<RespT>(respListener) {
+                            private final AtomicBoolean done = new AtomicBoolean(false);
 
                             @Override
-                            public void onClose(Status status, Metadata trailers) {
+                            public void start(Listener<RespT> respListener, Metadata headers) {
+                                super.start(
+                                        new ForwardingClientCallListener.SimpleForwardingClientCallListener<RespT>(
+                                                respListener) {
+
+                                            @Override
+                                            public void onClose(Status status, Metadata trailers) {
+                                                try {
+                                                    super.onClose(status, trailers);
+                                                } finally {
+                                                    if (done.compareAndSet(false, true)) {
+                                                        if (status.isOk()) {
+                                                            listener.onSuccess();
+                                                        } else if (Status.Code.UNAVAILABLE == status.getCode()) {
+                                                            listener.onDropped();
+                                                        } else {
+                                                            listener.onIgnore();
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        headers);
+                            }
+
+                            @Override
+                            public void cancel(String message, Throwable cause) {
                                 try {
-                                    super.onClose(status, trailers);
+                                    super.cancel(message, cause);
                                 } finally {
                                     if (done.compareAndSet(false, true)) {
-                                        if (status.isOk()) {
-                                            listener.onSuccess();
-                                        } else if (Status.Code.UNAVAILABLE == status.getCode()) {
-                                            listener.onDropped();
-                                        } else {
-                                            listener.onIgnore();
-                                        }
+                                        listener.onIgnore();
                                     }
                                 }
                             }
-                        }, headers);
-                    }
-
-                    @Override
-                    public void cancel(String message, Throwable cause) {
-                        try {
-                            super.cancel(message, cause);
-                        } finally {
-                            if (done.compareAndSet(false, true)) {
-                                listener.onIgnore();
-                            }
-                        }
-                    }
-                })
+                        })
                 .orElseGet(() -> new ClientCall<ReqT, RespT>() {
 
                     private Listener<RespT> respListener;
@@ -118,12 +121,10 @@ public class ClientRequestLimitInterceptor implements ClientInterceptor {
                     }
 
                     @Override
-                    public void request(int numMessages) {
-                    }
+                    public void request(int numMessages) {}
 
                     @Override
-                    public void cancel(String message, Throwable cause) {
-                    }
+                    public void cancel(String message, Throwable cause) {}
 
                     @Override
                     public void halfClose() {
@@ -131,8 +132,7 @@ public class ClientRequestLimitInterceptor implements ClientInterceptor {
                     }
 
                     @Override
-                    public void sendMessage(ReqT message) {
-                    }
+                    public void sendMessage(ReqT message) {}
                 });
     }
 

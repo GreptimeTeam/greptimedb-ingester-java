@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.rpc.limit;
 
 import com.netflix.concurrency.limits.Limiter;
@@ -22,8 +23,6 @@ import java.time.Duration;
 
 /**
  * Refer to `concurrency-limit-grpc`
- *
- * @author jiachun.fjc
  */
 public class RequestLimiterBuilder extends AbstractPartitionedLimiter.Builder<RequestLimiterBuilder, RequestLimitCtx> {
 
@@ -53,7 +52,8 @@ public class RequestLimiterBuilder extends AbstractPartitionedLimiter.Builder<Re
     }
 
     public Limiter<RequestLimitCtx> build() {
-        return this.blockOnLimit ? BlockingLimiter.wrap(super.build(), Duration.ofMillis(this.blockTimeoutMillis))
+        return this.blockOnLimit
+                ? BlockingLimiter.wrap(super.build(), Duration.ofMillis(this.blockTimeoutMillis))
                 : super.build();
     }
 

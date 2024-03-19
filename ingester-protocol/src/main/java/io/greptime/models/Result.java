@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.models;
 
 import io.greptime.common.util.Ensures;
@@ -20,8 +21,6 @@ import java.util.function.Function;
 
 /**
  * `Result` is a type that represents either success ([`Ok`]) or failure ([`Err`]).
- *
- * @author jiachun.fjc
  */
 public final class Result<Ok, Err> {
 

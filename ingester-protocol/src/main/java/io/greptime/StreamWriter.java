@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime;
 
 import java.util.concurrent.CompletableFuture;
@@ -22,8 +23,6 @@ import java.util.concurrent.CompletableFuture;
  * typically used in data import scenarios. After completion,
  * the stream needs to be closed(Call `StreamWriter#completed()`),
  * and the write result can be obtained from the database server.
- *
- * @author jiachun.fjc
  */
 public interface StreamWriter<V, R> {
 

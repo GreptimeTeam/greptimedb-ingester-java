@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.limit;
 
 import io.greptime.errors.LimitedException;
@@ -20,8 +21,6 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * A limited policy using a given {@code Limiter}.
- *
- * @author jiachun.fjc
  */
 public interface LimitedPolicy {
 
@@ -60,11 +59,9 @@ public interface LimitedPolicy {
                 return true;
             }
 
-            final String err =
-                    String.format("Limited by `AbortPolicy`, acquirePermits=%d, maxPermits=%d, availablePermits=%d.", //
-                            permits, //
-                            limiter.maxPermits(), //
-                            limiter.availablePermits());
+            final String err = String.format(
+                    "Limited by `AbortPolicy`, acquirePermits=%d, maxPermits=%d, availablePermits=%d.",
+                    permits, limiter.maxPermits(), limiter.availablePermits());
             throw new LimitedException(err);
         }
     }
@@ -122,14 +119,10 @@ public interface LimitedPolicy {
                 return true;
             }
 
-            String err =
-                    String.format("Limited by `AbortOnBlockingTimeoutPolicy[timeout=%d, unit=%s]`, acquirePermits=%d, "
-                            + "maxPermits=%d, availablePermits=%d.", //
-                            timeout(), //
-                            unit(), //
-                            permits, //
-                            limiter.maxPermits(), //
-                            limiter.availablePermits());
+            String err = String.format(
+                    "Limited by `AbortOnBlockingTimeoutPolicy[timeout=%d, unit=%s]`, acquirePermits=%d, "
+                            + "maxPermits=%d, availablePermits=%d.",
+                    timeout(), unit(), permits, limiter.maxPermits(), limiter.availablePermits());
             throw new LimitedException(err);
         }
     }

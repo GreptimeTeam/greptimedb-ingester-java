@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.common.util;
 
 import com.codahale.metrics.Timer;
@@ -21,8 +22,6 @@ import java.util.concurrent.Executor;
 /**
  * A {@link Executor} that with a timer metric
  * which aggregates timing durations and provides duration statistics.
- *
- * @author jiachun.fjc
  */
 public class MetricExecutor implements Executor {
     private final Executor pool;
@@ -43,9 +42,6 @@ public class MetricExecutor implements Executor {
 
     @Override
     public String toString() {
-        return "MetricExecutor{" + //
-                "pool=" + pool + //
-                ", name='" + name + '\'' + //
-                '}';
+        return "MetricExecutor{" + "pool=" + pool + ", name='" + name + '\'' + '}';
     }
 }

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime;
 
 import io.greptime.models.DataType;
@@ -25,15 +26,15 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
- * @author jiachun.fjc
+ *
  */
 public class TestUtil {
 
     public static Collection<Table> testTable(String tableName, int rowCount) {
-        TableSchema tableSchema = TableSchema.newBuilder(tableName) //
-                .addTag("host", DataType.String) //
-                .addTimestamp("ts", DataType.TimestampMillisecond) //
-                .addField("cpu", DataType.Float64) //
+        TableSchema tableSchema = TableSchema.newBuilder(tableName)
+                .addTag("host", DataType.String)
+                .addTimestamp("ts", DataType.TimestampMillisecond)
+                .addField("cpu", DataType.Float64)
                 .build();
 
         Table table = Table.from(tableSchema);

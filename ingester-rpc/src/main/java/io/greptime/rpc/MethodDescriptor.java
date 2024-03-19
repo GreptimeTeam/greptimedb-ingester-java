@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.rpc;
 
 import java.util.Objects;
 
 /**
  * Description of a remote method.
- *
- * @author jiachun.fjc
  */
 public class MethodDescriptor {
     private final String name;
@@ -72,11 +71,7 @@ public class MethodDescriptor {
 
     @Override
     public String toString() {
-        return "MethodDescriptor{" + //
-                "name='" + name + '\'' + //
-                ", type=" + type + //
-                ", limitPercent=" + limitPercent + //
-                '}';
+        return "MethodDescriptor{" + "name='" + name + '\'' + ", type=" + type + ", limitPercent=" + limitPercent + '}';
     }
 
     public enum MethodType {

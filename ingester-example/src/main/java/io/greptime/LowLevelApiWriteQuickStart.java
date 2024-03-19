@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime;
 
 import io.greptime.models.DataType;
@@ -21,15 +22,15 @@ import io.greptime.models.Result;
 import io.greptime.models.Table;
 import io.greptime.models.TableSchema;
 import io.greptime.models.WriteOk;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * @author jiachun.fjc
+ *
  */
 public class LowLevelApiWriteQuickStart {
 
@@ -38,17 +39,17 @@ public class LowLevelApiWriteQuickStart {
     public static void main(String[] args) throws ExecutionException, InterruptedException {
         GreptimeDB greptimeDB = TestConnector.connectToDefaultDB();
 
-        TableSchema cpuMetricSchema = TableSchema.newBuilder("cpu_metric") //
-                .addTag("host", DataType.String) //
-                .addTimestamp("ts", DataType.TimestampMillisecond) //
-                .addField("cpu_user", DataType.Float64) //
-                .addField("cpu_sys", DataType.Float64) //
+        TableSchema cpuMetricSchema = TableSchema.newBuilder("cpu_metric")
+                .addTag("host", DataType.String)
+                .addTimestamp("ts", DataType.TimestampMillisecond)
+                .addField("cpu_user", DataType.Float64)
+                .addField("cpu_sys", DataType.Float64)
                 .build();
 
-        TableSchema memMetricSchema = TableSchema.newBuilder("mem_metric") //
-                .addTag("host", DataType.String) //
-                .addTimestamp("ts", DataType.TimestampMillisecond) //
-                .addField("mem_usage", DataType.Float64) //
+        TableSchema memMetricSchema = TableSchema.newBuilder("mem_metric")
+                .addTag("host", DataType.String)
+                .addTimestamp("ts", DataType.TimestampMillisecond)
+                .addField("mem_usage", DataType.Float64)
                 .build();
 
         Table cpuMetric = Table.from(cpuMetricSchema);
@@ -76,9 +77,8 @@ public class LowLevelApiWriteQuickStart {
 
         Result<WriteOk, Err> result = future.get();
 
-        Result<Integer, String> simpleResult = result //
-                .map(WriteOk::getSuccess) //
-                .mapErr(err -> err.getError().getMessage());
+        Result<Integer, String> simpleResult =
+                result.map(WriteOk::getSuccess).mapErr(err -> err.getError().getMessage());
         if (simpleResult.isOk()) {
             LOG.info("Write success: {}", simpleResult.getOk());
         } else {
@@ -86,7 +86,8 @@ public class LowLevelApiWriteQuickStart {
         }
 
         List<Table> delete_objs = Arrays.asList(cpuMetric.subRange(0, 5), memMetric.subRange(0, 5));
-        Result<WriteOk, Err> deletes = greptimeDB.write(delete_objs, WriteOp.Delete).get();
+        Result<WriteOk, Err> deletes =
+                greptimeDB.write(delete_objs, WriteOp.Delete).get();
 
         if (deletes.isOk()) {
             LOG.info("Delete result: {}", result.getOk());

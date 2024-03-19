@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.models;
 
 import com.google.protobuf.ByteStringHelper;
@@ -21,14 +22,13 @@ import io.greptime.v1.RowData;
 
 /**
  * A utility that handles some processing of row based data.
- *
- * @author jiachun.fjc
  */
 public final class RowHelper {
 
-    public static void addValue(RowData.Row.Builder builder, //
-            Common.ColumnDataType dataType, //
-            Common.ColumnDataTypeExtension dataTypeExtension, //
+    public static void addValue(
+            RowData.Row.Builder builder,
+            Common.ColumnDataType dataType,
+            Common.ColumnDataTypeExtension dataTypeExtension,
             Object value) {
         RowData.Value.Builder valueBuilder = RowData.Value.newBuilder();
         if (value == null) {

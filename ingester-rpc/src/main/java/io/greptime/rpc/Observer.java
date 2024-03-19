@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.rpc;
 
 import java.util.concurrent.Executor;
 
 /**
  * Receives notifications from an observable stream of messages.
- *
- * @author jiachun.fjc
  */
 public interface Observer<V> {
 

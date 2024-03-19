@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.options;
 
 import io.greptime.RouterClient;
@@ -23,8 +24,6 @@ import java.util.concurrent.Executor;
 
 /**
  * Write options.
- *
- * @author jiachun.fjc
  */
 public class WriteOptions implements Copiable<WriteOptions> {
     private String database;
@@ -119,14 +118,13 @@ public class WriteOptions implements Copiable<WriteOptions> {
     @Override
     public String toString() {
         // Do not print auto info
-        return "WriteOptions{" + //
-                "database='" + database + '\'' + //
-                ", routerClient=" + routerClient + //
-                ", asyncPool=" + asyncPool + //
-                ", maxRetries=" + maxRetries + //
-                ", maxInFlightWritePoints=" + maxInFlightWritePoints + //
-                ", limitedPolicy=" + limitedPolicy + //
-                ", defaultStreamMaxWritePointsPerSecond=" + defaultStreamMaxWritePointsPerSecond + //
-                '}';
+        return "WriteOptions{" + "database='"
+                + database + '\'' + ", routerClient="
+                + routerClient + ", asyncPool="
+                + asyncPool + ", maxRetries="
+                + maxRetries + ", maxInFlightWritePoints="
+                + maxInFlightWritePoints + ", limitedPolicy="
+                + limitedPolicy + ", defaultStreamMaxWritePointsPerSecond="
+                + defaultStreamMaxWritePointsPerSecond + '}';
     }
 }

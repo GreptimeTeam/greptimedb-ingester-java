@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.common.util;
 
 import java.util.concurrent.RejectedExecutionHandler;
@@ -23,15 +24,11 @@ import java.util.concurrent.TimeUnit;
  * A {@link java.util.concurrent.ThreadPoolExecutor} that can additionally
  * schedule tasks to run after a given delay with a timer metric
  * which aggregates timing durations and provides duration statistics.
- *
- * @author jiachun.fjc
  */
 public class MetricScheduledThreadPoolExecutor extends LogScheduledThreadPoolExecutor {
 
-    public MetricScheduledThreadPoolExecutor(int corePoolSize, //
-            ThreadFactory threadFactory, //
-            RejectedExecutionHandler handler, //
-            String name) {
+    public MetricScheduledThreadPoolExecutor(
+            int corePoolSize, ThreadFactory threadFactory, RejectedExecutionHandler handler, String name) {
         super(corePoolSize, threadFactory, handler, name);
     }
 
@@ -43,8 +40,8 @@ public class MetricScheduledThreadPoolExecutor extends LogScheduledThreadPoolExe
 
     @Override
     protected void afterExecute(Runnable r, Throwable t) {
-        ThreadPoolMetricRegistry.metricRegistry() //
-                .timer("scheduled_thread_pool." + getName()) //
+        ThreadPoolMetricRegistry.metricRegistry()
+                .timer("scheduled_thread_pool." + getName())
                 .update(ThreadPoolMetricRegistry.finish(), TimeUnit.MILLISECONDS);
         super.afterExecute(r, t);
     }

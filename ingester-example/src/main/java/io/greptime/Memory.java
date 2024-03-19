@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime;
 
 import io.greptime.models.Column;
@@ -20,7 +21,7 @@ import io.greptime.models.DataType;
 import io.greptime.models.Metric;
 
 /**
- * @author jiachun.fjc
+ *
  */
 @Metric(name = "mem_metric")
 public class Memory {

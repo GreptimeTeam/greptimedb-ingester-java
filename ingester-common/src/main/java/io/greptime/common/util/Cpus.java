@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.common.util;
 
 import io.greptime.common.Keys;
 
 /**
  * Utility for cpu.
- *
- * @author jiachun.fjc
  */
 public class Cpus {
 
-    private static final int CPUS = SystemPropertyUtil.getInt(Keys.AVAILABLE_CPUS, Runtime.getRuntime()
-            .availableProcessors());
+    private static final int CPUS =
+            SystemPropertyUtil.getInt(Keys.AVAILABLE_CPUS, Runtime.getRuntime().availableProcessors());
 
     /**
      * The configured number of available processors. The default is

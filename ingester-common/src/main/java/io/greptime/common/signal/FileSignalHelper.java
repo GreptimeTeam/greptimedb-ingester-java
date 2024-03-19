@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.common.signal;
 
 import java.io.File;
 import java.nio.file.Paths;
 
 /**
- * @author jiachun.fjc
+ *
  */
 public class FileSignalHelper {
     private static final String[] EMPTY_ARRAY = new String[0];
 
     public static boolean ignoreSignal(FileSignal fileSignal) {
-        return !Paths.get(FileOutputHelper.getOutDir(), fileSignal.getFilename()).toFile().exists();
+        return !Paths.get(FileOutputHelper.getOutDir(), fileSignal.getFilename())
+                .toFile()
+                .exists();
     }
 
     public static boolean ignoreFileOutputSignal() {

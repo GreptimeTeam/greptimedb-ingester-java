@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.models;
 
 import java.lang.annotation.ElementType;
@@ -22,8 +23,6 @@ import java.lang.annotation.Target;
 
 /**
  * This annotation is used to mapping POJO class into {@link Table}.
- *
- * @author jiachun.fjc
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

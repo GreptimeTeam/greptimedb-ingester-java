@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.common.util;
 
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * Like rust: pub type SharedScheduledPool = RcObjectPool<ScheduledExecutorService>
- *
- * @author jiachun.fjc
  */
 public class SharedScheduledPool extends RcObjectPool<ScheduledExecutorService> {
 

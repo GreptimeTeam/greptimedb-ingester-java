@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.common.util;
 
 import com.codahale.metrics.Counter;
@@ -22,16 +23,14 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
 import com.codahale.metrics.Slf4jReporter;
 import com.codahale.metrics.Timer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * In GreptimeDB client, metrics are required. As for whether to output (log) metrics
  * results, you decide.
- *
- * @author jiachun.fjc
  */
 public final class MetricsUtil {
 
@@ -41,22 +40,22 @@ public final class MetricsUtil {
     private static final ScheduledReporter SCHEDULED_REPORTER;
 
     static {
-        ScheduledExecutorService scheduledPool = ThreadPoolUtil.newScheduledBuilder() //
-                .enableMetric(true) //
-                .coreThreads(1) //
-                .poolName("metrics.reporter") //
-                .threadFactory(new NamedThreadFactory("metrics.reporter", true)) //
+        ScheduledExecutorService scheduledPool = ThreadPoolUtil.newScheduledBuilder()
+                .enableMetric(true)
+                .coreThreads(1)
+                .poolName("metrics.reporter")
+                .threadFactory(new NamedThreadFactory("metrics.reporter", true))
                 .build();
         SCHEDULED_REPORTER = createReporter(scheduledPool);
     }
 
     private static ScheduledReporter createReporter(ScheduledExecutorService scheduledPool) {
         try {
-            return Slf4jReporter.forRegistry(MetricsUtil.METRIC_REGISTRY) //
-                    .withLoggingLevel(Slf4jReporter.LoggingLevel.INFO) //
-                    .outputTo(LOG) //
-                    .scheduleOn(scheduledPool) //
-                    .shutdownExecutorOnStop(true) //
+            return Slf4jReporter.forRegistry(MetricsUtil.METRIC_REGISTRY)
+                    .withLoggingLevel(Slf4jReporter.LoggingLevel.INFO)
+                    .outputTo(LOG)
+                    .scheduleOn(scheduledPool)
+                    .shutdownExecutorOnStop(true)
                     .build();
         } catch (Throwable ex) {
             LOG.warn("Fail to create metrics reporter.", ex);

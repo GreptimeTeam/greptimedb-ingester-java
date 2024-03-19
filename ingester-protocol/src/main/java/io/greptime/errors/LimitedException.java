@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.errors;
 
 /**
  * A flow control exception that can be thrown by AbortPolicy.
- *
- * @author jiachun.fjc
  */
 public class LimitedException extends RuntimeException {
 

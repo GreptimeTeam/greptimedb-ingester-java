@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.options;
 
 import io.greptime.Router;
@@ -21,14 +22,14 @@ import io.greptime.limit.LimitedPolicy;
 import io.greptime.models.AuthInfo;
 import io.greptime.rpc.RpcOptions;
 import io.greptime.rpc.TlsOptions;
-import org.junit.Assert;
-import org.junit.Test;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
- * @author jiachun.fjc
+ *
  */
 public class GreptimeOptionsTest {
 
@@ -47,27 +48,30 @@ public class GreptimeOptionsTest {
         Router<Void, Endpoint> router = createTestRouter();
         TlsOptions tlsOptions = new TlsOptions();
 
-        GreptimeOptions opts = GreptimeOptions.newBuilder(endpoints, database) //
-                .asyncPool(asyncPool) //
-                .rpcOptions(rpcOptions) //
-                .tlsOptions(tlsOptions) //
-                .writeMaxRetries(writeMaxRetries) //
-                .maxInFlightWritePoints(maxInFlightWritePoints) //
-                .writeLimitedPolicy(limitedPolicy) //
-                .defaultStreamMaxWritePointsPerSecond(defaultStreamMaxWritePointsPerSecond) //
-                .routeTableRefreshPeriodSeconds(routeTableRefreshPeriodSeconds) //
-                .authInfo(authInfo) //
-                .router(router) //
+        GreptimeOptions opts = GreptimeOptions.newBuilder(endpoints, database)
+                .asyncPool(asyncPool)
+                .rpcOptions(rpcOptions)
+                .tlsOptions(tlsOptions)
+                .writeMaxRetries(writeMaxRetries)
+                .maxInFlightWritePoints(maxInFlightWritePoints)
+                .writeLimitedPolicy(limitedPolicy)
+                .defaultStreamMaxWritePointsPerSecond(defaultStreamMaxWritePointsPerSecond)
+                .routeTableRefreshPeriodSeconds(routeTableRefreshPeriodSeconds)
+                .authInfo(authInfo)
+                .router(router)
                 .build();
 
         Assert.assertEquals(database, opts.getDatabase());
-        Assert.assertArrayEquals(endpoints, opts.getEndpoints().stream().map(Endpoint::toString).toArray());
+        Assert.assertArrayEquals(
+                endpoints, opts.getEndpoints().stream().map(Endpoint::toString).toArray());
         Assert.assertEquals(rpcOptions, opts.getRpcOptions());
         Assert.assertEquals(tlsOptions, opts.getRpcOptions().getTlsOptions());
 
         RouterOptions routerOptions = opts.getRouterOptions();
         Assert.assertNotNull(routerOptions);
-        Assert.assertArrayEquals(endpoints, routerOptions.getEndpoints().stream().map(Endpoint::toString).toArray());
+        Assert.assertArrayEquals(
+                endpoints,
+                routerOptions.getEndpoints().stream().map(Endpoint::toString).toArray());
         Assert.assertEquals(router, routerOptions.getRouter());
         Assert.assertEquals(routeTableRefreshPeriodSeconds, routerOptions.getRefreshPeriodSeconds());
 
@@ -77,7 +81,8 @@ public class GreptimeOptionsTest {
         Assert.assertEquals(writeMaxRetries, writeOptions.getMaxRetries());
         Assert.assertEquals(maxInFlightWritePoints, writeOptions.getMaxInFlightWritePoints());
         Assert.assertEquals(limitedPolicy, writeOptions.getLimitedPolicy());
-        Assert.assertEquals(defaultStreamMaxWritePointsPerSecond, writeOptions.getDefaultStreamMaxWritePointsPerSecond());
+        Assert.assertEquals(
+                defaultStreamMaxWritePointsPerSecond, writeOptions.getDefaultStreamMaxWritePointsPerSecond());
         Assert.assertEquals(authInfo, writeOptions.getAuthInfo());
     }
 

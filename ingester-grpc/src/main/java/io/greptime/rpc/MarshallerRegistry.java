@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.rpc;
 
 import com.google.protobuf.Message;
 import io.greptime.common.util.Ensures;
-
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,8 +25,6 @@ import java.util.stream.Collectors;
 
 /**
  * Marshaller registry for grpc service.
- *
- * @author jiachun.fjc
  */
 public interface MarshallerRegistry {
 
@@ -37,8 +35,7 @@ public interface MarshallerRegistry {
      * @param methodType grpc method type
      * @return method name
      */
-    default String getMethodName(Class<? extends Message> reqCls, //
-                                 io.grpc.MethodDescriptor.MethodType methodType) {
+    default String getMethodName(Class<? extends Message> reqCls, io.grpc.MethodDescriptor.MethodType methodType) {
         return getMethodName(reqCls, supportedMethodType(methodType));
     }
 
@@ -64,9 +61,8 @@ public interface MarshallerRegistry {
      * @return method's limit percent
      */
     default Map<String, Double> getAllMethodsLimitPercent() {
-        return getAllMethodDescriptors() //
-                .stream() //
-                .filter(mth -> mth.getLimitPercent() > 0) //
+        return getAllMethodDescriptors().stream()
+                .filter(mth -> mth.getLimitPercent() > 0)
                 .collect(Collectors.toMap(MethodDescriptor::getName, MethodDescriptor::getLimitPercent));
     }
 
@@ -94,10 +90,8 @@ public interface MarshallerRegistry {
      * @param defaultReqIns  default request instance
      * @param defaultRespIns default response instance
      */
-    void registerMarshaller(MethodDescriptor method, //
-                            Class<? extends Message> reqCls, //
-                            Message defaultReqIns, //
-                            Message defaultRespIns);
+    void registerMarshaller(
+            MethodDescriptor method, Class<? extends Message> reqCls, Message defaultReqIns, Message defaultRespIns);
 
     default MethodDescriptor.MethodType supportedMethodType(io.grpc.MethodDescriptor.MethodType mt) {
         switch (mt) {
@@ -115,12 +109,10 @@ public interface MarshallerRegistry {
     enum DefaultMarshallerRegistry implements MarshallerRegistry {
         INSTANCE;
 
-        private final Map<Class<? extends Message>, Map<MethodDescriptor.MethodType, MethodDescriptor>>  methods   =
-                                                                                                                new ConcurrentHashMap<>();
-        private final Map<Class<? extends Message>, Message>                                             requests  =
-                                                                                                                new ConcurrentHashMap<>();
-        private final Map<Class<? extends Message>, Message>                                             responses =
-                                                                                                                new ConcurrentHashMap<>();
+        private final Map<Class<? extends Message>, Map<MethodDescriptor.MethodType, MethodDescriptor>> methods =
+                new ConcurrentHashMap<>();
+        private final Map<Class<? extends Message>, Message> requests = new ConcurrentHashMap<>();
+        private final Map<Class<? extends Message>, Message> responses = new ConcurrentHashMap<>();
 
         @Override
         public String getMethodName(Class<? extends Message> reqCls, MethodDescriptor.MethodType methodType) {
@@ -133,9 +125,7 @@ public interface MarshallerRegistry {
 
         @Override
         public Set<MethodDescriptor> getAllMethodDescriptors() {
-            return this.methods
-                    .values()
-                    .stream()
+            return this.methods.values().stream()
                     .flatMap(map -> map.values().stream())
                     .collect(Collectors.toSet());
         }
@@ -151,11 +141,14 @@ public interface MarshallerRegistry {
         }
 
         @Override
-        public void registerMarshaller(MethodDescriptor method, //
-                                       Class<? extends Message> reqCls, //
-                                       Message defaultReqIns, //
-                                       Message defaultRespIns) {
-            this.methods.computeIfAbsent(reqCls, cls -> new ConcurrentHashMap<>()).put(method.getType(), method);
+        public void registerMarshaller(
+                MethodDescriptor method,
+                Class<? extends Message> reqCls,
+                Message defaultReqIns,
+                Message defaultRespIns) {
+            this.methods
+                    .computeIfAbsent(reqCls, cls -> new ConcurrentHashMap<>())
+                    .put(method.getType(), method);
             this.requests.put(reqCls, defaultReqIns);
             this.responses.put(reqCls, defaultRespIns);
         }

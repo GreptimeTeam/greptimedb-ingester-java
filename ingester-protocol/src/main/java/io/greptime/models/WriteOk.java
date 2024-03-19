@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.models;
 
 /**
  * Contains the success value of write.
- *
- * @author jiachun.fjc
  */
 public class WriteOk {
 
@@ -48,10 +47,7 @@ public class WriteOk {
 
     @Override
     public String toString() {
-        return "WriteOk{" + //
-                "success=" + success + //
-                ", failure=" + failure + //
-                '}';
+        return "WriteOk{" + "success=" + success + ", failure=" + failure + '}';
     }
 
     /**

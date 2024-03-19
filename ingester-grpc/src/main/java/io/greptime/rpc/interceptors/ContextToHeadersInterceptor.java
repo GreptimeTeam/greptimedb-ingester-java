@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.rpc.interceptors;
 
 import io.greptime.rpc.Context;
@@ -26,8 +27,6 @@ import io.grpc.MethodDescriptor;
 
 /**
  * Add RPC context to gRPC headers.
- *
- * @author jiachun.fjc
  */
 public class ContextToHeadersInterceptor implements ClientInterceptor {
 
@@ -38,14 +37,13 @@ public class ContextToHeadersInterceptor implements ClientInterceptor {
     }
 
     @Override
-    public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method, //
-            CallOptions callOpts, //
-            Channel next) {
+    public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
+            MethodDescriptor<ReqT, RespT> method, CallOptions callOpts, Channel next) {
         return new HeaderAttachingClientCall<>(next.newCall(method, callOpts));
     }
 
-    private static final class HeaderAttachingClientCall<ReqT, RespT> extends
-            ForwardingClientCall.SimpleForwardingClientCall<ReqT, RespT> {
+    private static final class HeaderAttachingClientCall<ReqT, RespT>
+            extends ForwardingClientCall.SimpleForwardingClientCall<ReqT, RespT> {
 
         HeaderAttachingClientCall(ClientCall<ReqT, RespT> delegate) {
             super(delegate);
@@ -55,10 +53,10 @@ public class ContextToHeadersInterceptor implements ClientInterceptor {
         public void start(Listener<RespT> respListener, Metadata headers) {
             Context ctx = CURRENT_CTX.get();
             if (ctx != null) {
-                ctx.entrySet().forEach(e -> headers.put( //
-                        Metadata.Key.of(e.getKey(), Metadata.ASCII_STRING_MARSHALLER), //
-                        String.valueOf(e.getValue())) //
-                );
+                ctx.entrySet()
+                        .forEach(e -> headers.put(
+                                Metadata.Key.of(e.getKey(), Metadata.ASCII_STRING_MARSHALLER),
+                                String.valueOf(e.getValue())));
             }
             CURRENT_CTX.remove();
             super.start(respListener, headers);

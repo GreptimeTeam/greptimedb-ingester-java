@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -28,9 +27,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * @author jiachun.fjc
+ *
  */
 public class QueryJDBC {
 
@@ -49,12 +50,13 @@ public class QueryJDBC {
             ResultSet rs = statement.executeQuery("DESC cpu_metric");
             LOG.info("Column | Type | Key | Null | Default | Semantic Type ");
             while (rs.next()) {
-                LOG.info("{} | {} | {} | {} | {} | {}", //
-                        rs.getString(1), //
-                        rs.getString(2), //
-                        rs.getString(3), //
-                        rs.getString(4), //
-                        rs.getString(5), //
+                LOG.info(
+                        "{} | {} | {} | {} | {} | {}",
+                        rs.getString(1),
+                        rs.getString(2),
+                        rs.getString(3),
+                        rs.getString(4),
+                        rs.getString(5),
                         rs.getString(6));
             }
 
@@ -68,10 +70,11 @@ public class QueryJDBC {
             rs = statement.executeQuery("SELECT * FROM cpu_metric ORDER BY ts DESC LIMIT 5");
             LOG.info("host | ts | cpu_user | cpu_sys");
             while (rs.next()) {
-                LOG.info("{} | {} | {} | {}", //
-                        rs.getString("host"), //
-                        rs.getTimestamp("ts"), //
-                        rs.getDouble("cpu_user"), //
+                LOG.info(
+                        "{} | {} | {} | {}",
+                        rs.getString("host"),
+                        rs.getTimestamp("ts"),
+                        rs.getDouble("cpu_user"),
                         rs.getDouble("cpu_sys"));
             }
         }

@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.errors;
 
 /**
- * @author jiachun.fjc
+ *
  */
 public class ServerException extends RuntimeException {
 

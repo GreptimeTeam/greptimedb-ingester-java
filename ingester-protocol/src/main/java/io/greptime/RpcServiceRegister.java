@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime;
 
 import io.greptime.rpc.MethodDescriptor;
@@ -21,8 +22,6 @@ import io.greptime.v1.Database;
 
 /**
  * The RPC service register.
- *
- * @author jiachun.fjc
  */
 public class RpcServiceRegister {
 
@@ -30,17 +29,21 @@ public class RpcServiceRegister {
 
     public static void registerAllService() {
         // register protobuf serializer
-        RpcFactoryProvider.getRpcFactory().register(
-                MethodDescriptor.of(String.format(METHOD_TEMPLATE, "Handle"), MethodDescriptor.MethodType.UNARY, 1), //
-                Database.GreptimeRequest.class, //
-                Database.GreptimeRequest.getDefaultInstance(), //
-                Database.GreptimeResponse.getDefaultInstance());
+        RpcFactoryProvider.getRpcFactory()
+                .register(
+                        MethodDescriptor.of(
+                                String.format(METHOD_TEMPLATE, "Handle"), MethodDescriptor.MethodType.UNARY, 1),
+                        Database.GreptimeRequest.class,
+                        Database.GreptimeRequest.getDefaultInstance(),
+                        Database.GreptimeResponse.getDefaultInstance());
 
-        RpcFactoryProvider.getRpcFactory().register(
-                MethodDescriptor.of(String.format(METHOD_TEMPLATE, "HandleRequests"),
-                        MethodDescriptor.MethodType.CLIENT_STREAMING), //
-                Database.GreptimeRequest.class, //
-                Database.GreptimeRequest.getDefaultInstance(), //
-                Database.GreptimeResponse.getDefaultInstance());
+        RpcFactoryProvider.getRpcFactory()
+                .register(
+                        MethodDescriptor.of(
+                                String.format(METHOD_TEMPLATE, "HandleRequests"),
+                                MethodDescriptor.MethodType.CLIENT_STREAMING),
+                        Database.GreptimeRequest.class,
+                        Database.GreptimeRequest.getDefaultInstance(),
+                        Database.GreptimeResponse.getDefaultInstance());
     }
 }

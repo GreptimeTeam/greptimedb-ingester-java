@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.rpc.limit;
 
 import com.netflix.concurrency.limits.MetricRegistry;
@@ -21,8 +22,6 @@ import java.util.function.Supplier;
 
 /**
  * For tracking metrics in the limiters.
- *
- * @author jiachun.fjc
  */
 public class LimitMetricRegistry implements MetricRegistry {
 

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.common.signal;
 
 import io.greptime.common.Keys;
@@ -26,8 +27,6 @@ import java.util.Date;
 
 /**
  * File output helper.
- *
- * @author jiachun.fjc
  */
 public final class FileOutputHelper {
 

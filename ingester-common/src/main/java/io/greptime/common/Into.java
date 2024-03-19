@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.common;
 
 /**
  * A value-to-value conversion.
- *
- * @author jiachun.fjc
  */
 public interface Into<Output> {
     Output into();

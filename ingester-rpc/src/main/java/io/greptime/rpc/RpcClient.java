@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.rpc;
 
 import io.greptime.common.Display;
@@ -21,8 +22,6 @@ import io.greptime.common.Lifecycle;
 
 /**
  * A common RPC client interface.
- *
- * @author jiachun.fjc
  */
 public interface RpcClient extends Lifecycle<RpcOptions>, Display {
 
@@ -80,11 +79,7 @@ public interface RpcClient extends Lifecycle<RpcOptions>, Display {
      * @param <Resp> the response message type
      */
     @SuppressWarnings("unused")
-    default <Req, Resp> void invokeAsync(
-            Endpoint endpoint,
-            Req request,
-            Observer<Resp> observer,
-            long timeoutMs) {
+    default <Req, Resp> void invokeAsync(Endpoint endpoint, Req request, Observer<Resp> observer, long timeoutMs) {
         invokeAsync(endpoint, request, null, observer, timeoutMs);
     }
 
@@ -99,12 +94,7 @@ public interface RpcClient extends Lifecycle<RpcOptions>, Display {
      * @param <Req> the request message type
      * @param <Resp> the response message type
      */
-    <Req, Resp> void invokeAsync(
-            Endpoint endpoint,
-            Req request,
-            Context ctx,
-            Observer<Resp> observer,
-            long timeoutMs);
+    <Req, Resp> void invokeAsync(Endpoint endpoint, Req request, Context ctx, Observer<Resp> observer, long timeoutMs);
 
     /**
      * Executes a server-streaming call with a response {@link Observer}.
@@ -118,11 +108,7 @@ public interface RpcClient extends Lifecycle<RpcOptions>, Display {
      * @param <Req> the request message type
      * @param <Resp> the response message type
      */
-    <Req, Resp> void invokeServerStreaming(
-            Endpoint endpoint,
-            Req request,
-            Context ctx,
-            Observer<Resp> observer);
+    <Req, Resp> void invokeServerStreaming(Endpoint endpoint, Req request, Context ctx, Observer<Resp> observer);
 
     /**
      * Executes a client-streaming call with a request {@link Observer}
@@ -137,8 +123,5 @@ public interface RpcClient extends Lifecycle<RpcOptions>, Display {
      * @return request {@link Observer}.
      */
     <Req, Resp> Observer<Req> invokeClientStreaming(
-            Endpoint endpoint,
-            Req defaultReqIns,
-            Context ctx,
-            Observer<Resp> respObserver);
+            Endpoint endpoint, Req defaultReqIns, Context ctx, Observer<Resp> respObserver);
 }

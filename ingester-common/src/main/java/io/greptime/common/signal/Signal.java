@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.common.signal;
 
 /**
  * Signal types.
- *
- * @author jiachun.fjc
  */
 public enum Signal {
     SIG_USR2("USR2");

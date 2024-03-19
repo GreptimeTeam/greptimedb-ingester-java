@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.signal;
 
 import io.greptime.GreptimeDB;
@@ -22,8 +23,6 @@ import io.greptime.common.signal.FileOutputHelper;
 import io.greptime.common.signal.FileSignalHelper;
 import io.greptime.common.signal.SignalHandler;
 import io.greptime.common.util.Files;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -31,11 +30,11 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A signal handler that can display all client instance's memory state.
- *
- * @author jiachun.fjc
  */
 @SPI(priority = 98)
 public class DisplaySignalHandler implements SignalHandler {
@@ -58,7 +57,9 @@ public class DisplaySignalHandler implements SignalHandler {
         try {
             File file = FileOutputHelper.getOutputFile(BASE_NAME);
 
-            LOG.info("Displaying GreptimeDB clients triggered by signal: {} to file: {}.", signalName,
+            LOG.info(
+                    "Displaying GreptimeDB clients triggered by signal: {} to file: {}.",
+                    signalName,
                     file.getAbsoluteFile());
 
             try (PrintWriter out =

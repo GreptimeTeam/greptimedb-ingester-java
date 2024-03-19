@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.rpc;
 
 import io.greptime.common.Copiable;
@@ -21,8 +22,6 @@ import java.util.Optional;
 
 /**
  * GreptimeDB secure connection options
- *
- * @author Ning Sun<sunning@greptime.com>
  */
 public class TlsOptions implements Copiable<TlsOptions> {
 
@@ -80,11 +79,10 @@ public class TlsOptions implements Copiable<TlsOptions> {
 
     @Override
     public String toString() {
-        return "TlsOptions{" + //
-                "clientCertChain=" + clientCertChain + //
-                ", privateKey=" + privateKey + //
-                ", privateKeyPassword='" + getPrivateKeyPassword().map((v) -> "****") + '\'' + //
-                ", rootCerts=" + rootCerts + //
-                '}';
+        return "TlsOptions{" + "clientCertChain="
+                + clientCertChain + ", privateKey="
+                + privateKey + ", privateKeyPassword='"
+                + getPrivateKeyPassword().map((v) -> "****") + '\'' + ", rootCerts="
+                + rootCerts + '}';
     }
 }

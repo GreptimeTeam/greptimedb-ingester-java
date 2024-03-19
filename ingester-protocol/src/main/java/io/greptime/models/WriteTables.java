@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.models;
 
 import io.greptime.WriteOp;
@@ -20,7 +21,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
- * @author jiachun.fjc
+ *
  */
 public class WriteTables {
     private final Collection<Table> tables;

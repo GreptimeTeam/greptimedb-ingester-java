@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.rpc;
 
 import io.greptime.common.Copiable;
@@ -23,8 +24,6 @@ import java.util.Set;
 /**
  * Invoke context, it can pass some additional information to the
  * database server in the form of KV.
- *
- * @author jiachun.fjc
  */
 @SuppressWarnings({"unchecked", "unused"})
 public class Context implements Copiable<Context> {

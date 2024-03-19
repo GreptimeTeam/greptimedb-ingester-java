@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime;
 
 import io.greptime.models.Table;
@@ -20,8 +21,6 @@ import java.util.List;
 
 /**
  * Converts POJO objects into {@link Table} objects
- *
- * @author jiachun.fjc
  */
 public interface PojoObjectMapper {
 

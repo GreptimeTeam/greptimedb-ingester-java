@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.rpc.signal;
 
 import io.greptime.common.SPI;
@@ -25,8 +26,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  * A signal handler that can reset LIMIT_SWITCH by {@link ClientRequestLimitInterceptor#resetLimitSwitch()}.
- *
- * @author jiachun.fjc
  */
 @SPI(priority = 89)
 public class RpcLimitSignalHandler implements SignalHandler {

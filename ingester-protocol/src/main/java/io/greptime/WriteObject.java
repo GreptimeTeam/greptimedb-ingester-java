@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime;
 
 import io.greptime.models.Err;
 import io.greptime.models.Result;
 import io.greptime.models.WriteOk;
 import io.greptime.rpc.Context;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -27,8 +27,6 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * Write POJO object API: writes data in POJO object format to the DB.
- *
- * @author jiachun.fjc
  */
 public interface WriteObject {
     /**

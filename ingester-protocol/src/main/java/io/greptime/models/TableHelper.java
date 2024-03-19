@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.models;
 
 import io.greptime.WriteOp;
@@ -22,11 +23,12 @@ import io.greptime.v1.Database;
 import java.util.Collection;
 
 /**
- * @author jiachun.fjc
+ *
  */
 public class TableHelper {
 
-    public static Database.GreptimeRequest toGreptimeRequest(WriteTables writeTables, String database, AuthInfo authInfo) {
+    public static Database.GreptimeRequest toGreptimeRequest(
+            WriteTables writeTables, String database, AuthInfo authInfo) {
         Common.RequestHeader.Builder headerBuilder = Common.RequestHeader.newBuilder();
         if (database != null) {
             headerBuilder.setDbname(database);
@@ -45,9 +47,9 @@ public class TableHelper {
                     Ensures.ensure(t.pointCount() > 0, "No data to insert in table: %s", t.tableName());
                     insertBuilder.addInserts(t.intoRowInsertRequest());
                 }
-                return Database.GreptimeRequest.newBuilder() //
-                        .setHeader(headerBuilder.build()) //
-                        .setRowInserts(insertBuilder.build()) //
+                return Database.GreptimeRequest.newBuilder()
+                        .setHeader(headerBuilder.build())
+                        .setRowInserts(insertBuilder.build())
                         .build();
             case Delete:
                 Database.RowDeleteRequests.Builder deleteBuilder = Database.RowDeleteRequests.newBuilder();
@@ -55,9 +57,9 @@ public class TableHelper {
                     Ensures.ensure(t.pointCount() > 0, "No data to delete in table: %s", t.tableName());
                     deleteBuilder.addDeletes(t.intoRowDeleteRequest());
                 }
-                return Database.GreptimeRequest.newBuilder() //
-                        .setHeader(headerBuilder.build()) //
-                        .setRowDeletes(deleteBuilder.build()) //
+                return Database.GreptimeRequest.newBuilder()
+                        .setHeader(headerBuilder.build())
+                        .setRowDeletes(deleteBuilder.build())
                         .build();
             default:
                 throw new IllegalArgumentException("Unsupported write operation: " + writeOp);

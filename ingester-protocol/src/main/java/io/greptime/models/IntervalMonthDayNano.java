@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.models;
 
 import io.greptime.common.Into;
 import io.greptime.v1.Common;
 
 /**
- * @author jiachun.fjc
+ *
  */
 public class IntervalMonthDayNano implements Into<Common.IntervalMonthDayNano> {
     private final int months;
@@ -34,10 +35,10 @@ public class IntervalMonthDayNano implements Into<Common.IntervalMonthDayNano> {
 
     @Override
     public Common.IntervalMonthDayNano into() {
-        return Common.IntervalMonthDayNano.newBuilder() //
-                .setMonths(this.months) //
-                .setDays(this.days) //
-                .setNanoseconds(this.nanoseconds) //
+        return Common.IntervalMonthDayNano.newBuilder()
+                .setMonths(this.months)
+                .setDays(this.days)
+                .setNanoseconds(this.nanoseconds)
                 .build();
     }
 }

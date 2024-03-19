@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.common;
 
 /**
  * Constant string keys.
- *
- * @author jiachun.fjc
  */
 public final class Keys {
     public static final String DB_NAME = "GreptimeDB";

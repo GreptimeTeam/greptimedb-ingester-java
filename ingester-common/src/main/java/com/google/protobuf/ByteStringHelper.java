@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.google.protobuf;
 
 /**
  * A {@code ByteString} helper, avoid some memory copying to improve performance.
- *
- * @author jiachun.fjc
  */
 public class ByteStringHelper {
 

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.models;
 
 import io.greptime.common.Endpoint;
@@ -20,7 +21,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * @author jiachun.fjc
+ *
  */
 public class ErrTest {
 

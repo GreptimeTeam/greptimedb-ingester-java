@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.limit;
 
 import com.codahale.metrics.Histogram;
@@ -29,8 +30,6 @@ import java.util.function.Supplier;
  * total number of permits, we will allow this request under the condition
  * that the available permits are equal to the maximum number of permits,
  * i.e., there are no in-flight requests.
- *
- * @author jiachun.fjc
  */
 public abstract class AbstractLimiter<In, Out> {
 

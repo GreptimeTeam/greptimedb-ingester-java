@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.signal;
 
 import io.greptime.Util;
@@ -25,8 +26,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  * A signal handler that can reset RW_LOGGING by {@link Util#resetRwLogging()}.
- *
- * @author jiachun.fjc
  */
 @SPI(priority = 95)
 public class RwLoggingSignalHandler implements SignalHandler {

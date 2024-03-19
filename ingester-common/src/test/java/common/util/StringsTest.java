@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package common.util;
 
 import io.greptime.common.util.Strings;
@@ -20,7 +21,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * @author jiachun.fjc
+ *
  */
 public class StringsTest {
 

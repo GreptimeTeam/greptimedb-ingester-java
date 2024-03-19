@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.common.util;
 
 import java.util.ArrayList;
@@ -21,8 +22,6 @@ import java.util.List;
 /**
  * Static utility methods pertaining to {@code String} or {@code CharSequence}
  * instances.
- *
- * @author jiachun.fjc
  */
 public final class Strings {
 

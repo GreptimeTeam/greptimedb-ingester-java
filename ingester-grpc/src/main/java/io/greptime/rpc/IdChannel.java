@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.rpc;
 
 import io.grpc.CallOptions;
@@ -25,8 +26,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * A managed channel that has a channel id.
- *
- * @author jiachun.fjc
  */
 public class IdChannel extends ManagedChannel {
 
@@ -106,9 +105,6 @@ public class IdChannel extends ManagedChannel {
 
     @Override
     public String toString() {
-        return "IdChannel{" + //
-                "channelId=" + channelId + //
-                ", channel=" + channel + //
-                '}';
+        return "IdChannel{" + "channelId=" + channelId + ", channel=" + channel + '}';
     }
 }

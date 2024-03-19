@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.rpc;
 
 import io.grpc.ManagedChannel;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Managed channel shutdown helper.
- *
- * @author jiachun.fjc
  */
 public final class ManagedChannelHelper {
 

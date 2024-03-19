@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.limit;
 
 import io.greptime.models.Err;
@@ -23,8 +24,6 @@ import java.util.Collection;
 
 /**
  * Like rust: pub type WriteLimiter = AbstractLimiter<WriteRowsWriteRows, Result<WriteOk, Err>>
- *
- * @author jiachun.fjc
  */
 public abstract class WriteLimiter extends AbstractLimiter<Collection<Table>, Result<WriteOk, Err>> {
 

@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.common.util;
 
 import io.greptime.common.Keys;
+import java.util.Locale;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.Locale;
 
 /**
  * Platform utilities.
- *
- * @author jiachun.fjc
  */
 public class Platform {
 
@@ -67,8 +66,6 @@ public class Platform {
     }
 
     private static boolean checkOS(String osKey) {
-        return SystemPropertyUtil.get(Keys.OS_NAME, "") //
-                .toLowerCase(Locale.US) //
-                .contains(osKey);
+        return SystemPropertyUtil.get(Keys.OS_NAME, "").toLowerCase(Locale.US).contains(osKey);
     }
 }

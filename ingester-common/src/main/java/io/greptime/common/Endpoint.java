@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.common;
 
 import io.greptime.common.util.Strings;
@@ -20,8 +21,6 @@ import java.io.Serializable;
 
 /**
  * An IP address with port.
- *
- * @author jiachun.fjc
  */
 public class Endpoint implements Serializable {
 

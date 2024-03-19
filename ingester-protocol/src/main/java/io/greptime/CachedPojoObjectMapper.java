@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime;
 
 import com.google.common.cache.CacheBuilder;
@@ -35,8 +36,6 @@ import java.util.Map;
 /**
  * This utility class converts POJO objects into {@link Table} objects,
  * inspired by <a href="https://github.com/influxdata/influxdb-client-java/blob/master/client/src/main/java/com/influxdb/client/internal/MeasurementMapper.java">InfluxDB client-java</a>.
- *
- * @author jiachun.fjc
  */
 @SPI(priority = 9)
 public class CachedPojoObjectMapper implements PojoObjectMapper {
@@ -48,15 +47,15 @@ public class CachedPojoObjectMapper implements PojoObjectMapper {
     }
 
     public CachedPojoObjectMapper(int maxCachedPOJOs) {
-        this.classFieldCache =
-                CacheBuilder.newBuilder().maximumSize(maxCachedPOJOs)
-                        .build(new CacheLoader<Class<?>, Map<String, Field>>() {
-                            @SuppressWarnings("NullableProblems")
-                            @Override
-                            public Map<String, Field> load(Class<?> key) {
-                                return createMetricClass(key);
-                            }
-                        });
+        this.classFieldCache = CacheBuilder.newBuilder()
+                .maximumSize(maxCachedPOJOs)
+                .build(new CacheLoader<Class<?>, Map<String, Field>>() {
+                    @SuppressWarnings("NullableProblems")
+                    @Override
+                    public Map<String, Field> load(Class<?> key) {
+                        return createMetricClass(key);
+                    }
+                });
     }
 
     @Override
@@ -115,9 +114,8 @@ public class CachedPojoObjectMapper implements PojoObjectMapper {
         if (metricAnnotation != null) {
             return metricAnnotation.name();
         } else {
-            String err =
-                    String.format("Unable to determine Metric for '%s'." + " Does it have a @Metric annotation?",
-                            metricType);
+            String err = String.format(
+                    "Unable to determine Metric for '%s'. Does it have a @Metric annotation?", metricType);
             throw new PojoException(err);
         }
     }

@@ -13,24 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.greptime.common.signal;
 
 import io.greptime.common.Keys;
 import io.greptime.common.util.ServiceLoader;
 import io.greptime.common.util.SystemPropertyUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A tool class for loading and registering all signals.
  * <p>
  * Do not support windows.
- *
- * @author jiachun.fjc
  */
 public class SignalHandlersLoader {
 
@@ -44,13 +43,13 @@ public class SignalHandlersLoader {
     public static void load() {
         try {
             if (USE_OS_SIGNAL && SignalHelper.supportSignal()) {
-                List<SignalHandler> handlers = ServiceLoader.load(SignalHandler.class) //
-                        .sort();
+                List<SignalHandler> handlers =
+                        ServiceLoader.load(SignalHandler.class).sort();
 
                 LOG.info("Loaded signals: {}.", handlers);
 
                 Map<Signal, List<SignalHandler>> mapTo = new HashMap<>();
-                handlers.forEach(h -> mapTo.computeIfAbsent(h.signal(), sig -> new ArrayList<>()) //
+                handlers.forEach(h -> mapTo.computeIfAbsent(h.signal(), sig -> new ArrayList<>())
                         .add(h));
 
                 mapTo.forEach((sig, hs) -> {
