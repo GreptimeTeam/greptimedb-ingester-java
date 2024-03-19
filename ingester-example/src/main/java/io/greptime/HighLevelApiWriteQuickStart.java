@@ -63,9 +63,8 @@ public class HighLevelApiWriteQuickStart {
 
         Result<WriteOk, Err> result = puts.get();
 
-        Result<Integer, String> simpleResult = result //
-                .map(WriteOk::getSuccess) //
-                .mapErr(err -> err.getError().getMessage());
+        Result<Integer, String> simpleResult =
+                result.map(WriteOk::getSuccess).mapErr(err -> err.getError().getMessage());
         if (simpleResult.isOk()) {
             LOG.info("Write success: {}", simpleResult.getOk());
         } else {

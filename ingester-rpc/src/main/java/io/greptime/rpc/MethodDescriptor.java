@@ -73,14 +73,7 @@ public class MethodDescriptor {
 
     @Override
     public String toString() {
-        return "MethodDescriptor{" + //
-                "name='"
-                + name + '\'' + //
-                ", type="
-                + type + //
-                ", limitPercent="
-                + limitPercent + //
-                '}';
+        return "MethodDescriptor{" + "name='" + name + '\'' + ", type=" + type + ", limitPercent=" + limitPercent + '}';
     }
 
     public enum MethodType {

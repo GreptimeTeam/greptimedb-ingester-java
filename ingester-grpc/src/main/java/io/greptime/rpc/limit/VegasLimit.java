@@ -279,9 +279,7 @@ public class VegasLimit extends AbstractLimit {
 
     @Override
     public String toString() {
-        return "VegasLimit [limit=" + getLimit() + //
-                ", rtt_noload="
-                + TimeUnit.NANOSECONDS.toMicros(this.rtt_noload) / 1000.0 + //
-                " ms]";
+        return "VegasLimit [limit=" + getLimit() + ", rtt_noload="
+                + TimeUnit.NANOSECONDS.toMicros(this.rtt_noload) / 1000.0 + " ms]";
     }
 }

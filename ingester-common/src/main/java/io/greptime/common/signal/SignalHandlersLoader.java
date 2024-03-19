@@ -45,13 +45,13 @@ public class SignalHandlersLoader {
     public static void load() {
         try {
             if (USE_OS_SIGNAL && SignalHelper.supportSignal()) {
-                List<SignalHandler> handlers = ServiceLoader.load(SignalHandler.class) //
-                        .sort();
+                List<SignalHandler> handlers =
+                        ServiceLoader.load(SignalHandler.class).sort();
 
                 LOG.info("Loaded signals: {}.", handlers);
 
                 Map<Signal, List<SignalHandler>> mapTo = new HashMap<>();
-                handlers.forEach(h -> mapTo.computeIfAbsent(h.signal(), sig -> new ArrayList<>()) //
+                handlers.forEach(h -> mapTo.computeIfAbsent(h.signal(), sig -> new ArrayList<>())
                         .add(h));
 
                 mapTo.forEach((sig, hs) -> {

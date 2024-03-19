@@ -120,21 +120,13 @@ public class WriteOptions implements Copiable<WriteOptions> {
     @Override
     public String toString() {
         // Do not print auto info
-        return "WriteOptions{" + //
-                "database='"
-                + database + '\'' + //
-                ", routerClient="
-                + routerClient + //
-                ", asyncPool="
-                + asyncPool + //
-                ", maxRetries="
-                + maxRetries + //
-                ", maxInFlightWritePoints="
-                + maxInFlightWritePoints + //
-                ", limitedPolicy="
-                + limitedPolicy + //
-                ", defaultStreamMaxWritePointsPerSecond="
-                + defaultStreamMaxWritePointsPerSecond + //
-                '}';
+        return "WriteOptions{" + "database='"
+                + database + '\'' + ", routerClient="
+                + routerClient + ", asyncPool="
+                + asyncPool + ", maxRetries="
+                + maxRetries + ", maxInFlightWritePoints="
+                + maxInFlightWritePoints + ", limitedPolicy="
+                + limitedPolicy + ", defaultStreamMaxWritePointsPerSecond="
+                + defaultStreamMaxWritePointsPerSecond + '}';
     }
 }

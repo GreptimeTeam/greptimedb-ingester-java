@@ -31,10 +31,10 @@ import java.util.Collections;
 public class TestUtil {
 
     public static Collection<Table> testTable(String tableName, int rowCount) {
-        TableSchema tableSchema = TableSchema.newBuilder(tableName) //
-                .addTag("host", DataType.String) //
-                .addTimestamp("ts", DataType.TimestampMillisecond) //
-                .addField("cpu", DataType.Float64) //
+        TableSchema tableSchema = TableSchema.newBuilder(tableName)
+                .addTag("host", DataType.String)
+                .addTimestamp("ts", DataType.TimestampMillisecond)
+                .addField("cpu", DataType.Float64)
                 .build();
 
         Table table = Table.from(tableSchema);

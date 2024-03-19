@@ -82,13 +82,9 @@ public class RouterOptions implements Copiable<RouterOptions> {
 
     @Override
     public String toString() {
-        return "RouterOptions{" + //
-                "endpoints="
-                + endpoints + //
-                ", refreshPeriodSeconds="
-                + refreshPeriodSeconds + //
-                ", router="
-                + router + //
-                '}';
+        return "RouterOptions{" + "endpoints="
+                + endpoints + ", refreshPeriodSeconds="
+                + refreshPeriodSeconds + ", router="
+                + router + '}';
     }
 }

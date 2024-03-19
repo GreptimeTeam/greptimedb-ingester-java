@@ -115,11 +115,11 @@ public interface Table {
         }
 
         private static Table buildTable(
-                String tableName, //
-                int columnCount, //
-                List<String> columnNames, //
-                List<Common.SemanticType> semanticTypes, //
-                List<Common.ColumnDataType> dataTypes, //
+                String tableName,
+                int columnCount,
+                List<String> columnNames,
+                List<Common.SemanticType> semanticTypes,
+                List<Common.ColumnDataType> dataTypes,
                 List<Common.ColumnDataTypeExtension> dataTypeExtensions) {
             RowBasedTable table = new RowBasedTable();
             table.tableName = tableName;
@@ -127,9 +127,9 @@ public interface Table {
 
             for (int i = 0; i < columnCount; i++) {
                 RowData.ColumnSchema.Builder builder = RowData.ColumnSchema.newBuilder();
-                builder.setColumnName(columnNames.get(i)) //
-                        .setSemanticType(semanticTypes.get(i)) //
-                        .setDatatype(dataTypes.get(i)) //
+                builder.setColumnName(columnNames.get(i))
+                        .setSemanticType(semanticTypes.get(i))
+                        .setDatatype(dataTypes.get(i))
                         .setDatatypeExtension(dataTypeExtensions.get(i));
                 table.columnSchemas.add(builder.build());
             }
@@ -192,25 +192,25 @@ public interface Table {
 
         @Override
         public Database.RowInsertRequest intoRowInsertRequest() {
-            return Database.RowInsertRequest.newBuilder() //
-                    .setTableName(this.tableName) //
-                    .setRows(into()) //
+            return Database.RowInsertRequest.newBuilder()
+                    .setTableName(this.tableName)
+                    .setRows(into())
                     .build();
         }
 
         @Override
         public Database.RowDeleteRequest intoRowDeleteRequest() {
-            return Database.RowDeleteRequest.newBuilder() //
-                    .setTableName(this.tableName) //
-                    .setRows(into()) //
+            return Database.RowDeleteRequest.newBuilder()
+                    .setTableName(this.tableName)
+                    .setRows(into())
                     .build();
         }
 
         @Override
         public RowData.Rows into() {
-            return RowData.Rows.newBuilder() //
-                    .addAllSchema(this.columnSchemas) //
-                    .addAllRows(this.rows) //
+            return RowData.Rows.newBuilder()
+                    .addAllSchema(this.columnSchemas)
+                    .addAllRows(this.rows)
                     .build();
         }
     }

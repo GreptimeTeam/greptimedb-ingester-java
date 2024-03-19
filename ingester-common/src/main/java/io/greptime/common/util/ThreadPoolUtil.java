@@ -71,13 +71,13 @@ public final class ThreadPoolUtil {
      *         or {@code threadFactory} or {@code handler} is null
      */
     public static ThreadPoolExecutor newThreadPool(
-            String poolName, //
-            boolean enableMetric, //
-            int coreThreads, //
-            int maximumThreads, //
-            long keepAliveSeconds, //
-            BlockingQueue<Runnable> workQueue, //
-            ThreadFactory threadFactory, //
+            String poolName,
+            boolean enableMetric,
+            int coreThreads,
+            int maximumThreads,
+            long keepAliveSeconds,
+            BlockingQueue<Runnable> workQueue,
+            ThreadFactory threadFactory,
             RejectedExecutionHandler rejectedHandler) {
         TimeUnit unit = TimeUnit.SECONDS;
         if (enableMetric) {
@@ -122,10 +122,10 @@ public final class ThreadPoolUtil {
      * @return a new ScheduledThreadPoolExecutor
      */
     public static ScheduledThreadPoolExecutor newScheduledThreadPool(
-            String poolName, //
-            boolean enableMetric, //
-            int coreThreads, //
-            ThreadFactory threadFactory, //
+            String poolName,
+            boolean enableMetric,
+            int coreThreads,
+            ThreadFactory threadFactory,
             RejectedExecutionHandler rejectedHandler) {
         if (enableMetric) {
             return new MetricScheduledThreadPoolExecutor(coreThreads, threadFactory, rejectedHandler, poolName);

@@ -47,11 +47,11 @@ public final class Util {
         RW_LOGGING = new AtomicBoolean(SystemPropertyUtil.getBool(Keys.RW_LOGGING, false));
         REPORT_PERIOD_MIN = SystemPropertyUtil.getInt(Keys.REPORT_PERIOD, 30);
         DISPLAY = ThreadPoolUtil.newScheduledBuilder()
-                .poolName("display_self") //
-                .coreThreads(1) //
-                .enableMetric(true) //
-                .threadFactory(new NamedThreadFactory("display_self", true)) //
-                .rejectedHandler(new ThreadPoolExecutor.DiscardOldestPolicy()) //
+                .poolName("display_self")
+                .coreThreads(1)
+                .enableMetric(true)
+                .threadFactory(new NamedThreadFactory("display_self", true))
+                .rejectedHandler(new ThreadPoolExecutor.DiscardOldestPolicy())
                 .build();
 
         Runtime.getRuntime()
@@ -109,12 +109,12 @@ public final class Util {
 
             @Override
             public ScheduledExecutorService create() {
-                return ThreadPoolUtil.newScheduledBuilder() //
-                        .poolName(name) //
-                        .coreThreads(workers) //
-                        .enableMetric(true) //
-                        .threadFactory(new NamedThreadFactory(name, true)) //
-                        .rejectedHandler(new ThreadPoolExecutor.DiscardOldestPolicy()) //
+                return ThreadPoolUtil.newScheduledBuilder()
+                        .poolName(name)
+                        .coreThreads(workers)
+                        .enableMetric(true)
+                        .threadFactory(new NamedThreadFactory(name, true))
+                        .rejectedHandler(new ThreadPoolExecutor.DiscardOldestPolicy())
                         .build();
             }
 
@@ -176,7 +176,7 @@ public final class Util {
      */
     public static String clientVersion() {
         try {
-            return loadProps(Util.class.getClassLoader(), "client_version.properties") //
+            return loadProps(Util.class.getClassLoader(), "client_version.properties")
                     .getProperty(Keys.VERSION_KEY, "Unknown version");
         } catch (Exception ignored) {
             return "Unknown version(err)";

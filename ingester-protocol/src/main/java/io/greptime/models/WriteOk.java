@@ -49,12 +49,7 @@ public class WriteOk {
 
     @Override
     public String toString() {
-        return "WriteOk{" + //
-                "success="
-                + success + //
-                ", failure="
-                + failure + //
-                '}';
+        return "WriteOk{" + "success=" + success + ", failure=" + failure + '}';
     }
 
     /**

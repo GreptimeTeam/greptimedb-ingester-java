@@ -42,13 +42,13 @@ public class LogThreadPoolExecutor extends ThreadPoolExecutor {
     private final String name;
 
     public LogThreadPoolExecutor(
-            int corePoolSize, //
-            int maximumPoolSize, //
-            long keepAliveTime, //
-            TimeUnit unit, //
-            BlockingQueue<Runnable> workQueue, //
-            ThreadFactory threadFactory, //
-            RejectedExecutionHandler handler, //
+            int corePoolSize,
+            int maximumPoolSize,
+            long keepAliveTime,
+            TimeUnit unit,
+            BlockingQueue<Runnable> workQueue,
+            ThreadFactory threadFactory,
+            RejectedExecutionHandler handler,
             String name) {
         super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, threadFactory, handler);
         this.corePoolSize = corePoolSize;
@@ -90,14 +90,10 @@ public class LogThreadPoolExecutor extends ThreadPoolExecutor {
 
     @Override
     public String toString() {
-        return "ThreadPoolExecutor{" + //
-                "corePoolSize="
-                + corePoolSize + //
-                ", maximumPoolSize="
-                + maximumPoolSize + //
-                ", name='"
-                + name + '\'' + //
-                "} "
+        return "ThreadPoolExecutor{" + "corePoolSize="
+                + corePoolSize + ", maximumPoolSize="
+                + maximumPoolSize + ", name='"
+                + name + '\'' + "} "
                 + super.toString();
     }
 }

@@ -191,9 +191,7 @@ public class RouterClient implements Lifecycle<RouterOptions>, Display {
 
     @Override
     public void display(Printer out) {
-        out.println("--- RouterClient ---") //
-                .print("opts=") //
-                .println(this.opts);
+        out.println("--- RouterClient ---").print("opts=").println(this.opts);
 
         if (this.rpcClient != null) {
             out.println("");
@@ -205,14 +203,7 @@ public class RouterClient implements Lifecycle<RouterOptions>, Display {
 
     @Override
     public String toString() {
-        return "RouterClient{" + //
-                "refresher="
-                + refresher + //
-                ", opts="
-                + opts + //
-                ", rpcClient="
-                + rpcClient + //
-                '}';
+        return "RouterClient{" + "refresher=" + refresher + ", opts=" + opts + ", rpcClient=" + rpcClient + '}';
     }
 
     /**

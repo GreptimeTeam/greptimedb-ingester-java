@@ -41,12 +41,10 @@ public class AuthInfo implements Into<Common.AuthHeader> {
 
     @Override
     public Common.AuthHeader into() {
-        Common.Basic basic = Common.Basic.newBuilder() //
-                .setUsername(this.username) //
-                .setPassword(this.password) //
+        Common.Basic basic = Common.Basic.newBuilder()
+                .setUsername(this.username)
+                .setPassword(this.password)
                 .build();
-        return Common.AuthHeader.newBuilder() //
-                .setBasic(basic) //
-                .build();
+        return Common.AuthHeader.newBuilder().setBasic(basic).build();
     }
 }

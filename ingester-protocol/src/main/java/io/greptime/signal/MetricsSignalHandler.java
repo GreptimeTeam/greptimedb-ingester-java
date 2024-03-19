@@ -57,9 +57,9 @@ public class MetricsSignalHandler implements SignalHandler {
                     file.getAbsoluteFile());
 
             try (PrintStream out = new PrintStream(new FileOutputStream(file, true))) {
-                MetricReporter reporter = MetricReporter.forRegistry(MetricsUtil.metricRegistry()) //
-                        .outputTo(out) //
-                        .prefixedWith("-- GreptimeDB") //
+                MetricReporter reporter = MetricReporter.forRegistry(MetricsUtil.metricRegistry())
+                        .outputTo(out)
+                        .prefixedWith("-- GreptimeDB")
                         .build();
                 reporter.report();
                 out.flush();

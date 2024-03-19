@@ -29,17 +29,16 @@ public class TableSchemaTest {
 
     @Test
     public void testNonNull() {
-        TableSchema schema = TableSchema.newBuilder("test_table") //
-                .addTag("col1", DataType.String) //
-                .addTag("col2", DataType.String) //
-                .addField("col3", DataType.Int32) //
-                .addColumn(
-                        "col4", SemanticType.Field, DataType.Decimal128, new DataType.DecimalTypeExtension(39, 9)) //
+        TableSchema schema = TableSchema.newBuilder("test_table")
+                .addTag("col1", DataType.String)
+                .addTag("col2", DataType.String)
+                .addField("col3", DataType.Int32)
+                .addColumn("col4", SemanticType.Field, DataType.Decimal128, new DataType.DecimalTypeExtension(39, 9))
                 .build();
 
         Table.RowBasedTable table = (Table.RowBasedTable) Table.from(schema);
-        table.addRow("1", "11", 111, new BigDecimal("0.1")) //
-                .addRow("2", "22", 222, new BigDecimal("0.2")) //
+        table.addRow("1", "11", 111, new BigDecimal("0.1"))
+                .addRow("2", "22", 222, new BigDecimal("0.2"))
                 .addRow("3", "33", 333, new BigDecimal("0.3"));
 
         Assert.assertEquals(3, table.rowCount());
@@ -60,16 +59,14 @@ public class TableSchemaTest {
 
     @Test
     public void testSomeNull() {
-        TableSchema schema = TableSchema.newBuilder("test_table") //
-                .addTag("col1", DataType.String) //
-                .addTag("col2", DataType.String) //
-                .addField("col3", DataType.Int32) //
+        TableSchema schema = TableSchema.newBuilder("test_table")
+                .addTag("col1", DataType.String)
+                .addTag("col2", DataType.String)
+                .addField("col3", DataType.Int32)
                 .build();
 
         Table.RowBasedTable table = (Table.RowBasedTable) Table.from(schema);
-        table.addRow("1", "11", 111) //
-                .addRow("2", null, 222) //
-                .addRow("3", "33", null);
+        table.addRow("1", "11", 111).addRow("2", null, 222).addRow("3", "33", null);
 
         Assert.assertEquals(3, table.rowCount());
         RowData.Rows rawRows = table.into();
@@ -81,9 +78,9 @@ public class TableSchemaTest {
 
     @Test
     public void testNotSupportTimestamp() {
-        TableSchema.Builder builder = TableSchema.newBuilder("test_table") //
-                .addTag("col1", DataType.String) //
-                .addTag("col2", DataType.String) //
+        TableSchema.Builder builder = TableSchema.newBuilder("test_table")
+                .addTag("col1", DataType.String)
+                .addTag("col2", DataType.String)
                 .addField("col3", DataType.Int32);
 
         try {
@@ -96,9 +93,9 @@ public class TableSchemaTest {
 
     @Test
     public void testNotSupportDecimalExtension() {
-        TableSchema.Builder builder = TableSchema.newBuilder("test_table") //
-                .addTag("col1", DataType.String) //
-                .addTag("col2", DataType.String) //
+        TableSchema.Builder builder = TableSchema.newBuilder("test_table")
+                .addTag("col1", DataType.String)
+                .addTag("col2", DataType.String)
                 .addField("col3", DataType.Int32);
 
         try {

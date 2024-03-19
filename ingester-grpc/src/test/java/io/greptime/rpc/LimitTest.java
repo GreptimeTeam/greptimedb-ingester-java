@@ -33,20 +33,20 @@ public class LimitTest {
     private static final Logger LOG = LoggerFactory.getLogger(LimitTest.class);
 
     static Gradient2Limit createGradient2() {
-        return Gradient2Limit.newBuilder() //
-                .initialLimit(512) //
-                .maxConcurrency(1024) //
-                .smoothing(0.2) //
-                .longWindow(100) //
-                .queueSize(16) //
+        return Gradient2Limit.newBuilder()
+                .initialLimit(512)
+                .maxConcurrency(1024)
+                .smoothing(0.2)
+                .longWindow(100)
+                .queueSize(16)
                 .build();
     }
 
     static VegasLimit createVegas() {
-        return VegasLimit.newBuilder() //
-                .initialLimit(512) //
-                .maxConcurrency(1024) //
-                .smoothing(0.2) //
+        return VegasLimit.newBuilder()
+                .initialLimit(512)
+                .maxConcurrency(1024)
+                .smoothing(0.2)
                 .build();
     }
 

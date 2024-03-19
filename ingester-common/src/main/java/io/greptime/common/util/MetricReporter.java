@@ -60,10 +60,10 @@ public class MetricReporter {
     public void report() {
         synchronized (this) {
             report(
-                    this.registry.getGauges(this.filter), //
-                    this.registry.getCounters(this.filter), //
-                    this.registry.getHistograms(this.filter), //
-                    this.registry.getMeters(this.filter), //
+                    this.registry.getGauges(this.filter),
+                    this.registry.getCounters(this.filter),
+                    this.registry.getHistograms(this.filter),
+                    this.registry.getMeters(this.filter),
                     this.registry.getTimers(this.filter));
         }
     }
@@ -208,15 +208,15 @@ public class MetricReporter {
          */
         public MetricReporter build() {
             return new MetricReporter(
-                    this.registry, //
-                    this.output, //
-                    this.prefix, //
-                    this.locale, //
-                    this.clock, //
-                    this.timeZone, //
-                    this.rateUnit, //
-                    this.durationUnit, //
-                    this.filter, //
+                    this.registry,
+                    this.output,
+                    this.prefix,
+                    this.locale,
+                    this.clock,
+                    this.timeZone,
+                    this.rateUnit,
+                    this.durationUnit,
+                    this.filter,
                     this.disabledMetricAttributes);
         }
     }
@@ -237,15 +237,15 @@ public class MetricReporter {
     private final DateFormat dateFormat;
 
     private MetricReporter(
-            MetricRegistry registry, //
-            PrintStream output, //
-            String prefix, //
-            Locale locale, //
-            Clock clock, //
-            TimeZone timeZone, //
-            TimeUnit rateUnit, //
-            TimeUnit durationUnit, //
-            MetricFilter filter, //
+            MetricRegistry registry,
+            PrintStream output,
+            String prefix,
+            Locale locale,
+            Clock clock,
+            TimeZone timeZone,
+            TimeUnit rateUnit,
+            TimeUnit durationUnit,
+            MetricFilter filter,
             Set<MetricAttribute> disabledMetricAttributes) {
         this.registry = registry;
         this.output = output;
@@ -265,10 +265,10 @@ public class MetricReporter {
 
     @SuppressWarnings("rawtypes")
     public void report(
-            SortedMap<String, Gauge> gauges, //
-            SortedMap<String, Counter> counters, //
-            SortedMap<String, Histogram> histograms, //
-            SortedMap<String, Meter> meters, //
+            SortedMap<String, Gauge> gauges,
+            SortedMap<String, Counter> counters,
+            SortedMap<String, Histogram> histograms,
+            SortedMap<String, Meter> meters,
             SortedMap<String, Timer> timers) {
         String dateTime = this.dateFormat.format(new Date(this.clock.getTime()));
         printWithBanner(dateTime, '=');

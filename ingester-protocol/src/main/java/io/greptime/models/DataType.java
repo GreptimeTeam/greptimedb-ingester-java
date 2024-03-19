@@ -25,33 +25,33 @@ import io.greptime.v1.Common;
  *
  */
 public enum DataType {
-    Bool, //
-    Int8, //
-    Int16, //
-    Int32, //
-    Int64, //
-    UInt8, //
-    UInt16, //
-    UInt32, //
-    UInt64, //
-    Float32, //
-    Float64, //
-    Binary, //
-    String, //
-    Date, //
-    DateTime, //
-    TimestampSecond, //
-    TimestampMillisecond, //
-    TimestampMicrosecond, //
-    TimestampNanosecond, //
-    TimeSecond, //
-    TimeMilliSecond, //
-    TimeMicroSecond, //
-    TimeNanoSecond, //
-    IntervalYearMonth, //
-    IntervalDayTime, //
-    IntervalMonthDayNano, //
-    Decimal128, //
+    Bool,
+    Int8,
+    Int16,
+    Int32,
+    Int64,
+    UInt8,
+    UInt16,
+    UInt32,
+    UInt64,
+    Float32,
+    Float64,
+    Binary,
+    String,
+    Date,
+    DateTime,
+    TimestampSecond,
+    TimestampMillisecond,
+    TimestampMicrosecond,
+    TimestampNanosecond,
+    TimeSecond,
+    TimeMilliSecond,
+    TimeMicroSecond,
+    TimeNanoSecond,
+    IntervalYearMonth,
+    IntervalDayTime,
+    IntervalMonthDayNano,
+    Decimal128,
     ;
 
     public boolean isTimestamp() {
@@ -142,9 +142,9 @@ public enum DataType {
 
         @Override
         public Common.DecimalTypeExtension into() {
-            return Common.DecimalTypeExtension.newBuilder() //
-                    .setPrecision(this.precision) //
-                    .setScale(this.scale) //
+            return Common.DecimalTypeExtension.newBuilder()
+                    .setPrecision(this.precision)
+                    .setScale(this.scale)
                     .build();
         }
     }

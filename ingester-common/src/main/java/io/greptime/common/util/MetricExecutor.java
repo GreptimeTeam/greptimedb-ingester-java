@@ -44,11 +44,6 @@ public class MetricExecutor implements Executor {
 
     @Override
     public String toString() {
-        return "MetricExecutor{" + //
-                "pool="
-                + pool + //
-                ", name='"
-                + name + '\'' + //
-                '}';
+        return "MetricExecutor{" + "pool=" + pool + ", name='" + name + '\'' + '}';
     }
 }

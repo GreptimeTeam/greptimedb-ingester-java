@@ -67,35 +67,35 @@ public class WriteClientTest {
 
     @Test
     public void testWriteSuccess() throws ExecutionException, InterruptedException {
-        TableSchema schema = TableSchema.newBuilder("test_table") //
-                .addTag("test_tag", DataType.String) //
-                .addTimestamp("test_ts", DataType.TimestampMillisecond) //
-                .addField("field1", DataType.Int8) //
-                .addField("field2", DataType.Int16) //
-                .addField("field3", DataType.Int32) //
-                .addField("field4", DataType.Int64) //
-                .addField("field5", DataType.UInt8) //
-                .addField("field6", DataType.UInt16) //
-                .addField("field7", DataType.UInt32) //
-                .addField("field8", DataType.UInt64) //
-                .addField("field9", DataType.Float32) //
-                .addField("field10", DataType.Float64) //
-                .addField("field11", DataType.Bool) //
-                .addField("field12", DataType.Binary) //
-                .addField("field13", DataType.Date) //
-                .addField("field14", DataType.DateTime) //
-                .addField("field15", DataType.TimestampSecond) //
-                .addField("field16", DataType.TimestampMillisecond) //
-                .addField("field17", DataType.TimestampMicrosecond) //
-                .addField("field18", DataType.TimestampNanosecond) //
-                .addField("field19", DataType.TimeSecond) //
-                .addField("field20", DataType.TimeMilliSecond) //
-                .addField("field21", DataType.TimeMicroSecond) //
-                .addField("field22", DataType.TimeNanoSecond) //
-                .addField("field23", DataType.IntervalYearMonth) //
-                .addField("field24", DataType.IntervalDayTime) //
-                .addField("field25", DataType.IntervalMonthDayNano) //
-                .addField("field26", DataType.Decimal128) //
+        TableSchema schema = TableSchema.newBuilder("test_table")
+                .addTag("test_tag", DataType.String)
+                .addTimestamp("test_ts", DataType.TimestampMillisecond)
+                .addField("field1", DataType.Int8)
+                .addField("field2", DataType.Int16)
+                .addField("field3", DataType.Int32)
+                .addField("field4", DataType.Int64)
+                .addField("field5", DataType.UInt8)
+                .addField("field6", DataType.UInt16)
+                .addField("field7", DataType.UInt32)
+                .addField("field8", DataType.UInt64)
+                .addField("field9", DataType.Float32)
+                .addField("field10", DataType.Float64)
+                .addField("field11", DataType.Bool)
+                .addField("field12", DataType.Binary)
+                .addField("field13", DataType.Date)
+                .addField("field14", DataType.DateTime)
+                .addField("field15", DataType.TimestampSecond)
+                .addField("field16", DataType.TimestampMillisecond)
+                .addField("field17", DataType.TimestampMicrosecond)
+                .addField("field18", DataType.TimestampNanosecond)
+                .addField("field19", DataType.TimeSecond)
+                .addField("field20", DataType.TimeMilliSecond)
+                .addField("field21", DataType.TimeMicroSecond)
+                .addField("field22", DataType.TimeNanoSecond)
+                .addField("field23", DataType.IntervalYearMonth)
+                .addField("field24", DataType.IntervalDayTime)
+                .addField("field25", DataType.IntervalMonthDayNano)
+                .addField("field26", DataType.Decimal128)
                 .build();
         Table table = Table.from(schema);
         long ts = System.currentTimeMillis();
@@ -195,14 +195,12 @@ public class WriteClientTest {
         table.addRow(row3);
 
         Endpoint addr = Endpoint.parse("127.0.0.1:8081");
-        Database.GreptimeResponse response = Database.GreptimeResponse.newBuilder() //
-                .setAffectedRows(Common.AffectedRows.newBuilder() //
-                        .setValue(3)) //
+        Database.GreptimeResponse response = Database.GreptimeResponse.newBuilder()
+                .setAffectedRows(Common.AffectedRows.newBuilder().setValue(3))
                 .build();
 
-        Mockito.when(this.routerClient.route()) //
-                .thenReturn(Util.completedCf(addr));
-        Mockito.when(this.routerClient.invoke(Mockito.eq(addr), Mockito.any(), Mockito.any())) //
+        Mockito.when(this.routerClient.route()).thenReturn(Util.completedCf(addr));
+        Mockito.when(this.routerClient.invoke(Mockito.eq(addr), Mockito.any(), Mockito.any()))
                 .thenReturn(Util.completedCf(response));
 
         Result<WriteOk, Err> res = this.writeClient.write(table).get();

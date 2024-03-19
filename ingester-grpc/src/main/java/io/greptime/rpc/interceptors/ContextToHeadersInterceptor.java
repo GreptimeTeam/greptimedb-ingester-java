@@ -40,9 +40,7 @@ public class ContextToHeadersInterceptor implements ClientInterceptor {
 
     @Override
     public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
-            MethodDescriptor<ReqT, RespT> method, //
-            CallOptions callOpts, //
-            Channel next) {
+            MethodDescriptor<ReqT, RespT> method, CallOptions callOpts, Channel next) {
         return new HeaderAttachingClientCall<>(next.newCall(method, callOpts));
     }
 
@@ -58,11 +56,9 @@ public class ContextToHeadersInterceptor implements ClientInterceptor {
             Context ctx = CURRENT_CTX.get();
             if (ctx != null) {
                 ctx.entrySet()
-                        .forEach(
-                                e -> headers.put( //
-                                        Metadata.Key.of(e.getKey(), Metadata.ASCII_STRING_MARSHALLER), //
-                                        String.valueOf(e.getValue())) //
-                                );
+                        .forEach(e -> headers.put(
+                                Metadata.Key.of(e.getKey(), Metadata.ASCII_STRING_MARSHALLER),
+                                String.valueOf(e.getValue())));
             }
             CURRENT_CTX.remove();
             super.start(respListener, headers);

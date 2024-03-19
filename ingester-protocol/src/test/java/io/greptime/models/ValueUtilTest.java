@@ -90,12 +90,12 @@ public class ValueUtilTest {
         final int precision = 38;
         final int scale = 9;
 
-        Common.DecimalTypeExtension decimalTypeExtension = Common.DecimalTypeExtension.newBuilder() //
-                .setPrecision(precision) //
-                .setScale(scale) //
+        Common.DecimalTypeExtension decimalTypeExtension = Common.DecimalTypeExtension.newBuilder()
+                .setPrecision(precision)
+                .setScale(scale)
                 .build();
-        Common.ColumnDataTypeExtension dataTypeExtension = Common.ColumnDataTypeExtension.newBuilder() //
-                .setDecimalType(decimalTypeExtension) //
+        Common.ColumnDataTypeExtension dataTypeExtension = Common.ColumnDataTypeExtension.newBuilder()
+                .setDecimalType(decimalTypeExtension)
                 .build();
 
         for (int i = 0; i < 1000; i++) {

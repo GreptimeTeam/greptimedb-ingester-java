@@ -175,8 +175,8 @@ public class GrpcClient implements RpcClient {
 
         MethodDescriptor<Message, Message> method = getCallMethod(request, MethodDescriptor.MethodType.UNARY);
         long timeout = calcTimeout(timeoutMs);
-        CallOptions callOpts = CallOptions.DEFAULT //
-                .withDeadlineAfter(timeout, TimeUnit.MILLISECONDS) //
+        CallOptions callOpts = CallOptions.DEFAULT
+                .withDeadlineAfter(timeout, TimeUnit.MILLISECONDS)
                 .withExecutor(getObserverExecutor(observer));
 
         String methodName = method.getFullMethodName();
@@ -371,23 +371,23 @@ public class GrpcClient implements RpcClient {
         Limit limit;
         switch (kind) {
             case Vegas:
-                limit = VegasLimit.newBuilder() //
-                        .initialLimit(Math.max(minInitialLimit, this.opts.getInitialLimit())) //
-                        .maxConcurrency(this.opts.getMaxLimit()) //
-                        .smoothing(this.opts.getSmoothing()) //
-                        .logOnLimitChange(this.opts.isLogOnLimitChange()) //
-                        .metricRegistry(metricRegistry) //
+                limit = VegasLimit.newBuilder()
+                        .initialLimit(Math.max(minInitialLimit, this.opts.getInitialLimit()))
+                        .maxConcurrency(this.opts.getMaxLimit())
+                        .smoothing(this.opts.getSmoothing())
+                        .logOnLimitChange(this.opts.isLogOnLimitChange())
+                        .metricRegistry(metricRegistry)
                         .build();
                 break;
             case Gradient:
-                limit = Gradient2Limit.newBuilder() //
-                        .initialLimit(Math.max(minInitialLimit, this.opts.getInitialLimit())) //
-                        .maxConcurrency(this.opts.getMaxLimit()) //
-                        .longWindow(this.opts.getLongRttWindow()) //
-                        .smoothing(this.opts.getSmoothing()) //
-                        .queueSize(Math.max(4, Cpus.cpus() << 1)) //
-                        .logOnLimitChange(this.opts.isLogOnLimitChange()) //
-                        .metricRegistry(metricRegistry) //
+                limit = Gradient2Limit.newBuilder()
+                        .initialLimit(Math.max(minInitialLimit, this.opts.getInitialLimit()))
+                        .maxConcurrency(this.opts.getMaxLimit())
+                        .longWindow(this.opts.getLongRttWindow())
+                        .smoothing(this.opts.getSmoothing())
+                        .queueSize(Math.max(4, Cpus.cpus() << 1))
+                        .logOnLimitChange(this.opts.isLogOnLimitChange())
+                        .metricRegistry(metricRegistry)
                         .build();
                 break;
             default:
@@ -395,19 +395,16 @@ public class GrpcClient implements RpcClient {
         }
 
         RequestLimiterBuilder limiterBuilder = RequestLimiterBuilder.newBuilder()
-                .named(LIMITER_NAME) //
-                .metricRegistry(metricRegistry) //
-                .blockOnLimit(this.opts.isBlockOnLimit(), this.opts.getDefaultRpcTimeout()) //
+                .named(LIMITER_NAME)
+                .metricRegistry(metricRegistry)
+                .blockOnLimit(this.opts.isBlockOnLimit(), this.opts.getDefaultRpcTimeout())
                 .limit(limit);
 
         Map<String, Double> methodsLimitPercent = this.marshallerRegistry.getAllMethodsLimitPercent();
         if (methodsLimitPercent.isEmpty()) {
             return new ClientRequestLimitInterceptor(limiterBuilder.build());
         } else {
-            double sum = methodsLimitPercent //
-                    .values() //
-                    .stream() //
-                    .reduce(0.0, Double::sum);
+            double sum = methodsLimitPercent.values().stream().reduce(0.0, Double::sum);
             Ensures.ensure(Math.abs(sum - 1.0) < 0.1, "the total percent sum of partitions must be near 100%");
             methodsLimitPercent.forEach(limiterBuilder::partition);
 
@@ -418,23 +415,20 @@ public class GrpcClient implements RpcClient {
 
     private void attachErrMsg(
             Throwable err, String callType, String method, String target, long startCall, long duration, Context ctx) {
-        StringBuilder buf = StringBuilderHelper.get() //
-                .append("Grpc ") //
-                .append(callType) //
-                .append(" got an error,") //
-                .append(" method=") //
-                .append(method) //
-                .append(", target=") //
-                .append(target) //
-                .append(", startCall=") //
+        StringBuilder buf = StringBuilderHelper.get()
+                .append("Grpc ")
+                .append(callType)
+                .append(" got an error,")
+                .append(" method=")
+                .append(method)
+                .append(", target=")
+                .append(target)
+                .append(", startCall=")
                 .append(startCall);
         if (duration > 0) {
-            buf.append(", duration=") //
-                    .append(duration) //
-                    .append(" millis");
+            buf.append(", duration=").append(duration).append(" millis");
         }
-        buf.append(", ctx=") //
-                .append(ctx);
+        buf.append(", ctx=").append(ctx);
         err.addSuppressed(new OnlyErrorMessage(buf.toString()));
     }
 
@@ -521,12 +515,11 @@ public class GrpcClient implements RpcClient {
         Ensures.ensureNonNull(defaultReqIns, "null default request instance: " + reqCls.getName());
         Ensures.ensureNonNull(defaultRespIns, "null default response instance: " + reqCls.getName());
 
-        return MethodDescriptor //
-                .<Message, Message>newBuilder() //
-                .setType(methodType) //
-                .setFullMethodName(this.marshallerRegistry.getMethodName(reqCls, methodType)) //
-                .setRequestMarshaller(ProtoUtils.marshaller(defaultReqIns)) //
-                .setResponseMarshaller(ProtoUtils.marshaller(defaultRespIns)) //
+        return MethodDescriptor.<Message, Message>newBuilder()
+                .setType(methodType)
+                .setFullMethodName(this.marshallerRegistry.getMethodName(reqCls, methodType))
+                .setRequestMarshaller(ProtoUtils.marshaller(defaultReqIns))
+                .setResponseMarshaller(ProtoUtils.marshaller(defaultRespIns))
                 .build();
     }
 
@@ -578,16 +571,16 @@ public class GrpcClient implements RpcClient {
         }
 
         ManagedChannel innerChannel = innerChannelBuilder
-                .executor(this.asyncPool) //
-                .intercept(this.interceptors) //
-                .maxInboundMessageSize(this.opts.getMaxInboundMessageSize()) //
-                .flowControlWindow(this.opts.getFlowControlWindow()) //
-                .idleTimeout(this.opts.getIdleTimeoutSeconds(), TimeUnit.SECONDS) //
-                .keepAliveTime(this.opts.getKeepAliveTimeSeconds(), TimeUnit.SECONDS) //
-                .keepAliveTimeout(this.opts.getKeepAliveTimeoutSeconds(), TimeUnit.SECONDS) //
-                .keepAliveWithoutCalls(this.opts.isKeepAliveWithoutCalls()) //
-                .withOption(ChannelOption.SO_REUSEADDR, true) //
-                .withOption(ChannelOption.TCP_NODELAY, true) //
+                .executor(this.asyncPool)
+                .intercept(this.interceptors)
+                .maxInboundMessageSize(this.opts.getMaxInboundMessageSize())
+                .flowControlWindow(this.opts.getFlowControlWindow())
+                .idleTimeout(this.opts.getIdleTimeoutSeconds(), TimeUnit.SECONDS)
+                .keepAliveTime(this.opts.getKeepAliveTimeSeconds(), TimeUnit.SECONDS)
+                .keepAliveTimeout(this.opts.getKeepAliveTimeoutSeconds(), TimeUnit.SECONDS)
+                .keepAliveWithoutCalls(this.opts.isKeepAliveWithoutCalls())
+                .withOption(ChannelOption.SO_REUSEADDR, true)
+                .withOption(ChannelOption.TCP_NODELAY, true)
                 .build();
 
         IdChannel idChannel = new IdChannel(innerChannel);
@@ -648,20 +641,20 @@ public class GrpcClient implements RpcClient {
 
     @Override
     public void display(Printer out) {
-        out.println("--- GrpcClient ---") //
-                .print("started=") //
-                .println(this.started) //
-                .print("opts=") //
-                .println(this.opts) //
-                .print("connectionObservers=") //
-                .println(this.connectionObservers) //
-                .print("asyncPool=") //
-                .println(this.asyncPool) //
-                .print("interceptors=") //
-                .println(this.interceptors) //
-                .print("managedChannelPool=") //
-                .println(this.managedChannelPool) //
-                .print("transientFailures=") //
+        out.println("--- GrpcClient ---")
+                .print("started=")
+                .println(this.started)
+                .print("opts=")
+                .println(this.opts)
+                .print("connectionObservers=")
+                .println(this.connectionObservers)
+                .print("asyncPool=")
+                .println(this.asyncPool)
+                .print("interceptors=")
+                .println(this.interceptors)
+                .print("managedChannelPool=")
+                .println(this.managedChannelPool)
+                .print("transientFailures=")
                 .println(this.transientFailures);
     }
 
@@ -670,12 +663,12 @@ public class GrpcClient implements RpcClient {
     }
 
     private static String target(Channel ch, String address) {
-        return StringBuilderHelper.get() //
-                .append('[') //
-                .append(channelId(ch)) //
-                .append('/') //
-                .append(address) //
-                .append(']') //
+        return StringBuilderHelper.get()
+                .append('[')
+                .append(channelId(ch))
+                .append('/')
+                .append(address)
+                .append(']')
                 .toString();
     }
 
@@ -686,11 +679,7 @@ public class GrpcClient implements RpcClient {
         return -1;
     }
 
-    private static void checkArgs(
-            Endpoint endpoint, //
-            Object request, //
-            Context ctx, //
-            Observer<?> observer) {
+    private static void checkArgs(Endpoint endpoint, Object request, Context ctx, Observer<?> observer) {
         Ensures.ensureNonNull(endpoint, "null `endpoint`");
         Ensures.ensureNonNull(request, "null `request`");
         Ensures.ensureNonNull(ctx, "null `ctx`");
@@ -702,15 +691,15 @@ public class GrpcClient implements RpcClient {
         int coreWorks = SystemPropertyUtil.getInt(Keys.GRPC_POOL_CORE_WORKERS, Cpus.cpus());
         int maximumWorks = SystemPropertyUtil.getInt(Keys.GRPC_POOL_MAXIMUM_WORKERS, Cpus.cpus() << 2);
 
-        return ThreadPoolUtil.newBuilder() //
-                .poolName(name) //
-                .enableMetric(true) //
-                .coreThreads(coreWorks) //
-                .maximumThreads(maximumWorks) //
-                .keepAliveSeconds(60L) //
-                .workQueue(new ArrayBlockingQueue<>(512)) //
-                .threadFactory(new NamedThreadFactory(name, true)) //
-                .rejectedHandler(new AsyncPoolRejectedHandler(name)) //
+        return ThreadPoolUtil.newBuilder()
+                .poolName(name)
+                .enableMetric(true)
+                .coreThreads(coreWorks)
+                .maximumThreads(maximumWorks)
+                .keepAliveSeconds(60L)
+                .workQueue(new ArrayBlockingQueue<>(512))
+                .threadFactory(new NamedThreadFactory(name, true))
+                .rejectedHandler(new AsyncPoolRejectedHandler(name))
                 .build();
     }
 

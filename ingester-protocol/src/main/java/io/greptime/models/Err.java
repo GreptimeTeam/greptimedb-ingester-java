@@ -61,14 +61,7 @@ public class Err {
 
     @Override
     public String toString() {
-        return "Err{" + //
-                "code="
-                + code + //
-                ", error='"
-                + error + '\'' + //
-                ", errTo="
-                + errTo + //
-                '}';
+        return "Err{" + "code=" + code + ", error='" + error + '\'' + ", errTo=" + errTo + '}';
     }
 
     /**

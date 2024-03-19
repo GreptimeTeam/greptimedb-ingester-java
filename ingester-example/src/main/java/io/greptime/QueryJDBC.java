@@ -51,12 +51,12 @@ public class QueryJDBC {
             LOG.info("Column | Type | Key | Null | Default | Semantic Type ");
             while (rs.next()) {
                 LOG.info(
-                        "{} | {} | {} | {} | {} | {}", //
-                        rs.getString(1), //
-                        rs.getString(2), //
-                        rs.getString(3), //
-                        rs.getString(4), //
-                        rs.getString(5), //
+                        "{} | {} | {} | {} | {} | {}",
+                        rs.getString(1),
+                        rs.getString(2),
+                        rs.getString(3),
+                        rs.getString(4),
+                        rs.getString(5),
                         rs.getString(6));
             }
 
@@ -71,10 +71,10 @@ public class QueryJDBC {
             LOG.info("host | ts | cpu_user | cpu_sys");
             while (rs.next()) {
                 LOG.info(
-                        "{} | {} | {} | {}", //
-                        rs.getString("host"), //
-                        rs.getTimestamp("ts"), //
-                        rs.getDouble("cpu_user"), //
+                        "{} | {} | {} | {}",
+                        rs.getString("host"),
+                        rs.getTimestamp("ts"),
+                        rs.getDouble("cpu_user"),
                         rs.getDouble("cpu_sys"));
             }
         }

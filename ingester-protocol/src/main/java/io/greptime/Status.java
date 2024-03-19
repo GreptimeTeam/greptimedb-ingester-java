@@ -58,14 +58,12 @@ public enum Status {
     // ====== Begin of catalog related status code =====
     // Table already exists.
     TableAlreadyExists(4000),
-    //
     TableNotFound(4001),
-    //
-    TableColumnNotFound(4002), //
-    TableColumnExists(4003), //
-    DatabaseNotFound(4004), //
-    RegionNotFound(4005), //
-    RegionAlreadyExists(4006), //
+    TableColumnNotFound(4002),
+    TableColumnExists(4003),
+    DatabaseNotFound(4004),
+    RegionNotFound(4005),
+    RegionAlreadyExists(4006),
     RegionReadonly(4007),
     // ====== End of catalog related status code =======
 

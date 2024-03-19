@@ -34,18 +34,18 @@ public class RpcServiceRegister {
         RpcFactoryProvider.getRpcFactory()
                 .register(
                         MethodDescriptor.of(
-                                String.format(METHOD_TEMPLATE, "Handle"), MethodDescriptor.MethodType.UNARY, 1), //
-                        Database.GreptimeRequest.class, //
-                        Database.GreptimeRequest.getDefaultInstance(), //
+                                String.format(METHOD_TEMPLATE, "Handle"), MethodDescriptor.MethodType.UNARY, 1),
+                        Database.GreptimeRequest.class,
+                        Database.GreptimeRequest.getDefaultInstance(),
                         Database.GreptimeResponse.getDefaultInstance());
 
         RpcFactoryProvider.getRpcFactory()
                 .register(
                         MethodDescriptor.of(
                                 String.format(METHOD_TEMPLATE, "HandleRequests"),
-                                MethodDescriptor.MethodType.CLIENT_STREAMING), //
-                        Database.GreptimeRequest.class, //
-                        Database.GreptimeRequest.getDefaultInstance(), //
+                                MethodDescriptor.MethodType.CLIENT_STREAMING),
+                        Database.GreptimeRequest.class,
+                        Database.GreptimeRequest.getDefaultInstance(),
                         Database.GreptimeResponse.getDefaultInstance());
     }
 }

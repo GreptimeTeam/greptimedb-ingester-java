@@ -39,17 +39,17 @@ public class LowLevelApiWriteQuickStart {
     public static void main(String[] args) throws ExecutionException, InterruptedException {
         GreptimeDB greptimeDB = TestConnector.connectToDefaultDB();
 
-        TableSchema cpuMetricSchema = TableSchema.newBuilder("cpu_metric") //
-                .addTag("host", DataType.String) //
-                .addTimestamp("ts", DataType.TimestampMillisecond) //
-                .addField("cpu_user", DataType.Float64) //
-                .addField("cpu_sys", DataType.Float64) //
+        TableSchema cpuMetricSchema = TableSchema.newBuilder("cpu_metric")
+                .addTag("host", DataType.String)
+                .addTimestamp("ts", DataType.TimestampMillisecond)
+                .addField("cpu_user", DataType.Float64)
+                .addField("cpu_sys", DataType.Float64)
                 .build();
 
-        TableSchema memMetricSchema = TableSchema.newBuilder("mem_metric") //
-                .addTag("host", DataType.String) //
-                .addTimestamp("ts", DataType.TimestampMillisecond) //
-                .addField("mem_usage", DataType.Float64) //
+        TableSchema memMetricSchema = TableSchema.newBuilder("mem_metric")
+                .addTag("host", DataType.String)
+                .addTimestamp("ts", DataType.TimestampMillisecond)
+                .addField("mem_usage", DataType.Float64)
                 .build();
 
         Table cpuMetric = Table.from(cpuMetricSchema);
@@ -77,9 +77,8 @@ public class LowLevelApiWriteQuickStart {
 
         Result<WriteOk, Err> result = future.get();
 
-        Result<Integer, String> simpleResult = result //
-                .map(WriteOk::getSuccess) //
-                .mapErr(err -> err.getError().getMessage());
+        Result<Integer, String> simpleResult =
+                result.map(WriteOk::getSuccess).mapErr(err -> err.getError().getMessage());
         if (simpleResult.isOk()) {
             LOG.info("Write success: {}", simpleResult.getOk());
         } else {

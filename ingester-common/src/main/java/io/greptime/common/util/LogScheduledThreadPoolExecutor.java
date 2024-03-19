@@ -40,10 +40,7 @@ public class LogScheduledThreadPoolExecutor extends ScheduledThreadPoolExecutor 
     private final String name;
 
     public LogScheduledThreadPoolExecutor(
-            int corePoolSize, //
-            ThreadFactory threadFactory, //
-            RejectedExecutionHandler handler, //
-            String name) {
+            int corePoolSize, ThreadFactory threadFactory, RejectedExecutionHandler handler, String name) {
         super(corePoolSize, threadFactory, handler);
         this.corePoolSize = corePoolSize;
         this.name = name;
@@ -83,12 +80,9 @@ public class LogScheduledThreadPoolExecutor extends ScheduledThreadPoolExecutor 
 
     @Override
     public String toString() {
-        return "ScheduledThreadPoolExecutor {" + //
-                "corePoolSize="
-                + corePoolSize + //
-                ", name='"
-                + name + '\'' + //
-                "} "
+        return "ScheduledThreadPoolExecutor {" + "corePoolSize="
+                + corePoolSize + ", name='"
+                + name + '\'' + "} "
                 + super.toString();
     }
 }

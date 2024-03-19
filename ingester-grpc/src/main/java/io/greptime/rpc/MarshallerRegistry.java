@@ -37,9 +37,7 @@ public interface MarshallerRegistry {
      * @param methodType grpc method type
      * @return method name
      */
-    default String getMethodName(
-            Class<? extends Message> reqCls, //
-            io.grpc.MethodDescriptor.MethodType methodType) {
+    default String getMethodName(Class<? extends Message> reqCls, io.grpc.MethodDescriptor.MethodType methodType) {
         return getMethodName(reqCls, supportedMethodType(methodType));
     }
 
@@ -65,9 +63,8 @@ public interface MarshallerRegistry {
      * @return method's limit percent
      */
     default Map<String, Double> getAllMethodsLimitPercent() {
-        return getAllMethodDescriptors() //
-                .stream() //
-                .filter(mth -> mth.getLimitPercent() > 0) //
+        return getAllMethodDescriptors().stream()
+                .filter(mth -> mth.getLimitPercent() > 0)
                 .collect(Collectors.toMap(MethodDescriptor::getName, MethodDescriptor::getLimitPercent));
     }
 
@@ -96,10 +93,7 @@ public interface MarshallerRegistry {
      * @param defaultRespIns default response instance
      */
     void registerMarshaller(
-            MethodDescriptor method, //
-            Class<? extends Message> reqCls, //
-            Message defaultReqIns, //
-            Message defaultRespIns);
+            MethodDescriptor method, Class<? extends Message> reqCls, Message defaultReqIns, Message defaultRespIns);
 
     default MethodDescriptor.MethodType supportedMethodType(io.grpc.MethodDescriptor.MethodType mt) {
         switch (mt) {
@@ -150,9 +144,9 @@ public interface MarshallerRegistry {
 
         @Override
         public void registerMarshaller(
-                MethodDescriptor method, //
-                Class<? extends Message> reqCls, //
-                Message defaultReqIns, //
+                MethodDescriptor method,
+                Class<? extends Message> reqCls,
+                Message defaultReqIns,
                 Message defaultRespIns) {
             this.methods
                     .computeIfAbsent(reqCls, cls -> new ConcurrentHashMap<>())

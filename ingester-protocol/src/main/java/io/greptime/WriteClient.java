@@ -258,23 +258,16 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
 
     @Override
     public void display(Printer out) {
-        out.println("--- WriteClient ---") //
-                .print("maxRetries=") //
-                .println(this.opts.getMaxRetries()) //
-                .print("asyncPool=") //
+        out.println("--- WriteClient ---")
+                .print("maxRetries=")
+                .println(this.opts.getMaxRetries())
+                .print("asyncPool=")
                 .println(this.asyncPool);
     }
 
     @Override
     public String toString() {
-        return "WriteClient{" + //
-                "opts="
-                + opts + //
-                ", routerClient="
-                + routerClient + //
-                ", asyncPool="
-                + asyncPool + //
-                '}';
+        return "WriteClient{" + "opts=" + opts + ", routerClient=" + routerClient + ", asyncPool=" + asyncPool + '}';
     }
 
     static final class InnerMetricHelper {
@@ -341,10 +334,8 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
         @Override
         public Result<WriteOk, Err> rejected(Collection<Table> in, RejectedState state) {
             String errMsg = String.format(
-                    "Write limited by client, acquirePermits=%d, maxPermits=%d, availablePermits=%d.", //
-                    state.acquirePermits(), //
-                    state.maxPermits(), //
-                    state.availablePermits());
+                    "Write limited by client, acquirePermits=%d, maxPermits=%d, availablePermits=%d.",
+                    state.acquirePermits(), state.maxPermits(), state.availablePermits());
             return Result.err(Err.writeErr(Result.FLOW_CONTROL, new LimitedException(errMsg), null));
         }
     }

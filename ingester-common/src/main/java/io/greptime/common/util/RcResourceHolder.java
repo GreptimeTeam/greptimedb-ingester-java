@@ -87,14 +87,7 @@ public class RcResourceHolder<T> {
 
         @Override
         public String toString() {
-            return "Instance{" + //
-                    "payload="
-                    + payload + //
-                    ", refCount="
-                    + refCount + //
-                    ", maxRefCount="
-                    + maxRefCount + //
-                    '}';
+            return "Instance{" + "payload=" + payload + ", refCount=" + refCount + ", maxRefCount=" + maxRefCount + '}';
         }
     }
 }

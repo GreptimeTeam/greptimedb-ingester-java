@@ -48,17 +48,17 @@ public class GreptimeOptionsTest {
         Router<Void, Endpoint> router = createTestRouter();
         TlsOptions tlsOptions = new TlsOptions();
 
-        GreptimeOptions opts = GreptimeOptions.newBuilder(endpoints, database) //
-                .asyncPool(asyncPool) //
-                .rpcOptions(rpcOptions) //
-                .tlsOptions(tlsOptions) //
-                .writeMaxRetries(writeMaxRetries) //
-                .maxInFlightWritePoints(maxInFlightWritePoints) //
-                .writeLimitedPolicy(limitedPolicy) //
-                .defaultStreamMaxWritePointsPerSecond(defaultStreamMaxWritePointsPerSecond) //
-                .routeTableRefreshPeriodSeconds(routeTableRefreshPeriodSeconds) //
-                .authInfo(authInfo) //
-                .router(router) //
+        GreptimeOptions opts = GreptimeOptions.newBuilder(endpoints, database)
+                .asyncPool(asyncPool)
+                .rpcOptions(rpcOptions)
+                .tlsOptions(tlsOptions)
+                .writeMaxRetries(writeMaxRetries)
+                .maxInFlightWritePoints(maxInFlightWritePoints)
+                .writeLimitedPolicy(limitedPolicy)
+                .defaultStreamMaxWritePointsPerSecond(defaultStreamMaxWritePointsPerSecond)
+                .routeTableRefreshPeriodSeconds(routeTableRefreshPeriodSeconds)
+                .authInfo(authInfo)
+                .router(router)
                 .build();
 
         Assert.assertEquals(database, opts.getDatabase());

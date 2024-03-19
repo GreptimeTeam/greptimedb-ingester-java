@@ -61,9 +61,7 @@ public class ClientRequestLimitInterceptor implements ClientInterceptor {
 
     @Override
     public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
-            MethodDescriptor<ReqT, RespT> method, //
-            CallOptions callOpts, //
-            Channel next) {
+            MethodDescriptor<ReqT, RespT> method, CallOptions callOpts, Channel next) {
         if (shouldNotUseLimiter(method.getType()) || !this.filter.apply(method.getFullMethodName())) {
             return next.newCall(method, callOpts);
         }

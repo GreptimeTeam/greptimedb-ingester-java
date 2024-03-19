@@ -181,16 +181,16 @@ public class GreptimeDB implements Write, WriteObject, Lifecycle<GreptimeOptions
 
     @Override
     public void display(Printer out) {
-        out.println("--- GreptimeDB Client ---") //
-                .print("id=") //
-                .println(this.id) //
-                .print("version=") //
-                .println(VERSION) //
-                .print("endpoints=") //
-                .println(this.opts.getEndpoints()) //
-                .print("database=") //
-                .println(this.opts.getDatabase()) //
-                .print("rpcOptions=") //
+        out.println("--- GreptimeDB Client ---")
+                .print("id=")
+                .println(this.id)
+                .print("version=")
+                .println(VERSION)
+                .print("endpoints=")
+                .println(this.opts.getEndpoints())
+                .print("database=")
+                .println(this.opts.getDatabase())
+                .print("rpcOptions=")
                 .println(this.opts.getRpcOptions());
 
         if (this.routerClient != null) {
@@ -208,24 +208,18 @@ public class GreptimeDB implements Write, WriteObject, Lifecycle<GreptimeOptions
 
     @Override
     public String toString() {
-        return "GreptimeDB{" + //
-                "id="
-                + id + //
-                "version="
-                + VERSION + //
-                ", opts="
-                + opts + //
-                ", routerClient="
-                + routerClient + //
-                ", writeClient="
-                + writeClient + //
-                '}';
+        return "GreptimeDB{" + "id="
+                + id + "version="
+                + VERSION + ", opts="
+                + opts + ", routerClient="
+                + routerClient + ", writeClient="
+                + writeClient + '}';
     }
 
     private Context attachCtx(Context ctx) {
         Context newCtx = ctx == null ? Context.newDefault() : ctx;
-        return newCtx.with(Keys.VERSION_KEY, VERSION) //
-                .with(Keys.NODE_KEY, NODE_ID) //
+        return newCtx.with(Keys.VERSION_KEY, VERSION)
+                .with(Keys.NODE_KEY, NODE_ID)
                 .with(Keys.ID_KEY, this.id);
     }
 

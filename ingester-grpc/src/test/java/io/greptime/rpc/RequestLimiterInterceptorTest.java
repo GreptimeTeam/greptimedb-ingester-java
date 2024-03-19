@@ -49,11 +49,11 @@ public class RequestLimiterInterceptorTest {
     private static final MethodDescriptor<String, String> METHOD_DESCRIPTOR;
 
     static {
-        METHOD_DESCRIPTOR = MethodDescriptor.<String, String>newBuilder() //
-                .setType(MethodDescriptor.MethodType.UNARY) //
-                .setFullMethodName("service/method") //
-                .setRequestMarshaller(StringMarshaller.INSTANCE) //
-                .setResponseMarshaller(StringMarshaller.INSTANCE) //
+        METHOD_DESCRIPTOR = MethodDescriptor.<String, String>newBuilder()
+                .setType(MethodDescriptor.MethodType.UNARY)
+                .setFullMethodName("service/method")
+                .setRequestMarshaller(StringMarshaller.INSTANCE)
+                .setResponseMarshaller(StringMarshaller.INSTANCE)
                 .build();
     }
 
@@ -81,13 +81,13 @@ public class RequestLimiterInterceptorTest {
 
         Limiter<RequestLimitCtx> limiter = RequestLimiterBuilder.newBuilder()
                 .named("limit_simulation")
-                .metricRegistry(new LimitMetricRegistry()) //
-                .blockOnLimit(true, 1000) //
+                .metricRegistry(new LimitMetricRegistry())
+                .blockOnLimit(true, 1000)
                 .build();
 
         Channel channel = NettyChannelBuilder.forTarget("localhost:" + server.getPort())
-                .usePlaintext() //
-                .intercept(new ClientRequestLimitInterceptor(limiter)) //
+                .usePlaintext()
+                .intercept(new ClientRequestLimitInterceptor(limiter))
                 .build();
 
         AtomicLong counter = new AtomicLong();

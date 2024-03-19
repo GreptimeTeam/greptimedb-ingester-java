@@ -155,9 +155,9 @@ public class TableSchema {
          * @return this builder
          */
         public Builder addColumn(
-                String name, //
-                SemanticType semanticType, //
-                DataType dataType, //
+                String name,
+                SemanticType semanticType,
+                DataType dataType,
                 DataType.DecimalTypeExtension decimalTypeExtension) {
             Ensures.ensureNonNull(name, "Null column name");
             Ensures.ensureNonNull(semanticType, "Null semantic type");
@@ -180,8 +180,8 @@ public class TableSchema {
                 this.dataTypeExtensions.add(Common.ColumnDataTypeExtension.getDefaultInstance());
             } else {
                 Ensures.ensure(dataType == DataType.Decimal128, "Only decimal type can have decimal type extension");
-                Common.ColumnDataTypeExtension ext = Common.ColumnDataTypeExtension.newBuilder() //
-                        .setDecimalType(decimalTypeExtension.into()) //
+                Common.ColumnDataTypeExtension ext = Common.ColumnDataTypeExtension.newBuilder()
+                        .setDecimalType(decimalTypeExtension.into())
                         .build();
                 this.dataTypeExtensions.add(ext);
             }
