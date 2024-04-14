@@ -16,7 +16,7 @@
 
 package io.greptime.models;
 
-import com.google.protobuf.ByteStringHelper;
+import com.google.protobuf.UnsafeByteOperations;
 import io.greptime.v1.Common;
 import io.greptime.v1.RowData;
 
@@ -71,7 +71,7 @@ public final class RowHelper {
                 valueBuilder.setBoolValue((boolean) value);
                 break;
             case BINARY:
-                valueBuilder.setBinaryValue(ByteStringHelper.wrap((byte[]) value));
+                valueBuilder.setBinaryValue(UnsafeByteOperations.unsafeWrap((byte[]) value));
                 break;
             case STRING:
                 valueBuilder.setStringValue((String) value);
