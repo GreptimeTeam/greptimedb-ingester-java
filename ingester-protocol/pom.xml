@@ -26,6 +26,10 @@
 
     <artifactId>ingester-protocol</artifactId>
 
+    <properties>
+        <greptimedb.proto.version>0.7.0</greptimedb.proto.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
@@ -39,7 +43,7 @@
         <dependency>
             <groupId>io.greptime</groupId>
             <artifactId>greptimedb-proto</artifactId>
-            <version>0.4.3</version>
+            <version>${greptimedb.proto.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
