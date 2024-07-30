@@ -28,6 +28,8 @@ import java.util.Set;
 @SuppressWarnings({"unchecked", "unused"})
 public class Context implements Copiable<Context> {
 
+    private static final String HINT_PREFIX = "x-greptime-hint:";
+
     private final Map<String, Object> ctx = new HashMap<>();
 
     /**
@@ -49,6 +51,17 @@ public class Context implements Copiable<Context> {
     }
 
     /**
+     * Creates a new {@link Context} with the specified hint key-value pair.
+     *
+     * @param key the hint key
+     * @param value the value
+     * @return the new {@link Context}
+     */
+    public static Context hint(String key, Object value) {
+        return Context.of(HINT_PREFIX + key, value);
+    }
+
+    /**
      * Adds the specified key-value pair to this {@link Context}.
      *
      * @param key the key
@@ -60,6 +73,17 @@ public class Context implements Copiable<Context> {
             this.ctx.put(key, value);
         }
         return this;
+    }
+
+    /**
+     * Adds the specified hint key-value pair to this {@link Context}.
+     *
+     * @param key the hint key
+     * @param value the value
+     * @return this {@link Context}
+     */
+    public Context withHint(String key, Object value) {
+        return with(HINT_PREFIX + key, value);
     }
 
     /**
