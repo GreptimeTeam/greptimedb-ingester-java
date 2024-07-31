@@ -28,7 +28,7 @@ import java.util.Set;
 @SuppressWarnings({"unchecked", "unused"})
 public class Context implements Copiable<Context> {
 
-    private static final String HINT_PREFIX = "x-greptime-hint:";
+    private static final String HINT_PREFIX = "x-greptime-hint-";
 
     private final Map<String, Object> ctx = new HashMap<>();
 
@@ -97,6 +97,17 @@ public class Context implements Copiable<Context> {
         synchronized (this) {
             return (T) this.ctx.get(key);
         }
+    }
+
+    /**
+     * Gets the value of the specified hint key.
+     *
+     * @param key the hint key
+     * @return the value
+     * @param <T> the type of the value
+     */
+    public <T> T getHint(String key) {
+        return get(HINT_PREFIX + key);
     }
 
     /**

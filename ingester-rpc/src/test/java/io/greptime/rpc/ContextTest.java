@@ -38,7 +38,8 @@ public class ContextTest {
     @Test
     public void hintShouldReturnContextWithHintEntryTest() {
         Context context = Context.hint("key", "value");
-        Assert.assertEquals("value", context.get("x-greptime-hint:key"));
+        Assert.assertEquals("value", context.getHint("key"));
+        Assert.assertEquals("value", context.get("x-greptime-hint-key"));
     }
 
     @Test
@@ -52,7 +53,8 @@ public class ContextTest {
     public void withHintShouldAddHintEntryToContextTest() {
         Context context = Context.newDefault();
         context.withHint("key", "value").with("key2", "value");
-        Assert.assertEquals("value", context.get("x-greptime-hint:key"));
+        Assert.assertEquals("value", context.get("x-greptime-hint-key"));
+        Assert.assertEquals("value", context.getHint("key"));
         Assert.assertEquals("value", context.get("key2"));
     }
 
