@@ -33,17 +33,10 @@ public interface Router<R, E> {
     CompletableFuture<E> routeFor(R request);
 
     /**
-     * Refresh the routing table from remote server.
-     * @return a future that will be completed when the refresh is done
-     */
-    CompletableFuture<Boolean> refresh();
-
-    /**
-     * Refresh the routing table.
-     * We need to get all the endpoints, and this method will overwrite all
-     * current endpoints.
+     * Refresh the routing table. By health checker or service discovery.
      *
-     * @param endpoints all new endpoints
+     * @param activities all activities endpoints
+     * @param inactivities all inactivities endpoints
      */
-    void onRefresh(List<E> endpoints);
+    void onRefresh(List<E> activities, List<E> inactivities);
 }

@@ -138,6 +138,20 @@ public final class Util {
         return CompletableFuture.completedFuture(value);
     }
 
+    /**
+     * Returns a new CompletableFuture that is already exceptionally with the given
+     * error.
+     *
+     * @param t the given exception
+     * @param <U> the type of the value
+     * @return the exceptionally {@link CompletableFuture}
+     */
+    public static <U> CompletableFuture<U> errorCf(Throwable t) {
+        CompletableFuture<U> err = new CompletableFuture<>();
+        err.completeExceptionally(t);
+        return err;
+    }
+
     public static <V> Observer<V> toObserver(CompletableFuture<V> future) {
         return new Observer<V>() {
 

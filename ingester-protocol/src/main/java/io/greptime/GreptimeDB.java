@@ -53,7 +53,7 @@ import org.slf4j.LoggerFactory;
 /**
  * The GreptimeDB client.
  */
-public class GreptimeDB implements Write, WriteObject, Lifecycle<GreptimeOptions>, HealthCheck, Display {
+public class GreptimeDB implements Write, WriteObject, Lifecycle<GreptimeOptions>, Health, Display {
 
     private static final Logger LOG = LoggerFactory.getLogger(GreptimeDB.class);
 
@@ -178,8 +178,8 @@ public class GreptimeDB implements Write, WriteObject, Lifecycle<GreptimeOptions
     }
 
     @Override
-    public CompletableFuture<Boolean> is_alive() {
-        return null;
+    public CompletableFuture<Map<Endpoint, Boolean>> checkHealth() {
+        return this.routerClient.checkHealth();
     }
 
     @Override

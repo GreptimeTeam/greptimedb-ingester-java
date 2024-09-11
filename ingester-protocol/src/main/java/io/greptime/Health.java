@@ -16,14 +16,14 @@
 
 package io.greptime;
 
+import io.greptime.common.Endpoint;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
  * Health check. It just like to probe the database and connections.
  * Users can use this status to perform fault tolerance and disaster recovery actions.
- *
- * @author jiachun.fjc
  */
-public interface HealthCheck {
-    CompletableFuture<Boolean> is_alive();
+public interface Health {
+    CompletableFuture<Map<Endpoint, Boolean>> checkHealth();
 }

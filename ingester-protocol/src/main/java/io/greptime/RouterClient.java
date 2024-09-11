@@ -25,12 +25,17 @@ import io.greptime.options.RouterOptions;
 import io.greptime.rpc.Context;
 import io.greptime.rpc.Observer;
 import io.greptime.rpc.RpcClient;
+import io.greptime.v1.Health.HealthCheckRequest;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +43,7 @@ import org.slf4j.LoggerFactory;
  * A route rpc client which cached the routing table information locally
  * and will auto refresh.
  */
-public class RouterClient implements Lifecycle<RouterOptions>, Display {
+public class RouterClient implements Lifecycle<RouterOptions>, Health, Display {
 
     private static final Logger LOG = LoggerFactory.getLogger(RouterClient.class);
 
@@ -57,19 +62,29 @@ public class RouterClient implements Lifecycle<RouterOptions>, Display {
         List<Endpoint> endpoints = Ensures.ensureNonNull(this.opts.getEndpoints(), "null `endpoints`");
 
         this.router = new DefaultRouter();
-        this.router.onRefresh(endpoints);
+        this.router.onRefresh(endpoints, null);
 
         long refreshPeriod = this.opts.getRefreshPeriodSeconds();
         if (refreshPeriod > 0) {
             this.refresher = REFRESHER_POOL.getObject();
             this.refresher.scheduleWithFixedDelay(
-                    () -> this.router.refresh().whenComplete((r, e) -> {
-                        if (e != null) {
-                            LOG.error("Router cache refresh failed.", e);
-                        } else {
-                            LOG.debug("Router cache refresh {}.", r ? "success" : "failed");
+                    () -> {
+                        try {
+                            Map<Endpoint, Boolean> health = this.checkHealth().get();
+                            List<Endpoint> activities = new ArrayList<>();
+                            List<Endpoint> inactivities = new ArrayList<>();
+                            for (Map.Entry<Endpoint, Boolean> entry : health.entrySet()) {
+                                if (entry.getValue()) {
+                                    activities.add(entry.getKey());
+                                } else {
+                                    inactivities.add(entry.getKey());
+                                }
+                            }
+                            this.router.onRefresh(activities, inactivities);
+                        } catch (Throwable t) {
+                            LOG.warn("Failed to check health", t);
                         }
-                    }),
+                    },
                     Util.randomInitialDelay(180),
                     refreshPeriod,
                     TimeUnit.SECONDS);
@@ -204,6 +219,22 @@ public class RouterClient implements Lifecycle<RouterOptions>, Display {
         return "RouterClient{" + "refresher=" + refresher + ", opts=" + opts + ", rpcClient=" + rpcClient + '}';
     }
 
+    @Override
+    public CompletableFuture<Map<Endpoint, Boolean>> checkHealth() {
+        Map<Endpoint, CompletableFuture<Boolean>> futures = this.opts.getEndpoints().stream()
+                .collect(Collectors.toMap(Function.identity(), endpoint -> {
+                    HealthCheckRequest req = HealthCheckRequest.newBuilder().build();
+                    return this.invoke(endpoint, req, Context.newDefault())
+                            .thenApply(resp -> true)
+                            .exceptionally(t -> false); // Handle failure and return false
+                }));
+
+        return CompletableFuture.allOf(futures.values().toArray(new CompletableFuture[0]))
+                .thenApply(
+                        ok -> futures.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue()
+                                .join())));
+    }
+
     /**
      * Request to a `frontend` server, which needs to return all members(frontend server),
      * or it can return only one domain address, it is also possible to return no address
@@ -219,25 +250,49 @@ public class RouterClient implements Lifecycle<RouterOptions>, Display {
      */
     private static class DefaultRouter implements Router<Void, Endpoint> {
 
-        private final AtomicReference<List<Endpoint>> endpointsRef = new AtomicReference<>();
+        private final AtomicReference<Endpoints> endpointsRef = new AtomicReference<>();
 
         @Override
         public CompletableFuture<Endpoint> routeFor(Void request) {
-            List<Endpoint> endpoints = this.endpointsRef.get();
+            Endpoints endpoints = this.endpointsRef.get();
+
+            if (endpoints == null) {
+                return Util.errorCf(new IllegalStateException("null `endpoints`"));
+            }
+
             ThreadLocalRandom random = ThreadLocalRandom.current();
-            int i = random.nextInt(0, endpoints.size());
-            return Util.completedCf(endpoints.get(i));
+
+            if (!endpoints.activities.isEmpty()) {
+                int i = random.nextInt(0, endpoints.activities.size());
+                return Util.completedCf(endpoints.activities.get(i));
+            }
+
+            if (!endpoints.inactivities.isEmpty()) {
+                int i = random.nextInt(0, endpoints.inactivities.size());
+                Endpoint goodLuck = endpoints.inactivities.get(i);
+                LOG.warn("No active endpoint, return an inactive one: {}", goodLuck);
+                return Util.completedCf(goodLuck);
+            }
+
+            return Util.errorCf(new IllegalStateException("empty `endpoints`"));
         }
 
         @Override
-        public CompletableFuture<Boolean> refresh() {
-            // always return true
-            return Util.completedCf(true);
+        public void onRefresh(List<Endpoint> activities, List<Endpoint> inactivities) {
+            if (inactivities != null && !inactivities.isEmpty()) {
+                LOG.warn("Some endpoints are inactive: {}", inactivities);
+            }
+            this.endpointsRef.set(new Endpoints(activities, inactivities));
         }
+    }
 
-        @Override
-        public void onRefresh(List<Endpoint> endpoints) {
-            this.endpointsRef.set(endpoints);
+    static class Endpoints {
+        final List<Endpoint> activities;
+        final List<Endpoint> inactivities;
+
+        Endpoints(List<Endpoint> activities, List<Endpoint> inactivities) {
+            this.activities = activities == null ? new ArrayList<>() : activities;
+            this.inactivities = inactivities == null ? new ArrayList<>() : inactivities;
         }
     }
 }

@@ -47,6 +47,7 @@ import io.greptime.rpc.Observer;
 import io.greptime.v1.Common;
 import io.greptime.v1.Database;
 import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -56,7 +57,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Default Write API impl.
  */
-public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
+public class WriteClient implements Write, Health, Lifecycle<WriteOptions>, Display {
 
     private static final Logger LOG = LoggerFactory.getLogger(WriteClient.class);
 
@@ -252,6 +253,11 @@ public class WriteClient implements Write, Lifecycle<WriteOptions>, Display {
                 rpcObserver.onCompleted();
             }
         };
+    }
+
+    @Override
+    public CompletableFuture<Map<Endpoint, Boolean>> checkHealth() {
+        return this.routerClient.checkHealth();
     }
 
     @Override
