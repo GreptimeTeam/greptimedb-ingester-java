@@ -35,6 +35,11 @@ import java.util.stream.Collectors;
  * GreptimeDB client options.
  */
 public class GreptimeOptions implements Copiable<GreptimeOptions> {
+    public static final int DEFAULT_WRITE_MAX_RETRIES = 1;
+    public static final int DEFAULT_MAX_IN_FLIGHT_WRITE_POINTS = 10 * 65536;
+    public static final int DEFAULT_DEFAULT_STREAM_MAX_WRITE_POINTS_PER_SECOND = 10 * 65536;
+    public static final long DEFAULT_ROUTE_TABLE_REFRESH_PERIOD_SECONDS = 10 * 60;
+
     private List<Endpoint> endpoints;
     private RpcOptions rpcOptions;
     private RouterOptions routerOptions;
@@ -145,14 +150,14 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         private RpcOptions rpcOptions = RpcOptions.newDefault();
         // GreptimeDB secure connection options
         private TlsOptions tlsOptions;
-        private int writeMaxRetries = 1;
+        private int writeMaxRetries = DEFAULT_WRITE_MAX_RETRIES;
         // Write flow limit: maximum number of data points in-flight.
-        private int maxInFlightWritePoints = 10 * 65536;
+        private int maxInFlightWritePoints = DEFAULT_MAX_IN_FLIGHT_WRITE_POINTS;
         private LimitedPolicy writeLimitedPolicy = LimitedPolicy.defaultWriteLimitedPolicy();
-        private int defaultStreamMaxWritePointsPerSecond = 10 * 65536;
+        private int defaultStreamMaxWritePointsPerSecond = DEFAULT_DEFAULT_STREAM_MAX_WRITE_POINTS_PER_SECOND;
         // Refresh frequency of route tables. The background refreshes all route tables periodically.
         // If the value is less than or equal to 0, the route tables will not be refreshed.
-        private long routeTableRefreshPeriodSeconds = -1;
+        private long routeTableRefreshPeriodSeconds = DEFAULT_ROUTE_TABLE_REFRESH_PERIOD_SECONDS;
         // Authentication information
         private AuthInfo authInfo;
         // The request router
