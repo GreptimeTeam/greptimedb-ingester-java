@@ -50,6 +50,8 @@ public class RouterClient implements Lifecycle<RouterOptions>, Health, Display {
 
     private static final SharedScheduledPool REFRESHER_POOL = Util.getSharedScheduledPool("route_cache_refresher", 1);
 
+    private final AtomicLong refreshSequencer = new AtomicLong(0);
+
     private ScheduledExecutorService refresher;
     private RouterOptions opts;
     private RpcClient rpcClient;
@@ -67,35 +69,36 @@ public class RouterClient implements Lifecycle<RouterOptions>, Health, Display {
 
         long refreshPeriod = this.opts.getRefreshPeriodSeconds();
         if (refreshPeriod > 0) {
-            AtomicLong order = new AtomicLong(0);
             this.refresher = REFRESHER_POOL.getObject();
             this.refresher.scheduleWithFixedDelay(
                     () -> {
-                        long thisOrder = order.incrementAndGet();
+                        long thisSequence = this.refreshSequencer.incrementAndGet();
                         checkHealth().whenComplete((r, t) -> {
                             if (t != null) {
                                 LOG.warn("Failed to check health", t);
                                 return;
                             }
 
-                            // I don't want to worry about the overflow issue with long anymore,
-                            // because assuming one increment per second, it will take 292 years
-                            // to overflow. I think that's sufficient.
-                            if (thisOrder < order.get()) {
-                                LOG.warn("Skip outdated health check result, order: {}", thisOrder);
-                                return;
-                            }
-
-                            List<Endpoint> activities = new ArrayList<>();
-                            List<Endpoint> inactivities = new ArrayList<>();
-                            for (Map.Entry<Endpoint, Boolean> entry : r.entrySet()) {
-                                if (entry.getValue()) {
-                                    activities.add(entry.getKey());
-                                } else {
-                                    inactivities.add(entry.getKey());
+                            synchronized (this.refreshSequencer) {
+                                // I don't want to worry about the overflow issue with long anymore,
+                                // because assuming one increment per second, it will take 292 years
+                                // to overflow. I think that's sufficient.
+                                if (thisSequence < this.refreshSequencer.get()) {
+                                    LOG.warn("Skip outdated health check result, sequence: {}", thisSequence);
+                                    return;
                                 }
+
+                                List<Endpoint> activities = new ArrayList<>();
+                                List<Endpoint> inactivities = new ArrayList<>();
+                                for (Map.Entry<Endpoint, Boolean> entry : r.entrySet()) {
+                                    if (entry.getValue()) {
+                                        activities.add(entry.getKey());
+                                    } else {
+                                        inactivities.add(entry.getKey());
+                                    }
+                                }
+                                this.router.onRefresh(activities, inactivities);
                             }
-                            this.router.onRefresh(activities, inactivities);
                         });
                     },
                     Util.randomInitialDelay(180),
