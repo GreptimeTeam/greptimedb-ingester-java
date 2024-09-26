@@ -79,7 +79,7 @@ public class RouterClient implements Lifecycle<RouterOptions>, Health, Display {
                                 return;
                             }
 
-                            synchronized (this) {
+                            synchronized (this.refreshSequencer) {
                                 // If the next task has started, we will ignore the current result.
                                 //
                                 // I don't want to worry about the overflow issue with long anymore,
