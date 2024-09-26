@@ -19,31 +19,46 @@ package io.greptime;
 import io.greptime.rpc.MethodDescriptor;
 import io.greptime.rpc.RpcFactoryProvider;
 import io.greptime.v1.Database;
+import io.greptime.v1.Health;
 
 /**
  * The RPC service register.
  */
 public class RpcServiceRegister {
 
-    private static final String METHOD_TEMPLATE = "greptime.v1.GreptimeDatabase/%s";
+    private static final String DATABASE_METHOD_TEMPLATE = "greptime.v1.GreptimeDatabase/%s";
+    private static final String HEALTH_METHOD_TEMPLATE = "greptime.v1.HealthCheck/%s";
 
     public static void registerAllService() {
-        // register protobuf serializer
+        // Handle
+        MethodDescriptor handleMethod = MethodDescriptor.of(
+                String.format(DATABASE_METHOD_TEMPLATE, "Handle"), MethodDescriptor.MethodType.UNARY, 1);
         RpcFactoryProvider.getRpcFactory()
                 .register(
-                        MethodDescriptor.of(
-                                String.format(METHOD_TEMPLATE, "Handle"), MethodDescriptor.MethodType.UNARY, 1),
+                        handleMethod,
                         Database.GreptimeRequest.class,
                         Database.GreptimeRequest.getDefaultInstance(),
                         Database.GreptimeResponse.getDefaultInstance());
 
+        // HandleRequests
+        MethodDescriptor handleRequestsMethod = MethodDescriptor.of(
+                String.format(DATABASE_METHOD_TEMPLATE, "HandleRequests"),
+                MethodDescriptor.MethodType.CLIENT_STREAMING);
         RpcFactoryProvider.getRpcFactory()
                 .register(
-                        MethodDescriptor.of(
-                                String.format(METHOD_TEMPLATE, "HandleRequests"),
-                                MethodDescriptor.MethodType.CLIENT_STREAMING),
+                        handleRequestsMethod,
                         Database.GreptimeRequest.class,
                         Database.GreptimeRequest.getDefaultInstance(),
                         Database.GreptimeResponse.getDefaultInstance());
+
+        // HealthCheck
+        MethodDescriptor healthCheckMethod = MethodDescriptor.of(
+                String.format(HEALTH_METHOD_TEMPLATE, "HealthCheck"), MethodDescriptor.MethodType.UNARY);
+        RpcFactoryProvider.getRpcFactory()
+                .register(
+                        healthCheckMethod,
+                        Health.HealthCheckRequest.class,
+                        Health.HealthCheckRequest.getDefaultInstance(),
+                        Health.HealthCheckResponse.getDefaultInstance());
     }
 }

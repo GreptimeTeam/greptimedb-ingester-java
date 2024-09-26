@@ -53,7 +53,7 @@ import org.slf4j.LoggerFactory;
 /**
  * The GreptimeDB client.
  */
-public class GreptimeDB implements Write, WriteObject, Lifecycle<GreptimeOptions>, Display {
+public class GreptimeDB implements Write, WriteObject, Lifecycle<GreptimeOptions>, Health, Display {
 
     private static final Logger LOG = LoggerFactory.getLogger(GreptimeDB.class);
 
@@ -175,6 +175,11 @@ public class GreptimeDB implements Write, WriteObject, Lifecycle<GreptimeOptions
     @Override
     public StreamWriter<Table, WriteOk> streamWriter(int maxPointsPerSecond, Context ctx) {
         return this.writeClient.streamWriter(maxPointsPerSecond, attachCtx(ctx));
+    }
+
+    @Override
+    public CompletableFuture<Map<Endpoint, Boolean>> checkHealth() {
+        return this.routerClient.checkHealth();
     }
 
     @Override

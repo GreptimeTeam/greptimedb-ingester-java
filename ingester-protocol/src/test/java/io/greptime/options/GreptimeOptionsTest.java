@@ -88,19 +88,13 @@ public class GreptimeOptionsTest {
 
     private Router<Void, Endpoint> createTestRouter() {
         return new Router<Void, Endpoint>() {
-
             @Override
             public CompletableFuture<Endpoint> routeFor(Void request) {
                 return null;
             }
 
             @Override
-            public CompletableFuture<Boolean> refresh() {
-                return null;
-            }
-
-            @Override
-            public void onRefresh(List<Endpoint> endpoints) {}
+            public void onRefresh(List<Endpoint> activities, List<Endpoint> inactivities) {}
         };
     }
 }
