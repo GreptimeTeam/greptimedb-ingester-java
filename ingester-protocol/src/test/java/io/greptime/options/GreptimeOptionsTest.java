@@ -44,6 +44,7 @@ public class GreptimeOptionsTest {
         LimitedPolicy limitedPolicy = new LimitedPolicy.DiscardPolicy();
         int defaultStreamMaxWritePointsPerSecond = 100000;
         long routeTableRefreshPeriodSeconds = 99;
+        long checkHealthTimeoutMs = 1000;
         AuthInfo authInfo = new AuthInfo("user", "password");
         Router<Void, Endpoint> router = createTestRouter();
         TlsOptions tlsOptions = new TlsOptions();
@@ -57,6 +58,7 @@ public class GreptimeOptionsTest {
                 .writeLimitedPolicy(limitedPolicy)
                 .defaultStreamMaxWritePointsPerSecond(defaultStreamMaxWritePointsPerSecond)
                 .routeTableRefreshPeriodSeconds(routeTableRefreshPeriodSeconds)
+                .checkHealthTimeoutMs(checkHealthTimeoutMs)
                 .authInfo(authInfo)
                 .router(router)
                 .build();
@@ -74,6 +76,7 @@ public class GreptimeOptionsTest {
                 routerOptions.getEndpoints().stream().map(Endpoint::toString).toArray());
         Assert.assertEquals(router, routerOptions.getRouter());
         Assert.assertEquals(routeTableRefreshPeriodSeconds, routerOptions.getRefreshPeriodSeconds());
+        Assert.assertEquals(checkHealthTimeoutMs, routerOptions.getCheckHealthTimeoutMs());
 
         WriteOptions writeOptions = opts.getWriteOptions();
         Assert.assertNotNull(writeOptions);
