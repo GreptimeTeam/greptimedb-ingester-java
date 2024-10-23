@@ -74,6 +74,11 @@ public class TestConnector {
                 // periodically. By default, the route tables will not be refreshed.
                 .routeTableRefreshPeriodSeconds(-1)
                 // Optional, the default value is fine.
+                // Timeout for health check, if the health check is not completed within the specified time,
+                // the health check will fail.
+                // The default is 1000
+                .checkHealthTimeoutMs(1000)
+                // Optional, the default value is fine.
                 // Sets the request router, The internal default implementation works well.
                 // You don't need to set it unless you have special requirements.
                 .router(null)

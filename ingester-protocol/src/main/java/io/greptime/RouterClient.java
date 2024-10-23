@@ -239,18 +239,24 @@ public class RouterClient implements Lifecycle<RouterOptions>, Health, Display {
 
     @Override
     public CompletableFuture<Map<Endpoint, Boolean>> checkHealth() {
-        Map<Endpoint, CompletableFuture<Boolean>> futures = this.opts.getEndpoints().stream()
-                .collect(Collectors.toMap(Function.identity(), endpoint -> {
-                    HealthCheckRequest req = HealthCheckRequest.newBuilder().build();
-                    return this.invoke(endpoint, req, Context.newDefault())
-                            .thenApply(resp -> true)
-                            .exceptionally(t -> false); // Handle failure and return false
-                }));
+        Map<Endpoint, CompletableFuture<Boolean>> futures =
+                this.opts.getEndpoints().stream().collect(Collectors.toMap(Function.identity(), this::doCheckHealth));
 
-        return CompletableFuture.allOf(futures.values().toArray(new CompletableFuture[0]))
-                .thenApply(
-                        ok -> futures.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue()
-                                .join())));
+        CompletableFuture<Void> all = CompletableFuture.allOf(futures.values().toArray(new CompletableFuture[0]));
+
+        return all.thenApply(ok -> futures.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().join())));
+    }
+
+    private CompletableFuture<Boolean> doCheckHealth(Endpoint endpoint) {
+        HealthCheckRequest req = HealthCheckRequest.newBuilder().build();
+        return invoke(endpoint, req, Context.newDefault(), this.opts.getCheckHealthTimeoutMs())
+                .thenApply(resp -> true)
+                .exceptionally(
+                        t -> { // Handle failure and return false
+                            LOG.warn("Failed to check health for endpoint: {}", endpoint, t);
+                            return false;
+                        });
     }
 
     /**

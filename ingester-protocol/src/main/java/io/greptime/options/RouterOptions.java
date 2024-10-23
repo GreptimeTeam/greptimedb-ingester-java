@@ -34,6 +34,8 @@ public class RouterOptions implements Copiable<RouterOptions> {
     // all route tables periodically. If the value is less than or
     // equal to 0, the route tables will not be refreshed.
     private long refreshPeriodSeconds = -1;
+    // Timeout for health check
+    private long checkHealthTimeoutMs;
     private Router<Void, Endpoint> router;
 
     public RpcClient getRpcClient() {
@@ -60,6 +62,14 @@ public class RouterOptions implements Copiable<RouterOptions> {
         this.refreshPeriodSeconds = refreshPeriodSeconds;
     }
 
+    public long getCheckHealthTimeoutMs() {
+        return checkHealthTimeoutMs;
+    }
+
+    public void setCheckHealthTimeoutMs(long checkHealthTimeoutMs) {
+        this.checkHealthTimeoutMs = checkHealthTimeoutMs;
+    }
+
     public Router<Void, Endpoint> getRouter() {
         return router;
     }
@@ -74,15 +84,18 @@ public class RouterOptions implements Copiable<RouterOptions> {
         opts.rpcClient = rpcClient;
         opts.endpoints = this.endpoints;
         opts.refreshPeriodSeconds = this.refreshPeriodSeconds;
+        opts.checkHealthTimeoutMs = this.checkHealthTimeoutMs;
         opts.router = this.router;
         return opts;
     }
 
     @Override
     public String toString() {
-        return "RouterOptions{" + "endpoints="
+        return "RouterOptions{" + "rpcClient="
+                + rpcClient + ", endpoints="
                 + endpoints + ", refreshPeriodSeconds="
-                + refreshPeriodSeconds + ", router="
+                + refreshPeriodSeconds + ", checkHealthTimeoutMs="
+                + checkHealthTimeoutMs + ", router="
                 + router + '}';
     }
 }

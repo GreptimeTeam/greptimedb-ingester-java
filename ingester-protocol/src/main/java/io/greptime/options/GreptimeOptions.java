@@ -39,6 +39,7 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
     public static final int DEFAULT_MAX_IN_FLIGHT_WRITE_POINTS = 10 * 65536;
     public static final int DEFAULT_DEFAULT_STREAM_MAX_WRITE_POINTS_PER_SECOND = 10 * 65536;
     public static final long DEFAULT_ROUTE_TABLE_REFRESH_PERIOD_SECONDS = 10 * 60;
+    public static final long DEFAULT_CHECK_HEALTH_TIMEOUT_MS = 1000;
 
     private List<Endpoint> endpoints;
     private RpcOptions rpcOptions;
@@ -158,6 +159,8 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         // Refresh frequency of route tables. The background refreshes all route tables periodically.
         // If the value is less than or equal to 0, the route tables will not be refreshed.
         private long routeTableRefreshPeriodSeconds = DEFAULT_ROUTE_TABLE_REFRESH_PERIOD_SECONDS;
+        // Timeout for health check
+        private long checkHealthTimeoutMs = DEFAULT_CHECK_HEALTH_TIMEOUT_MS;
         // Authentication information
         private AuthInfo authInfo;
         // The request router
@@ -274,6 +277,19 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         }
 
         /**
+         * Timeout for health check. The default is 1000ms.
+         * If the health check is not completed within the specified time, the health
+         * check will fail.
+         *
+         * @param checkHealthTimeoutMs timeout for health check
+         * @return this builder
+         */
+        public Builder checkHealthTimeoutMs(long checkHealthTimeoutMs) {
+            this.checkHealthTimeoutMs = checkHealthTimeoutMs;
+            return this;
+        }
+
+        /**
          * Sets authentication information. If the DB is not required to authenticate,
          * we can ignore this.
          *
@@ -321,6 +337,7 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
             routerOpts.setEndpoints(this.endpoints);
             routerOpts.setRouter(this.router);
             routerOpts.setRefreshPeriodSeconds(this.routeTableRefreshPeriodSeconds);
+            routerOpts.setCheckHealthTimeoutMs(this.checkHealthTimeoutMs);
             return routerOpts;
         }
 
