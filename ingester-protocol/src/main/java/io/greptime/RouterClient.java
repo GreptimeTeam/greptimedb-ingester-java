@@ -252,7 +252,11 @@ public class RouterClient implements Lifecycle<RouterOptions>, Health, Display {
         HealthCheckRequest req = HealthCheckRequest.newBuilder().build();
         return invoke(endpoint, req, Context.newDefault(), this.opts.getCheckHealthTimeoutMs())
                 .thenApply(resp -> true)
-                .exceptionally(t -> false); // Handle failure and return false
+                .exceptionally(
+                        t -> { // Handle failure and return false
+                            LOG.warn("Failed to check health for endpoint: {}", endpoint, t);
+                            return false;
+                        });
     }
 
     /**
