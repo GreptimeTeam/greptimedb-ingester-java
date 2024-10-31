@@ -96,14 +96,15 @@ public class WriteClientTest {
                 .addField("field24", DataType.IntervalDayTime)
                 .addField("field25", DataType.IntervalMonthDayNano)
                 .addField("field26", DataType.Decimal128)
+                .addField("field27", DataType.Json)
                 .build();
         Table table = Table.from(schema);
         long ts = System.currentTimeMillis();
 
         // spotless:off
-        Object[] row1 = new Object[]{"tag1", ts, 1, 2, 3, 4L, 5, 6, 7, 8L, 0.9F, 0.10D, true, new byte[0], 13L, 14L, 15L, 16L, 17L, 18L, 19L, 20L, 21L, 22L, 23, 24L, new IntervalMonthDayNano(1, 2, 3), BigDecimal.valueOf(123.456)};
-        Object[] row2 = new Object[]{"tag2", ts, 1, 2, 3, 4L, 5, 6, 7, 8L, 0.9F, 0.10D, true, new byte[0], 13L, 14L, 15L, 16L, 17L, 18L, 19L, 20L, 21L, 22L, 23, 24L, new IntervalMonthDayNano(4, 5, 6), BigDecimal.valueOf(123.456)};
-        Object[] row3 = new Object[]{"tag3", ts, 1, 2, 3, 4L, 5, 6, 7, 8L, 0.9F, 0.10D, true, new byte[0], 13L, 14L, 15L, 16L, 17L, 18L, 19L, 20L, 21L, 22L, 23, 24L, new IntervalMonthDayNano(7, 8, 9), BigDecimal.valueOf(123.456)};
+        Object[] row1 = new Object[]{"tag1", ts, 1, 2, 3, 4L, 5, 6, 7, 8L, 0.9F, 0.10D, true, new byte[0], 13L, 14L, 15L, 16L, 17L, 18L, 19L, 20L, 21L, 22L, 23, 24L, new IntervalMonthDayNano(1, 2, 3), BigDecimal.valueOf(123.456), "{\"a\": 1}"};
+        Object[] row2 = new Object[]{"tag2", ts, 1, 2, 3, 4L, 5, 6, 7, 8L, 0.9F, 0.10D, true, new byte[0], 13L, 14L, 15L, 16L, 17L, 18L, 19L, 20L, 21L, 22L, 23, 24L, new IntervalMonthDayNano(4, 5, 6), BigDecimal.valueOf(123.456), "{\"b\": 2}"};
+        Object[] row3 = new Object[]{"tag3", ts, 1, 2, 3, 4L, 5, 6, 7, 8L, 0.9F, 0.10D, true, new byte[0], 13L, 14L, 15L, 16L, 17L, 18L, 19L, 20L, 21L, 22L, 23, 24L, new IntervalMonthDayNano(7, 8, 9), BigDecimal.valueOf(123.456), "{\"c\": 3}"};
         // spotless:on
 
         table.addRow(row1);
