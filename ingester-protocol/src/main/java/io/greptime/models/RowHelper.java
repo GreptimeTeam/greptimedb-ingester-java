@@ -74,6 +74,7 @@ public final class RowHelper {
                 valueBuilder.setBinaryValue(UnsafeByteOperations.unsafeWrap((byte[]) value));
                 break;
             case STRING:
+            case JSON:
                 valueBuilder.setStringValue((String) value);
                 break;
             case DATE:

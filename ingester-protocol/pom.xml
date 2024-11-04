@@ -27,7 +27,7 @@
     <artifactId>ingester-protocol</artifactId>
 
     <properties>
-        <greptimedb.proto.version>0.7.0</greptimedb.proto.version>
+        <greptimedb.proto.version>0.9.0</greptimedb.proto.version>
     </properties>
 
     <dependencies>

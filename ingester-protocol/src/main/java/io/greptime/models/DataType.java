@@ -50,6 +50,7 @@ public enum DataType {
     IntervalDayTime,
     IntervalMonthDayNano,
     Decimal128,
+    Json,
     ;
 
     public boolean isTimestamp() {
@@ -115,6 +116,8 @@ public enum DataType {
                 return Common.ColumnDataType.INTERVAL_MONTH_DAY_NANO;
             case Decimal128:
                 return Common.ColumnDataType.DECIMAL128;
+            case Json:
+                return Common.ColumnDataType.JSON;
             default:
                 return null;
         }
