@@ -21,6 +21,8 @@ import java.util.Map;
 
 /**
  * Common status code for public API.
+ * <p>
+ * Always follow <a href="https://github.com/GreptimeTeam/greptimedb/blob/main/src/common/error/src/status_code.rs">GreptimeDB's STATUS CODE</a>
  */
 public enum Status {
     // ====== Begin of common status code ==============
@@ -37,8 +39,12 @@ public enum Status {
     Internal(1003, true),
     // Invalid arguments.
     InvalidArguments(1004),
-    // / The task is cancelled.
+    // The task is cancelled.
     Cancelled(1005),
+    // Illegal state.
+    IllegalState(1006),
+    // Caused by some error originated from external system.
+    External(1007),
     // ====== End of common status code ================
 
     // ====== Begin of SQL related status code =========
@@ -56,18 +62,35 @@ public enum Status {
     // ====== Begin of catalog related status code =====
     // Table already exists.
     TableAlreadyExists(4000),
+    // Table not found.
     TableNotFound(4001),
+    // Table column not found.
     TableColumnNotFound(4002),
+    // Table column already exists.
     TableColumnExists(4003),
+    // Database not found.
     DatabaseNotFound(4004),
+    // Region not found.
     RegionNotFound(4005),
+    // Region already exists.
     RegionAlreadyExists(4006),
+    // Region is read-only in current state.
     RegionReadonly(4007),
+    // Region is not in a proper state to handle specific request.
+    RegionNotReady(4008),
+    // Region is temporarily in busy state.
+    RegionBusy(4009),
+    // Table is temporarily unable to handle the request.
+    TableUnavailable(4010),
+    // Database already exists.
+    DatabaseAlreadyExists(4011),
     // ====== End of catalog related status code =======
 
     // ====== Begin of storage related status code =====
     // Storage is temporarily unable to handle the request
     StorageUnavailable(5000, true),
+    // Request is outdated, e.g., version mismatch.
+    RequestOutdated(5001),
     // ====== End of storage related status code =======
 
     // ====== Begin of server related status code =====
@@ -91,9 +114,8 @@ public enum Status {
     // Illegal request to connect catalog-schema
     AccessDenied(7005),
     // User is not authorized to perform the operation
-    PermissionDenied(7006),
-// ====== End of auth related status code =====
-;
+    PermissionDenied(7006);
+    // ====== End of auth related status code =====
 
     private static final Map<Integer, Status> DICT = new HashMap<>();
 
