@@ -16,6 +16,7 @@
 
 package io.greptime.models;
 
+import com.google.gson.Gson;
 import io.greptime.common.util.Ensures;
 import io.greptime.v1.Common;
 import java.math.BigDecimal;
@@ -103,5 +104,15 @@ public class ValueUtil {
         long low64Bits = unscaledValue.longValue();
 
         return Common.Decimal128.newBuilder().setHi(high64Bits).setLo(low64Bits).build();
+    }
+
+    // Gson's instances are Thread-safe we can reuse them freely across multiple threads.
+    private static final Gson GSON = new Gson();
+
+    static String getJsonString(Object value) {
+        if (value instanceof String) {
+            return (String) value;
+        }
+        return GSON.toJson(value);
     }
 }

@@ -74,7 +74,6 @@ public final class RowHelper {
                 valueBuilder.setBinaryValue(UnsafeByteOperations.unsafeWrap((byte[]) value));
                 break;
             case STRING:
-            case JSON:
                 valueBuilder.setStringValue((String) value);
                 break;
             case DATE:
@@ -118,6 +117,9 @@ public final class RowHelper {
                 break;
             case DECIMAL128:
                 valueBuilder.setDecimal128Value(ValueUtil.getDecimal128Value(dataTypeExtension, value));
+                break;
+            case JSON:
+                valueBuilder.setStringValue(ValueUtil.getJsonString(value));
                 break;
             default:
                 throw new IllegalArgumentException(String.format("Unsupported `data_type`: %s", dataType));
