@@ -23,6 +23,8 @@ import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 import java.util.TimeZone;
 import org.junit.Assert;
@@ -107,6 +109,37 @@ public class ValueUtilTest {
             BigDecimal value2 = TestUtil.getDecimal(result, scale);
 
             Assert.assertEquals(value, value2);
+        }
+    }
+
+    @Test
+    public void testGetJsonStringShouldReturnJsonStringForObject() {
+        String jsonString = ValueUtil.getJsonString(new TestObject("test", 123));
+        Assert.assertEquals("{\"name\":\"test\",\"value\":123}", jsonString);
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("name", "test");
+        map.put("value", 123);
+        String jsonString2 = ValueUtil.getJsonString(map);
+        Assert.assertEquals("{\"name\":\"test\",\"value\":123}", jsonString2);
+    }
+
+    @Test
+    public void testGetJsonStringShouldReturnStringForString() {
+        String jsonString = ValueUtil.getJsonString("test");
+        Assert.assertEquals("test", jsonString);
+
+        String jsonString2 = ValueUtil.getJsonString("{\"name\":\"test\",\"value\":123}");
+        Assert.assertEquals("{\"name\":\"test\",\"value\":123}", jsonString2);
+    }
+
+    private static class TestObject {
+        String name;
+        int value;
+
+        public TestObject(String name, int value) {
+            this.name = name;
+            this.value = value;
         }
     }
 }
