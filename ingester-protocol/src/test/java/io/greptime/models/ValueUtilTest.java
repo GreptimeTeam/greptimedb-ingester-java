@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -58,33 +59,59 @@ public class ValueUtilTest {
     }
 
     @Test
-    public void testGetDateTimeValue() {
+    public void testGetTimestampValue() {
         Calendar cal = Calendar.getInstance();
         TimeZone gmtTimeZone = TimeZone.getTimeZone("GMT");
         cal.setTimeZone(gmtTimeZone);
         cal.set(1970, Calendar.JANUARY, 2, 0, 0, 0);
         cal.set(Calendar.MILLISECOND, 111);
-        Assert.assertEquals(86400111, ValueUtil.getDateTimeValue(cal.getTime()));
-        Assert.assertEquals(86400111, ValueUtil.getDateTimeValue(cal.getTime().toInstant()));
-        Assert.assertEquals(86400000, ValueUtil.getDateTimeValue(Instant.ofEpochSecond(86400)));
-        Assert.assertEquals(86400, ValueUtil.getDateTimeValue(86400));
+        Assert.assertEquals(86400111, ValueUtil.getTimestamp(cal.getTime(), TimeUnit.MILLISECONDS));
+        Assert.assertEquals(86400111, ValueUtil.getTimestamp(cal.getTime().toInstant(), TimeUnit.MILLISECONDS));
+        Assert.assertEquals(86400000, ValueUtil.getTimestamp(Instant.ofEpochSecond(86400), TimeUnit.MILLISECONDS));
+        Assert.assertEquals(86400, ValueUtil.getTimestamp(86400, TimeUnit.SECONDS));
     }
 
     @Test
-    public void testGetIntervalMonthDayNanoValue() {
-        Common.IntervalMonthDayNano result = ValueUtil.getIntervalMonthDayNanoValue(new IntervalMonthDayNano(1, 2, 3));
-        Assert.assertEquals(1, result.getMonths());
-        Assert.assertEquals(2, result.getDays());
-        Assert.assertEquals(3, result.getNanoseconds());
+    public void testInstantToMicros() {
+        // Test positive instant
+        Instant instant = Instant.parse("2024-03-20T10:15:30.123456789Z");
+        long expectedMicros = instant.getEpochSecond() * 1_000_000 + instant.getNano() / 1_000;
+        Assert.assertEquals(expectedMicros, ValueUtil.instantToMicros(instant));
 
-        // test invalid type
-        try {
-            ValueUtil.getIntervalMonthDayNanoValue(1);
-            Assert.fail();
-        } catch (IllegalArgumentException e) {
-            Assert.assertEquals(
-                    "Expected type: `IntervalMonthDayNano`, actual: class java.lang.Integer", e.getMessage());
-        }
+        // Test negative instant
+        Instant negativeInstant = Instant.parse("1969-12-31T23:59:59.999999999Z");
+        Assert.assertEquals(-1, ValueUtil.instantToMicros(negativeInstant));
+    }
+
+    @Test
+    public void testInstantToNanos() {
+        // Test positive instant
+        Instant instant = Instant.parse("2024-03-20T10:15:30.123456789Z");
+        long expectedNanos = instant.getEpochSecond() * 1_000_000_000 + instant.getNano();
+        Assert.assertEquals(expectedNanos, ValueUtil.instantToNanos(instant));
+
+        // Test negative instant
+        Instant negativeInstant = Instant.parse("1969-12-31T23:59:59.999999999Z");
+        Assert.assertEquals(-1, ValueUtil.instantToNanos(negativeInstant));
+    }
+
+    @Test
+    public void testGetTimestampFromInstant() {
+        // Create a specific timestamp for testing
+        Instant instant = Instant.parse("2024-03-20T10:15:30.123456789Z");
+        // Calculate expected values from the instant
+        long expectedSeconds = instant.getEpochSecond();
+        long expectedMillis = instant.toEpochMilli();
+        long expectedMicros = instant.getEpochSecond() * 1_000_000 + instant.getNano() / 1_000;
+        long expectedNanos = instant.getEpochSecond() * 1_000_000_000 + instant.getNano();
+        // Test seconds
+        Assert.assertEquals(expectedSeconds, ValueUtil.getTimestampFromInstant(instant, TimeUnit.SECONDS));
+        // Test milliseconds
+        Assert.assertEquals(expectedMillis, ValueUtil.getTimestampFromInstant(instant, TimeUnit.MILLISECONDS));
+        // Test microseconds
+        Assert.assertEquals(expectedMicros, ValueUtil.getTimestampFromInstant(instant, TimeUnit.MICROSECONDS));
+        // Test nanoseconds
+        Assert.assertEquals(expectedNanos, ValueUtil.getTimestampFromInstant(instant, TimeUnit.NANOSECONDS));
     }
 
     @Test

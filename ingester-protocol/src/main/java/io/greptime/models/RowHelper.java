@@ -19,6 +19,7 @@ package io.greptime.models;
 import com.google.protobuf.UnsafeByteOperations;
 import io.greptime.v1.Common;
 import io.greptime.v1.RowData;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A utility that handles some processing of row based data.
@@ -79,20 +80,17 @@ public final class RowHelper {
             case DATE:
                 valueBuilder.setDateValue(ValueUtil.getDateValue(value));
                 break;
-            case DATETIME:
-                valueBuilder.setDatetimeValue(ValueUtil.getDateTimeValue(value));
-                break;
             case TIMESTAMP_SECOND:
-                valueBuilder.setTimestampSecondValue(ValueUtil.getLongValue(value));
+                valueBuilder.setTimestampSecondValue(ValueUtil.getTimestamp(value, TimeUnit.SECONDS));
                 break;
             case TIMESTAMP_MILLISECOND:
-                valueBuilder.setTimestampMillisecondValue(ValueUtil.getLongValue(value));
+                valueBuilder.setTimestampMillisecondValue(ValueUtil.getTimestamp(value, TimeUnit.MILLISECONDS));
                 break;
             case TIMESTAMP_MICROSECOND:
-                valueBuilder.setTimestampMicrosecondValue(ValueUtil.getLongValue(value));
+                valueBuilder.setTimestampMicrosecondValue(ValueUtil.getTimestamp(value, TimeUnit.MICROSECONDS));
                 break;
             case TIMESTAMP_NANOSECOND:
-                valueBuilder.setTimestampNanosecondValue(ValueUtil.getLongValue(value));
+                valueBuilder.setTimestampNanosecondValue(ValueUtil.getTimestamp(value, TimeUnit.NANOSECONDS));
                 break;
             case TIME_SECOND:
                 valueBuilder.setTimeSecondValue(ValueUtil.getLongValue(value));
@@ -105,15 +103,6 @@ public final class RowHelper {
                 break;
             case TIME_NANOSECOND:
                 valueBuilder.setTimeNanosecondValue(ValueUtil.getLongValue(value));
-                break;
-            case INTERVAL_YEAR_MONTH:
-                valueBuilder.setIntervalYearMonthValue((int) value);
-                break;
-            case INTERVAL_DAY_TIME:
-                valueBuilder.setIntervalDayTimeValue(ValueUtil.getLongValue(value));
-                break;
-            case INTERVAL_MONTH_DAY_NANO:
-                valueBuilder.setIntervalMonthDayNanoValue(ValueUtil.getIntervalMonthDayNanoValue(value));
                 break;
             case DECIMAL128:
                 valueBuilder.setDecimal128Value(ValueUtil.getDecimal128Value(dataTypeExtension, value));
