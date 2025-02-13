@@ -25,6 +25,7 @@ import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -69,25 +70,60 @@ public class ValueUtil {
         return (int) getLongValue(value);
     }
 
-    static long getDateTimeValue(Object value) {
+    static long getTimestamp(Object value, TimeUnit timeUnit) {
         if (value instanceof Instant) {
-            return ((Instant) value).toEpochMilli();
+            return getTimestampFromInstant((Instant) value, timeUnit);
         }
 
         if (value instanceof Date) {
             Instant instant = ((Date) value).toInstant();
-            return instant.toEpochMilli();
+            return getTimestampFromInstant(instant, timeUnit);
         }
 
         return getLongValue(value);
     }
 
-    static Common.IntervalMonthDayNano getIntervalMonthDayNanoValue(Object value) {
-        Ensures.ensure(
-                value instanceof IntervalMonthDayNano,
-                "Expected type: `IntervalMonthDayNano`, actual: %s",
-                value.getClass());
-        return ((IntervalMonthDayNano) value).into();
+    static long getTimestampFromInstant(Instant value, TimeUnit timeUnit) {
+        Ensures.ensureNonNull(value, "Instant value cannot be null");
+        Ensures.ensureNonNull(timeUnit, "TimeUnit cannot be null");
+        switch (timeUnit) {
+            case SECONDS:
+                return value.getEpochSecond();
+            case MILLISECONDS:
+                return value.toEpochMilli();
+            case MICROSECONDS:
+                return instantToMicros(value);
+            case NANOSECONDS:
+                return instantToNanos(value);
+            default:
+                throw new IllegalArgumentException("Unsupported time unit: " + timeUnit);
+        }
+    }
+
+    static long instantToMicros(Instant instant) {
+        long seconds = instant.getEpochSecond();
+        int nanos = instant.getNano();
+        if (seconds < 0 && nanos > 0) {
+            long micros = Math.multiplyExact(seconds + 1, 1000_000);
+            long adjustment = nanos / 1000 - 1000_000;
+            return Math.addExact(micros, adjustment);
+        } else {
+            long micros = Math.multiplyExact(seconds, 1000_000);
+            return Math.addExact(micros, nanos / 1000);
+        }
+    }
+
+    static long instantToNanos(Instant instant) {
+        long seconds = instant.getEpochSecond();
+        int nanos = instant.getNano();
+        if (seconds < 0 && nanos > 0) {
+            long nanosValue = Math.multiplyExact(seconds + 1, 1_000_000_000);
+            long adjustment = nanos - 1_000_000_000;
+            return Math.addExact(nanosValue, adjustment);
+        } else {
+            long nanosValue = Math.multiplyExact(seconds, 1_000_000_000);
+            return Math.addExact(nanosValue, nanos);
+        }
     }
 
     static Common.Decimal128 getDecimal128Value(Common.ColumnDataTypeExtension dataTypeExtension, Object value) {

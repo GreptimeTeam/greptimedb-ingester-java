@@ -37,6 +37,7 @@ public enum DataType {
     Binary,
     String,
     Date,
+    @Deprecated
     DateTime,
     TimestampSecond,
     TimestampMillisecond,
@@ -46,9 +47,6 @@ public enum DataType {
     TimeMilliSecond,
     TimeMicroSecond,
     TimeNanoSecond,
-    IntervalYearMonth,
-    IntervalDayTime,
-    IntervalMonthDayNano,
     Decimal128,
     Json,
     ;
@@ -90,12 +88,13 @@ public enum DataType {
                 return Common.ColumnDataType.STRING;
             case Date:
                 return Common.ColumnDataType.DATE;
-            case DateTime:
-                return Common.ColumnDataType.DATETIME;
             case TimestampSecond:
                 return Common.ColumnDataType.TIMESTAMP_SECOND;
             case TimestampMillisecond:
                 return Common.ColumnDataType.TIMESTAMP_MILLISECOND;
+            case DateTime:
+                // DateTime is an alias of TIMESTAMP_MICROSECOND
+                // https://github.com/GreptimeTeam/greptimedb/issues/5489
             case TimestampMicrosecond:
                 return Common.ColumnDataType.TIMESTAMP_MICROSECOND;
             case TimestampNanosecond:
@@ -108,12 +107,6 @@ public enum DataType {
                 return Common.ColumnDataType.TIME_MICROSECOND;
             case TimeNanoSecond:
                 return Common.ColumnDataType.TIME_NANOSECOND;
-            case IntervalYearMonth:
-                return Common.ColumnDataType.INTERVAL_YEAR_MONTH;
-            case IntervalDayTime:
-                return Common.ColumnDataType.INTERVAL_DAY_TIME;
-            case IntervalMonthDayNano:
-                return Common.ColumnDataType.INTERVAL_MONTH_DAY_NANO;
             case Decimal128:
                 return Common.ColumnDataType.DECIMAL128;
             case Json:
