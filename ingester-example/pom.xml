@@ -21,7 +21,7 @@
     <parent>
         <groupId>io.greptime</groupId>
         <artifactId>greptimedb-ingester</artifactId>
-        <version>0.11.0</version>
+        <version>0.12.0</version>
     </parent>
 
     <artifactId>ingester-example</artifactId>
