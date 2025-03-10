@@ -25,10 +25,10 @@ import java.util.Set;
  * Invoke context, it can pass some additional information to the
  * database server in the form of KV.
  */
-@SuppressWarnings({"unchecked", "unused"})
+@SuppressWarnings({"unchecked"})
 public class Context implements Copiable<Context> {
 
-    private static final String HINT_PREFIX = "x-greptime-hint-";
+    private static final String HINTS_KEY = "x-greptime-hints";
 
     private final Map<String, Object> ctx = new HashMap<>();
 
@@ -51,17 +51,6 @@ public class Context implements Copiable<Context> {
     }
 
     /**
-     * Creates a new {@link Context} with the specified hint key-value pair.
-     *
-     * @param key the hint key
-     * @param value the value
-     * @return the new {@link Context}
-     */
-    public static Context hint(String key, Object value) {
-        return Context.of(HINT_PREFIX + key, value);
-    }
-
-    /**
      * Adds the specified key-value pair to this {@link Context}.
      *
      * @param key the key
@@ -76,14 +65,35 @@ public class Context implements Copiable<Context> {
     }
 
     /**
-     * Adds the specified hint key-value pair to this {@link Context}.
+     * Adds a hint to the context.
      *
-     * @param key the hint key
+     * @param key the key
      * @param value the value
      * @return this {@link Context}
      */
-    public Context withHint(String key, Object value) {
-        return with(HINT_PREFIX + key, value);
+    public Context withHint(String key, String value) {
+        synchronized (this) {
+            this.ctx.compute(HINTS_KEY, (k, v) -> {
+                if (v == null) {
+                    v = String.format("%s=%s", key, value);
+                } else {
+                    v = v + "," + String.format("%s=%s", key, value);
+                }
+                return v;
+            });
+        }
+        return this;
+    }
+
+    /**
+     * Gets the hints from the context.
+     *
+     * @return the hints
+     */
+    public String getHints() {
+        synchronized (this) {
+            return (String) this.ctx.get(HINTS_KEY);
+        }
     }
 
     /**
@@ -97,17 +107,6 @@ public class Context implements Copiable<Context> {
         synchronized (this) {
             return (T) this.ctx.get(key);
         }
-    }
-
-    /**
-     * Gets the value of the specified hint key.
-     *
-     * @param key the hint key
-     * @return the value
-     * @param <T> the type of the value
-     */
-    public <T> T getHint(String key) {
-        return get(HINT_PREFIX + key);
     }
 
     /**
