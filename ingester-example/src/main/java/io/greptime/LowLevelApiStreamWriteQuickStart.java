@@ -20,6 +20,8 @@ import io.greptime.models.DataType;
 import io.greptime.models.Table;
 import io.greptime.models.TableSchema;
 import io.greptime.models.WriteOk;
+import io.greptime.rpc.Compression;
+import io.greptime.rpc.Context;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import org.slf4j.Logger;
@@ -66,7 +68,8 @@ public class LowLevelApiStreamWriteQuickStart {
             memMetric.addRow(host, ts, memUsage);
         }
 
-        StreamWriter<Table, WriteOk> writer = greptimeDB.streamWriter();
+        Context ctx = Context.newDefault().withCompression(Compression.Zstd);
+        StreamWriter<Table, WriteOk> writer = greptimeDB.streamWriter(100000, ctx);
 
         // write data into stream
         writer.write(cpuMetric);

@@ -46,6 +46,7 @@ import io.greptime.rpc.limit.VegasLimit;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
+import io.grpc.CompressorRegistry;
 import io.grpc.ConnectivityState;
 import io.grpc.ManagedChannel;
 import io.grpc.MethodDescriptor;
@@ -111,6 +112,11 @@ public class GrpcClient implements RpcClient {
     private final AtomicBoolean started = new AtomicBoolean(false);
     private final List<ConnectionObserver> connectionObservers = new CopyOnWriteArrayList<>();
     private final MarshallerRegistry marshallerRegistry;
+    private final CompressorRegistry compressorRegistry = CompressorRegistry.getDefaultInstance();
+
+    {
+        compressorRegistry.register(new ZstdCodec());
+    }
 
     private RpcOptions opts;
     private Executor asyncPool;
@@ -173,7 +179,7 @@ public class GrpcClient implements RpcClient {
 
         MethodDescriptor<Message, Message> method = getCallMethod(request, MethodDescriptor.MethodType.UNARY);
         long timeout = calcTimeout(timeoutMs);
-        CallOptions callOpts = CallOptions.DEFAULT
+        CallOptions callOpts = defaultCallOptions(ctx)
                 .withDeadlineAfter(timeout, TimeUnit.MILLISECONDS)
                 .withExecutor(getObserverExecutor(observer));
 
@@ -236,7 +242,7 @@ public class GrpcClient implements RpcClient {
 
         MethodDescriptor<Message, Message> method =
                 getCallMethod(request, MethodDescriptor.MethodType.SERVER_STREAMING);
-        CallOptions callOpts = CallOptions.DEFAULT.withExecutor(getObserverExecutor(observer));
+        CallOptions callOpts = defaultCallOptions(ctx).withExecutor(getObserverExecutor(observer));
 
         String methodName = method.getFullMethodName();
         String address = endpoint.toString();
@@ -283,7 +289,7 @@ public class GrpcClient implements RpcClient {
 
         MethodDescriptor<Message, Message> method =
                 getCallMethod(defaultReqIns, MethodDescriptor.MethodType.CLIENT_STREAMING);
-        CallOptions callOpts = CallOptions.DEFAULT.withExecutor(getObserverExecutor(respObserver));
+        CallOptions callOpts = defaultCallOptions(ctx).withExecutor(getObserverExecutor(respObserver));
 
         String methodName = method.getFullMethodName();
         String address = endpoint.toString();
@@ -577,6 +583,7 @@ public class GrpcClient implements RpcClient {
                 .keepAliveTime(this.opts.getKeepAliveTimeSeconds(), TimeUnit.SECONDS)
                 .keepAliveTimeout(this.opts.getKeepAliveTimeoutSeconds(), TimeUnit.SECONDS)
                 .keepAliveWithoutCalls(this.opts.isKeepAliveWithoutCalls())
+                .compressorRegistry(this.compressorRegistry)
                 .withOption(ChannelOption.SO_REUSEADDR, true)
                 .withOption(ChannelOption.TCP_NODELAY, true)
                 .build();
@@ -635,6 +642,15 @@ public class GrpcClient implements RpcClient {
 
     private void notifyShutdown(Endpoint endpoint) {
         this.connectionObservers.forEach(o -> o.onShutdown(endpoint));
+    }
+
+    private CallOptions defaultCallOptions(Context ctx) {
+        CallOptions callOpts = CallOptions.DEFAULT;
+        Compression compression = ctx.getCompression();
+        if (compression != Compression.None) {
+            callOpts = callOpts.withCompression(compression.getName());
+        }
+        return callOpts;
     }
 
     @Override
