@@ -29,6 +29,7 @@
     <properties>
         <io.grpc.version>1.56.1</io.grpc.version>
         <limits.version>0.3.6</limits.version>
+        <zstd-jni.version>1.5.7-1</zstd-jni.version>
     </properties>
 
     <dependencies>
@@ -80,6 +81,12 @@
                     <artifactId>slf4j-api</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.luben</groupId>
+            <artifactId>zstd-jni</artifactId>
+            <version>${zstd-jni.version}</version>
         </dependency>
 
         <!-- test -->

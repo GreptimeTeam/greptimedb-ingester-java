@@ -32,6 +32,8 @@ public class Context implements Copiable<Context> {
 
     private final Map<String, Object> ctx = new HashMap<>();
 
+    private Compression compression = Compression.None;
+
     /**
      * Creates a new {@link Context} with empty values.
      */
@@ -48,6 +50,30 @@ public class Context implements Copiable<Context> {
      */
     public static Context of(String key, Object value) {
         return new Context().with(key, value);
+    }
+
+    /**
+     * Sets the compression for the context.
+     *
+     * @param compression the compression type
+     * @return this {@link Context}
+     */
+    public Context withCompression(Compression compression) {
+        synchronized (this) {
+            this.compression = compression;
+        }
+        return this;
+    }
+
+    /**
+     * Gets the compression for the context.
+     *
+     * @return the compression type
+     */
+    public Compression getCompression() {
+        synchronized (this) {
+            return this.compression;
+        }
     }
 
     /**
