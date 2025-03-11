@@ -71,7 +71,9 @@ public class Context implements Copiable<Context> {
      * @return the compression type
      */
     public Compression getCompression() {
-        return this.compression;
+        synchronized (this) {
+            return this.compression;
+        }
     }
 
     /**
