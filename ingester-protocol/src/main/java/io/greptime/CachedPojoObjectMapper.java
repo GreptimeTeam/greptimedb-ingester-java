@@ -50,9 +50,8 @@ public class CachedPojoObjectMapper implements PojoObjectMapper {
         this.classFieldCache = CacheBuilder.newBuilder()
                 .maximumSize(maxCachedPOJOs)
                 .build(new CacheLoader<Class<?>, Map<String, Field>>() {
-                    @SuppressWarnings("NullableProblems")
                     @Override
-                    public Map<String, Field> load(Class<?> key) {
+                    public Map<String, Field> load(@SuppressWarnings("null") Class<?> key) {
                         return createMetricClass(key);
                     }
                 });

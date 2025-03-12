@@ -161,7 +161,10 @@ public class ValueUtilTest {
     }
 
     private static class TestObject {
+        @SuppressWarnings("unused")
         String name;
+
+        @SuppressWarnings("unused")
         int value;
 
         public TestObject(String name, int value) {

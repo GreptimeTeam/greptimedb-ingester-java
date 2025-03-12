@@ -100,6 +100,7 @@ public class ClientRequestLimitInterceptor implements ClientInterceptor {
                                         headers);
                             }
 
+                            @SuppressWarnings("null")
                             @Override
                             public void cancel(String message, Throwable cause) {
                                 try {
@@ -123,6 +124,7 @@ public class ClientRequestLimitInterceptor implements ClientInterceptor {
                     @Override
                     public void request(int numMessages) {}
 
+                    @SuppressWarnings("null")
                     @Override
                     public void cancel(String message, Throwable cause) {}
 
