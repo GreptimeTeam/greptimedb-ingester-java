@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 /**
  * This example demonstrates how to use the low-level API to write data to the database using stream.
  * It shows how to define the schema for metrics tables, write data to the stream, and get the write result.
- * It also shows how to delete data from the stream using the WriteOp.Delete.
+ * It also shows how to delete data from the stream using the `WriteOp.Delete`.
  */
 public class LowLevelApiStreamWriteQuickStart {
 
@@ -66,6 +66,8 @@ public class LowLevelApiStreamWriteQuickStart {
             long ts = System.currentTimeMillis();
             double cpuUser = i + 0.1;
             double cpuSys = i + 0.12;
+            // Add a row to the `cpu_metric` table.
+            // The order of the values must match the schema definition.
             cpuMetric.addRow(host, ts, cpuUser, cpuSys);
         }
 
@@ -73,6 +75,8 @@ public class LowLevelApiStreamWriteQuickStart {
             String host = "127.0.0." + i;
             long ts = System.currentTimeMillis();
             double memUsage = i + 0.2;
+            // Add a row to the `mem_metric` table.
+            // The order of the values must match the schema definition.
             memMetric.addRow(host, ts, memUsage);
         }
 
@@ -81,7 +85,10 @@ public class LowLevelApiStreamWriteQuickStart {
         cpuMetric.complete();
         memMetric.complete();
 
+        // Set the compression algorithm to Zstd.
         Context ctx = Context.newDefault().withCompression(Compression.Zstd);
+        // Create a stream writer with a rate limit of 100,000 points per second.
+        // This helps control the data flow and prevents overwhelming the database.
         StreamWriter<Table, WriteOk> writer = greptimeDB.streamWriter(100000, ctx);
 
         // Write table data to the stream. The data will be immediately flushed to the network.
@@ -92,13 +99,13 @@ public class LowLevelApiStreamWriteQuickStart {
         writer.write(memMetric);
 
         // Write a delete request to the stream to remove the first 5 rows from the cpuMetric table
-        // This demonstrates how to selectively delete data using the WriteOp.Delete
+        // This demonstrates how to selectively delete data using the `WriteOp.Delete`
         writer.write(cpuMetric.subRange(0, 5), WriteOp.Delete);
 
         // Completes the stream, and the stream will be closed.
         CompletableFuture<WriteOk> future = writer.completed();
 
-        // Now we can get the write result
+        // Now we can get the write result.
         WriteOk result = future.get();
 
         LOG.info("Write result: {}", result);

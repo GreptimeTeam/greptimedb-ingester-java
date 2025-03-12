@@ -38,7 +38,7 @@ import java.util.List;
  *     .build();
  *
  * Table table = Table.from(schema);
- * // the values order must be the same as the schema order
+ * // The order of the values must match the schema definition.
  * table.addRow(tag_value_1, now, field_value_1);
  * table.addRow(tag_value_2, now, field_value_2);
  * table.complete();

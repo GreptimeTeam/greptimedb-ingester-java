@@ -53,7 +53,7 @@ import java.util.List;
  *     .build();
  *
  * Table table = Table.from(schema);
- * // the values order must be the same as the schema order
+ * // The order of the values must match the schema definition.
  * table.addRow(1, "2023-01-01 00:00:00", "value1");
  * table.addRow(2, "2023-01-01 00:00:01", "value2");
  * table.complete();
