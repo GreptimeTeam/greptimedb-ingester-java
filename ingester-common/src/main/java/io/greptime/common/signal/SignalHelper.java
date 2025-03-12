@@ -70,12 +70,14 @@ public final class SignalHelper {
 
     static class SignalAccessor {
 
+        @SuppressWarnings("restriction")
         public void addSignal(String signalName, List<SignalHandler> handlers) {
             sun.misc.Signal signal = new sun.misc.Signal(signalName);
             SignalHandlerAdapter.addSignal(new SignalHandlerAdapter(signal, handlers));
         }
     }
 
+    @SuppressWarnings("restriction")
     static class SignalHandlerAdapter implements sun.misc.SignalHandler {
 
         private final sun.misc.Signal target;
