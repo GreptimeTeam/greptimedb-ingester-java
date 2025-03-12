@@ -25,7 +25,39 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Data in row format, ready to be written to the DB.
+ * A table represents data in row format that can be written to the database.
+ *
+ * <p>
+ * The table is mutable and allows adding rows incrementally. However, the data cannot be written to
+ * the database until the table is marked as complete by calling {@link #complete()}. This design enables
+ * batch processing of rows before writing.
+ * </p>
+ *
+ * <p>
+ * Important notes:
+ * </p>
+ * <ul>
+ *   <li>Tables are not thread-safe</li>
+ *   <li>Tables cannot be reused - create a new instance for each write operation</li>
+ *   <li>The associated {@link TableSchema} is immutable and can be reused</li>
+ * </ul>
+ *
+ * <p>
+ * Example usage:
+ * </p>
+ * <pre>{@code
+ * TableSchema schema = TableSchema.newBuilder("my_table")
+ *     .addTag("tag1", DataType.String)
+ *     .addTimestamp("ts", DataType.TimestampMillisecond)
+ *     .addField("field1", DataType.Float64)
+ *     .build();
+ *
+ * Table table = Table.from(schema);
+ * // the values order must be the same as the schema order
+ * table.addRow(1, "2023-01-01 00:00:00", "value1");
+ * table.addRow(2, "2023-01-01 00:00:01", "value2");
+ * table.complete();
+ * }</pre>
  */
 public interface Table {
 
@@ -34,7 +66,7 @@ public interface Table {
      */
     String tableName();
 
-    /**
+    /**··
      * The rows count to write.
      */
     int rowCount();
@@ -53,12 +85,19 @@ public interface Table {
 
     /**
      * Insets one row with all columns.
-     * 
+     *
      * The order of the values must be the same as the order of the schema.
      */
     Table addRow(Object... values);
 
     Table subRange(int fromIndex, int toIndex);
+
+    /**
+     * Completes the table data construction and prevents further row additions.
+     * After calling this method, the table will be immutable and ready to be written
+     * to the database.
+     */
+    Table complete();
 
     /**
      * Convert to {@link Database.RowInsertRequest}.
@@ -139,6 +178,8 @@ public interface Table {
 
     class RowBasedTable implements Table, Into<RowData.Rows> {
 
+        private volatile boolean completed = false;
+
         private String tableName;
 
         private List<RowData.ColumnSchema> columnSchemas;
@@ -171,6 +212,10 @@ public interface Table {
 
         @Override
         public Table addRow(Object... values) {
+            Ensures.ensure(
+                    !this.completed,
+                    "Table data construction has been completed. Cannot add more rows. Please create a new table instance.");
+
             checkNumValues(values.length);
 
             RowData.Row.Builder rowBuilder = RowData.Row.newBuilder();
@@ -212,6 +257,12 @@ public interface Table {
                     .addAllSchema(this.columnSchemas)
                     .addAllRows(this.rows)
                     .build();
+        }
+
+        @Override
+        public Table complete() {
+            this.completed = true;
+            return this;
         }
     }
 }

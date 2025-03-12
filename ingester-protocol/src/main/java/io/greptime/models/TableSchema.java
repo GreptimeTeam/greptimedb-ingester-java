@@ -22,12 +22,27 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Table schema for write data to the database.
+ * Defines the schema structure for writing data to the database.
  * <p>
- * If the same `TableSchema` will be used multiple times, it is advisable to cache it
- * to prevent redundant creation. The responsibility of caching lies with the user,
- * as the `Ingester` client should strive to avoid managing the cache and excessive
- * memory consumption.
+ * For optimal performance, it is recommended to cache and reuse the same {@code TableSchema} instance
+ * when writing data multiple times. The caching responsibility is delegated to the user since
+ * the {@code Ingester} client aims to minimize memory overhead by avoiding cache management.
+ * </p>
+ *
+ * <p>Example usage:</p>
+ * <pre>{@code
+ * TableSchema schema = TableSchema.newBuilder("my_table")
+ *     .addTag("tag1", DataType.String)
+ *     .addTimestamp("ts", DataType.TimestampMillisecond)
+ *     .addField("field1", DataType.Float64)
+ *     .build();
+ *
+ * Table table = Table.from(schema);
+ * // the values order must be the same as the schema order
+ * table.addRow(tag_value_1, now, field_value_1);
+ * table.addRow(tag_value_2, now, field_value_2);
+ * table.complete();
+ * }</pre>
  */
 public class TableSchema {
 
