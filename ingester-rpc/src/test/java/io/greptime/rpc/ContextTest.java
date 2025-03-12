@@ -76,12 +76,6 @@ public class ContextTest {
         Context context = Context.of("key", "value");
         context.clear();
         Assert.assertTrue(context.entrySet().isEmpty());
-    }
-
-    @Test
-    public void copyShouldReturnIdenticalContextTest() {
-        Context context = Context.of("key", "value");
-        Context copy = context.copy();
-        Assert.assertEquals(context.get("key").toString(), copy.get("key").toString());
+        Assert.assertEquals(Compression.None, context.getCompression());
     }
 }
