@@ -30,7 +30,6 @@ public interface RpcClient extends Lifecycle<RpcOptions>, Display {
      *
      * @param endpoint target address
      */
-    @SuppressWarnings("unused")
     void closeConnection(Endpoint endpoint);
 
     /**
@@ -78,7 +77,6 @@ public interface RpcClient extends Lifecycle<RpcOptions>, Display {
      * @param <Req> the request message type
      * @param <Resp> the response message type
      */
-    @SuppressWarnings("unused")
     default <Req, Resp> void invokeAsync(Endpoint endpoint, Req request, Observer<Resp> observer, long timeoutMs) {
         invokeAsync(endpoint, request, null, observer, timeoutMs);
     }

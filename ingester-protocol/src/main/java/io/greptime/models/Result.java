@@ -22,6 +22,7 @@ import java.util.function.Function;
 /**
  * `Result` is a type that represents either success ([`Ok`]) or failure ([`Err`]).
  */
+@SuppressWarnings("hiding")
 public final class Result<Ok, Err> {
 
     public static final int FLOW_CONTROL = 503;
