@@ -17,7 +17,7 @@
 package io.greptime.errors;
 
 /**
- *
+ * Exception for server side errors.
  */
 public class ServerException extends RuntimeException {
 

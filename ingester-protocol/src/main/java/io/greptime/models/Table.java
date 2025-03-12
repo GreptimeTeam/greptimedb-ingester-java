@@ -52,7 +52,9 @@ public interface Table {
     }
 
     /**
-     * Insets one row.
+     * Insets one row with all columns.
+     * 
+     * The order of the values must be the same as the order of the schema.
      */
     Table addRow(Object... values);
 
