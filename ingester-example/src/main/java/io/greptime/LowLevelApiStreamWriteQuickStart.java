@@ -28,7 +28,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
+ * This example demonstrates how to use the low-level API to write data to the database using stream.
+ * It shows how to define the schema for metrics tables, write data to the stream, and get the write result.
+ * It also shows how to delete data from the stream using the WriteOp.Delete.
  */
 public class LowLevelApiStreamWriteQuickStart {
 
@@ -37,6 +39,9 @@ public class LowLevelApiStreamWriteQuickStart {
     public static void main(String[] args) throws ExecutionException, InterruptedException {
         GreptimeDB greptimeDB = TestConnector.connectToDefaultDB();
 
+        // Define the schema for metrics tables.
+        // The schema is immutable and can be safely reused across multiple operations.
+        // It is recommended to use snake_case for column names.
         TableSchema cpuMetricSchema = TableSchema.newBuilder("cpu_metric")
                 .addTag("host", DataType.String)
                 .addTimestamp("ts", DataType.TimestampMillisecond)
@@ -50,6 +55,9 @@ public class LowLevelApiStreamWriteQuickStart {
                 .addField("mem_usage", DataType.Float64)
                 .build();
 
+        // Tables are not reusable - a new instance must be created for each write operation.
+        // However, we can add multiple rows to a single table before writing it,
+        // which is more efficient than writing rows individually.
         Table cpuMetric = Table.from(cpuMetricSchema);
         Table memMetric = Table.from(memMetricSchema);
 
@@ -68,19 +76,29 @@ public class LowLevelApiStreamWriteQuickStart {
             memMetric.addRow(host, ts, memUsage);
         }
 
+        // Complete the table to make it immutable. If users forget to call this method,
+        // it will still be called internally before the table data is written.
+        cpuMetric.complete();
+        memMetric.complete();
+
         Context ctx = Context.newDefault().withCompression(Compression.Zstd);
         StreamWriter<Table, WriteOk> writer = greptimeDB.streamWriter(100000, ctx);
 
-        // write data into stream
+        // Write table data to the stream. The data will be immediately flushed to the network.
+        // This allows for efficient, low-latency data transmission to the database.
+        // Since this is client streaming, we cannot get the write result immediately.
+        // After writing all data, we can call `completed()` to finalize the stream and get the result.
         writer.write(cpuMetric);
         writer.write(memMetric);
 
-        // delete the first 5 rows
+        // Write a delete request to the stream to remove the first 5 rows from the cpuMetric table
+        // This demonstrates how to selectively delete data using the WriteOp.Delete
         writer.write(cpuMetric.subRange(0, 5), WriteOp.Delete);
 
-        // complete the stream
+        // Completes the stream, and the stream will be closed.
         CompletableFuture<WriteOk> future = writer.completed();
 
+        // Now we can get the write result
         WriteOk result = future.get();
 
         LOG.info("Write result: {}", result);
