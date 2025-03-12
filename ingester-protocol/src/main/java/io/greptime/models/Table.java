@@ -100,6 +100,11 @@ public interface Table {
     Table complete();
 
     /**
+     * Returns true if the table has been completed.
+     */
+    boolean isCompleted();
+
+    /**
      * Convert to {@link Database.RowInsertRequest}.
      *
      * @return {@link Database.RowInsertRequest}
@@ -263,6 +268,11 @@ public interface Table {
         public Table complete() {
             this.completed = true;
             return this;
+        }
+
+        @Override
+        public boolean isCompleted() {
+            return this.completed;
         }
     }
 }
