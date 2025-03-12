@@ -16,7 +16,6 @@
 
 package io.greptime.rpc;
 
-import io.greptime.common.Copiable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -26,7 +25,7 @@ import java.util.Set;
  * database server in the form of KV.
  */
 @SuppressWarnings({"unchecked"})
-public class Context implements Copiable<Context> {
+public class Context {
 
     private static final String HINTS_KEY = "x-greptime-hints";
 
@@ -168,6 +167,7 @@ public class Context implements Copiable<Context> {
     public void clear() {
         synchronized (this) {
             this.ctx.clear();
+            this.compression = Compression.None;
         }
     }
 
@@ -183,16 +183,7 @@ public class Context implements Copiable<Context> {
     @Override
     public String toString() {
         synchronized (this) {
-            return this.ctx.toString();
-        }
-    }
-
-    @Override
-    public Context copy() {
-        synchronized (this) {
-            Context copy = new Context();
-            copy.ctx.putAll(this.ctx);
-            return copy;
+            return "Context{" + "ctx=" + ctx + ", compression=" + compression + '}';
         }
     }
 }
