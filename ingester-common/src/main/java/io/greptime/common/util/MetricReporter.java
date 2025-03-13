@@ -73,7 +73,6 @@ public class MetricReporter {
      * time zone, writing to {@code System.out}, converting rates to events/second, converting
      * durations to milliseconds, and not filtering metrics.
      */
-    @SuppressWarnings("unused")
     public static class Builder {
 
         private final MetricRegistry registry;

@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 /**
  * Named thread factory.
  */
-@SuppressWarnings("unused")
 public class NamedThreadFactory implements ThreadFactory {
 
     private static final Logger LOG = LoggerFactory.getLogger(NamedThreadFactory.class);

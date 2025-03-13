@@ -88,6 +88,11 @@ public class WriteClient implements Write, Health, Lifecycle<WriteOptions>, Disp
         Ensures.ensureNonNull(tables, "null `tables`");
         Ensures.ensure(!tables.isEmpty(), "empty `tables`");
 
+        // make sure all tables are completed(immutable) before writing
+        for (Table table : tables) {
+            table.complete();
+        }
+
         long startCall = Clock.defaultClock().getTick();
         WriteTables writeTables = new WriteTables(tables, writeOp);
         return this.writeLimiter.acquireAndDo(tables, () -> write0(writeTables, ctx, 0)
@@ -131,10 +136,13 @@ public class WriteClient implements Write, Health, Lifecycle<WriteOptions>, Disp
 
                     @Override
                     public StreamWriter<Table, WriteOk> write(Table table, WriteOp writeOp) {
+                        // make sure the table is completed(immutable) before writing
+                        table.complete();
+
                         if (respFuture.isCompletedExceptionally()) {
                             respFuture.getNow(null); // throw the exception now
                         }
-                        return super.write(table, writeOp); // may wait
+                        return super.write(table, writeOp); // may wait for the rate limiter
                     }
 
                     @Override

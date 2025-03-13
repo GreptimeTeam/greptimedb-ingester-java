@@ -17,9 +17,11 @@
 package io.greptime.errors;
 
 /**
- *
+ * Exception for pojo errors.
  */
 public class PojoException extends RuntimeException {
+
+    private static final long serialVersionUID = -1L;
 
     public PojoException(String message) {
         super(message);

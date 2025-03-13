@@ -69,7 +69,6 @@ import org.slf4j.LoggerFactory;
  * <p>
  * Refer to {@link com.netflix.concurrency.limits.limit.Gradient2Limit}
  */
-@SuppressWarnings("unused")
 public class Gradient2Limit extends AbstractLimit {
 
     private static final Logger LOG = LoggerFactory.getLogger(Gradient2Limit.class);

@@ -41,7 +41,6 @@ import org.slf4j.LoggerFactory;
  * <p>
  * Refer to {@link com.netflix.concurrency.limits.limit.VegasLimit}
  */
-@SuppressWarnings("unused")
 public class VegasLimit extends AbstractLimit {
 
     private static final Logger LOG = LoggerFactory.getLogger(VegasLimit.class);

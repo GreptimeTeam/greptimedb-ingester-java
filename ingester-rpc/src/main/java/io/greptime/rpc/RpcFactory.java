@@ -19,7 +19,6 @@ package io.greptime.rpc;
 /**
  * GreptimeDB's RPC service factory.
  */
-@SuppressWarnings("unused")
 public interface RpcFactory {
 
     /**

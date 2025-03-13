@@ -25,7 +25,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
+ * This example demonstrates how to use the high-level API to write data to the database using stream.
+ * It shows how to define the schema for metrics tables, write data to the stream, and get the write result.
+ * It also shows how to delete data from the stream using the `WriteOp.Delete`.
  */
 public class HighLevelApiStreamWriteQuickStart {
 
@@ -55,16 +57,21 @@ public class HighLevelApiStreamWriteQuickStart {
 
         StreamWriter<List<?>, WriteOk> writer = greptimeDB.objectsStreamWriter();
 
-        // write data into stream
+        // Write data to the stream. The data will be immediately flushed to the network.
+        // This allows for efficient, low-latency data transmission to the database.
+        // Since this is client streaming, we cannot get the write result immediately.
+        // After writing all data, we can call `completed()` to finalize the stream and get the result.
         writer.write(cpus);
         writer.write(memories);
 
-        // delete the first 5 rows
+        // Write a delete request to the stream to remove the first 5 rows from the cpuMetric table
+        // This demonstrates how to selectively delete data using the `WriteOp.Delete`
         writer.write(cpus.subList(0, 5), WriteOp.Delete);
 
-        // complete the stream
+        // Completes the stream, and the stream will be closed.
         CompletableFuture<WriteOk> future = writer.completed();
 
+        // Now we can get the write result.
         WriteOk result = future.get();
 
         LOG.info("Write result: {}", result);

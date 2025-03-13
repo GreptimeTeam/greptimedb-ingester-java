@@ -34,5 +34,8 @@ public interface Lifecycle<T> {
      */
     void shutdownGracefully();
 
+    /**
+     * Ensure the service is initialized.
+     */
     default void ensureInitialized() {}
 }

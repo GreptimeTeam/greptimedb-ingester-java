@@ -31,7 +31,6 @@ public class DirectExecutor implements Executor {
         this.executeTimer = MetricsUtil.timer("direct_executor_timer", name);
     }
 
-    @SuppressWarnings("NullableProblems")
     @Override
     public void execute(Runnable cmd) {
         this.executeTimer.time(cmd);

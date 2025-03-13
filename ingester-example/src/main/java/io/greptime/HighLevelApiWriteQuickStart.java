@@ -28,7 +28,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
+ * This example demonstrates how to use the high-level API to write data to the database.
+ * It shows how to define the schema for metrics tables, write data to the table, and get the write result.
+ * It also shows how to delete data from the table using the `WriteOp.Delete`.
  */
 public class HighLevelApiWriteQuickStart {
 
@@ -57,12 +59,19 @@ public class HighLevelApiWriteQuickStart {
         }
 
         // For performance reasons, the SDK is designed to be purely asynchronous.
-        // The return value is a future object. If you want to immediately obtain
-        // the result, you can call `future.get()`.
+        // The return value is a CompletableFuture object. If you want to immediately obtain
+        // the result, you can call `future.get()`, which will block until the operation completes.
+        // For production environments, consider using non-blocking approaches with callbacks or
+        // the CompletableFuture API.
         CompletableFuture<Result<WriteOk, Err>> puts = greptimeDB.writeObjects(cpus, memories);
 
+        // Now we can get the write result.
         Result<WriteOk, Err> result = puts.get();
 
+        // The Result object holds either a success value (WriteOk) or an error (Err).
+        // We can transform these values using the `map` method for success cases and `mapErr` for error cases.
+        // In this example, we extract just the success count from `WriteOk` and the error message from `Err`
+        // to create a simplified result that's easier to work with in our application logic.
         Result<Integer, String> simpleResult =
                 result.map(WriteOk::getSuccess).mapErr(err -> err.getError().getMessage());
         if (simpleResult.isOk()) {
@@ -72,6 +81,7 @@ public class HighLevelApiWriteQuickStart {
         }
 
         List<List<?>> deletePojoObjects = Arrays.asList(cpus.subList(0, 5), memories.subList(0, 5));
+        // We can also delete data from the table using the `WriteOp.Delete`.
         Result<WriteOk, Err> deletes =
                 greptimeDB.writeObjects(deletePojoObjects, WriteOp.Delete).get();
 

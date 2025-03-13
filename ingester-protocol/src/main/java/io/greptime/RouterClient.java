@@ -189,7 +189,6 @@ public class RouterClient implements Lifecycle<RouterOptions>, Health, Display {
      * @param <Req> the request type
      * @param <Resp> the response type
      */
-    @SuppressWarnings("unused")
     public <Req, Resp> void invokeServerStreaming(
             Endpoint endpoint, Req request, Context ctx, Observer<Resp> observer) {
         try {
