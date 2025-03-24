@@ -51,6 +51,7 @@
         <module>ingester-protocol</module>
         <module>ingester-example</module>
         <module>ingester-all</module>
+        <module>ingester-bulk-protocol</module>
     </modules>
 
     <scm>
@@ -101,6 +102,11 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>ingester-bulk-protocol</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>ingester-common</artifactId>
