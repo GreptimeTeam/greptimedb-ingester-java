@@ -39,6 +39,10 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>ingester-rpc</artifactId>
         </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>ingester-bulk-protocol</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>io.greptime</groupId>

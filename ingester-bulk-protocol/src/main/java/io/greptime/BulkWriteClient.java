@@ -18,8 +18,10 @@ package io.greptime;
 
 import com.codahale.metrics.Counter;
 import io.greptime.common.Endpoint;
+import io.greptime.common.Keys;
 import io.greptime.common.util.Ensures;
 import io.greptime.common.util.MetricsUtil;
+import io.netty.util.internal.SystemPropertyUtil;
 import org.apache.arrow.flight.CallOption;
 import org.apache.arrow.flight.FlightClient;
 import org.apache.arrow.flight.FlightClient.ClientStreamListener;
@@ -49,7 +51,13 @@ public class BulkWriteClient implements AutoCloseable {
 
     private static final Logger LOG = LoggerFactory.getLogger(BulkWriteClient.class);
 
-    private static final BufferAllocator ROOT_ALLOCATOR = new RootAllocator(Long.MAX_VALUE);
+    private static final BufferAllocator ROOT_ALLOCATOR;
+
+    static {
+        // max allocation size in bytes
+        long allocationLimit = SystemPropertyUtil.getLong(Keys.FLIGHT_ALLOCATION_LIMIT, Long.MAX_VALUE);
+        ROOT_ALLOCATOR = new RootAllocator(new FlightAllocationListener(), allocationLimit);
+    }
 
     private final Endpoint endpoint;
     private final FlightClient flightClient;
@@ -61,11 +69,26 @@ public class BulkWriteClient implements AutoCloseable {
         this.allocator = Ensures.ensureNonNull(allocator, "null `allocator`");
     }
 
-    public static BulkWriteClient create(Endpoint endpoint, long allocationLimit) {
+    /**
+     * Creates a bulk write client for efficiently writing data to the server.
+     *
+     * @param endpoint the endpoint of the server
+     * @param allocatorInitReservation the initial space reservation (obtained from this allocator)
+     * @param allocatorMaxAllocation the maximum amount of space the new child allocator can allocate
+     * @return a BulkWriteClient instance
+     */
+    public static BulkWriteClient create(
+            Endpoint endpoint, long allocatorInitReservation, long allocatorMaxAllocation) {
         Location location = Location.forGrpcInsecure(endpoint.getAddr(), endpoint.getPort());
 
         String allocatorName = String.format("BufferAllocator(%s)", location);
-        BufferAllocator allocator = ROOT_ALLOCATOR.newChildAllocator(allocatorName, 0, allocationLimit);
+        BufferAllocator allocator =
+                ROOT_ALLOCATOR.newChildAllocator(allocatorName, allocatorInitReservation, allocatorMaxAllocation);
+        Ensures.ensureNonNull(
+                allocator,
+                "Failed to create child buffer allocator, initReservation: %s, maxAllocation: %s",
+                allocatorInitReservation,
+                allocatorMaxAllocation);
 
         FlightClient flightClient =
                 FlightClient.builder().location(location).allocator(allocator).build();
@@ -107,16 +130,16 @@ public class BulkWriteClient implements AutoCloseable {
 
     static class FlightAllocationListener implements AllocationListener {
 
-        static final Counter ALLOCATION_COUNTER = MetricsUtil.counter("flight_allocation_counter");
+        static final Counter ALLOCATION_BYTES = MetricsUtil.counter("flight_allocation_bytes");
 
         @Override
         public void onAllocation(long size) {
-            ALLOCATION_COUNTER.inc(size);
+            ALLOCATION_BYTES.inc(size);
         }
 
         @Override
         public void onRelease(long size) {
-            ALLOCATION_COUNTER.dec(size);
+            ALLOCATION_BYTES.dec(size);
         }
 
         @Override
