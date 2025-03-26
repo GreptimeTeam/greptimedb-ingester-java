@@ -23,6 +23,8 @@ import io.greptime.v1.Database;
 import io.greptime.v1.RowData;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.arrow.vector.FieldVector;
+import org.apache.arrow.vector.VectorSchemaRoot;
 
 /**
  * A table represents data in row format that can be written to the database.
@@ -109,22 +111,43 @@ public interface Table {
      *
      * @return {@link Database.RowInsertRequest}
      */
-    Database.RowInsertRequest intoRowInsertRequest();
+    default Database.RowInsertRequest intoRowInsertRequest() {
+        throw new UnsupportedOperationException("Not supported for this table type");
+    }
 
     /**
      * Convert to {@link Database.RowDeleteRequest}.
      *
      * @return {@link Database.RowDeleteRequest}
      */
-    Database.RowDeleteRequest intoRowDeleteRequest();
+    default Database.RowDeleteRequest intoRowDeleteRequest() {
+        throw new UnsupportedOperationException("Not supported for this table type");
+    }
 
     default void checkNumValues(int len) {
         int columnCount = columnCount();
         Ensures.ensure(columnCount == len, "Expected values num: %d, actual: %d", columnCount, len);
     }
 
+    /**
+     * Create a table from a table schema.
+     *
+     * @param tableSchema the table schema
+     * @return a table
+     */
     static Table from(TableSchema tableSchema) {
         return new Builder(tableSchema).build();
+    }
+
+    /**
+     * Create a bulk table from a table schema and a vector schema root.
+     *
+     * @param tableSchema the table schema
+     * @param root the vector schema root
+     * @return a table
+     */
+    static Table from(TableSchema tableSchema, VectorSchemaRoot root) {
+        return new BulkTableBuilder(tableSchema, root).build();
     }
 
     class Builder {
@@ -165,9 +188,7 @@ public interface Table {
                 List<Common.SemanticType> semanticTypes,
                 List<Common.ColumnDataType> dataTypes,
                 List<Common.ColumnDataTypeExtension> dataTypeExtensions) {
-            RowBasedTable table = new RowBasedTable();
-            table.tableName = tableName;
-            table.columnSchemas = new ArrayList<>(columnCount);
+            RowBasedTable table = new RowBasedTable(tableName, new ArrayList<>(columnCount));
 
             for (int i = 0; i < columnCount; i++) {
                 RowData.ColumnSchema.Builder builder = RowData.ColumnSchema.newBuilder();
@@ -185,13 +206,12 @@ public interface Table {
 
         private volatile boolean completed = false;
 
-        private String tableName;
-
-        private List<RowData.ColumnSchema> columnSchemas;
+        private final String tableName;
+        private final List<RowData.ColumnSchema> columnSchemas;
         private final List<RowData.Row> rows;
 
-        public RowBasedTable() {
-            this.rows = new ArrayList<>();
+        public RowBasedTable(String tableName, List<RowData.ColumnSchema> columnSchemas) {
+            this(tableName, columnSchemas, new ArrayList<>());
         }
 
         private RowBasedTable(String tableName, List<RowData.ColumnSchema> columnSchemas, List<RowData.Row> rows) {
@@ -202,17 +222,17 @@ public interface Table {
 
         @Override
         public String tableName() {
-            return tableName;
+            return this.tableName;
         }
 
         @Override
         public int rowCount() {
-            return rows.size();
+            return this.rows.size();
         }
 
         @Override
         public int columnCount() {
-            return columnSchemas.size();
+            return this.columnSchemas.size();
         }
 
         @Override
@@ -262,6 +282,105 @@ public interface Table {
                     .addAllSchema(this.columnSchemas)
                     .addAllRows(this.rows)
                     .build();
+        }
+
+        @Override
+        public Table complete() {
+            this.completed = true;
+            return this;
+        }
+
+        @Override
+        public boolean isCompleted() {
+            return this.completed;
+        }
+    }
+
+    class BulkTableBuilder {
+        private final TableSchema tableSchema;
+        private final VectorSchemaRoot root;
+
+        public BulkTableBuilder(TableSchema tableSchema, VectorSchemaRoot root) {
+            this.tableSchema = tableSchema;
+            this.root = root;
+        }
+
+        public BulkTable build() {
+            String tableName = this.tableSchema.getTableName();
+            List<Common.ColumnDataType> dataTypes = this.tableSchema.getDataTypes();
+            List<Common.ColumnDataTypeExtension> dataTypeExtensions = this.tableSchema.getDataTypeExtensions();
+
+            Ensures.ensureNonNull(tableName, "Null table name");
+            Ensures.ensureNonNull(dataTypes, "Null data types");
+
+            int columnCount = dataTypes.size();
+
+            Ensures.ensure(columnCount > 0, "Empty column data types");
+            Ensures.ensure(
+                    columnCount == dataTypeExtensions.size(),
+                    "Column data types size not equal to data type extensions size");
+
+            return new BulkTable(tableName, dataTypes, dataTypeExtensions, this.root);
+        }
+    }
+
+    class BulkTable implements Table {
+
+        private volatile boolean completed = false;
+
+        private final String tableName;
+        private final List<Common.ColumnDataType> dataTypes;
+        private final List<Common.ColumnDataTypeExtension> dataTypeExtensions;
+        private final VectorSchemaRoot root;
+
+        public BulkTable(
+                String tableName,
+                List<Common.ColumnDataType> dataTypes,
+                List<Common.ColumnDataTypeExtension> dataTypeExtensions,
+                VectorSchemaRoot root) {
+            this.tableName = tableName;
+            this.dataTypes = dataTypes;
+            this.dataTypeExtensions = dataTypeExtensions;
+            this.root = root;
+        }
+
+        @Override
+        public String tableName() {
+            return this.tableName;
+        }
+
+        @Override
+        public int rowCount() {
+            return this.root.getRowCount();
+        }
+
+        @Override
+        public int columnCount() {
+            return this.root.getSchema().getFields().size();
+        }
+
+        @Override
+        public Table addRow(Object... values) {
+            Ensures.ensure(
+                    !this.completed,
+                    "Table data construction has been completed. Cannot add more rows. Please create a new table instance.");
+
+            checkNumValues(values.length);
+
+            int rowCount = this.root.getRowCount();
+            for (int i = 0; i < values.length; i++) {
+                FieldVector vector = this.root.getVector(i);
+                vector.allocateNew();
+                ArrowHelper.addValue(
+                        vector, rowCount, this.dataTypes.get(i), this.dataTypeExtensions.get(i), values[i]);
+            }
+            this.root.setRowCount(rowCount + 1);
+            return this;
+        }
+
+        @Override
+        public Table subRange(int fromIndex, int toIndex) {
+            throw new UnsupportedOperationException("Unsupported method 'subRange' by BulkTable");
         }
 
         @Override

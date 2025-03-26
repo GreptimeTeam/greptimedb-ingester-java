@@ -142,6 +142,41 @@ public class ValueUtil {
         return Common.Decimal128.newBuilder().setHi(high64Bits).setLo(low64Bits).build();
     }
 
+    static byte[] getDecimal128BigEndianBytes(Common.ColumnDataTypeExtension dataTypeExtension, Object value) {
+        Ensures.ensure(value instanceof BigDecimal, "Expected type: `BigDecimal`, actual: %s", value.getClass());
+        Ensures.ensureNonNull(dataTypeExtension, "Null `dataTypeExtension`");
+        Common.DecimalTypeExtension decimalTypeExtension = dataTypeExtension.hasDecimalType()
+                ? dataTypeExtension.getDecimalType()
+                : DataType.DecimalTypeExtension.DEFAULT.into();
+        BigDecimal decimal = (BigDecimal) value;
+        BigDecimal converted = decimal.setScale(decimalTypeExtension.getScale(), RoundingMode.HALF_UP);
+
+        BigInteger unscaledValue = converted.unscaledValue();
+        long high64Bits = unscaledValue.shiftRight(64).longValue();
+        long low64Bits = unscaledValue.longValue();
+
+        // Convert to big endian bytes
+        byte[] bytes = new byte[16];
+        bytes[0] = (byte) (high64Bits >> 56);
+        bytes[1] = (byte) (high64Bits >> 48);
+        bytes[2] = (byte) (high64Bits >> 40);
+        bytes[3] = (byte) (high64Bits >> 32);
+        bytes[4] = (byte) (high64Bits >> 24);
+        bytes[5] = (byte) (high64Bits >> 16);
+        bytes[6] = (byte) (high64Bits >> 8);
+        bytes[7] = (byte) high64Bits;
+        bytes[8] = (byte) (low64Bits >> 56);
+        bytes[9] = (byte) (low64Bits >> 48);
+        bytes[10] = (byte) (low64Bits >> 40);
+        bytes[11] = (byte) (low64Bits >> 32);
+        bytes[12] = (byte) (low64Bits >> 24);
+        bytes[13] = (byte) (low64Bits >> 16);
+        bytes[14] = (byte) (low64Bits >> 8);
+        bytes[15] = (byte) low64Bits;
+
+        return bytes;
+    }
+
     // Gson's instances are Thread-safe we can reuse them freely across multiple threads.
     private static final Gson GSON = new Gson();
 

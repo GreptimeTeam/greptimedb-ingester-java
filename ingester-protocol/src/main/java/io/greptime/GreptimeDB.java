@@ -53,7 +53,7 @@ import org.slf4j.LoggerFactory;
 /**
  * The GreptimeDB client.
  */
-public class GreptimeDB implements Write, WriteObject, Lifecycle<GreptimeOptions>, Health, Display {
+public class GreptimeDB implements Write, WriteObject, Health, Lifecycle<GreptimeOptions>, Display {
 
     private static final Logger LOG = LoggerFactory.getLogger(GreptimeDB.class);
 

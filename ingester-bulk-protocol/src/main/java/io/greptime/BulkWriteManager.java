@@ -22,6 +22,7 @@ import io.greptime.common.Keys;
 import io.greptime.common.util.Ensures;
 import io.greptime.common.util.MetricsUtil;
 import io.netty.util.internal.SystemPropertyUtil;
+import org.apache.arrow.flight.AsyncPutListener;
 import org.apache.arrow.flight.CallOption;
 import org.apache.arrow.flight.FlightClient;
 import org.apache.arrow.flight.FlightClient.ClientStreamListener;
@@ -39,51 +40,75 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * BulkWriteClient is a specialized client for efficiently writing block data to the server.
+ * BulkWriteManager is a specialized manager for efficiently writing block data to the server.
  *
  * It encapsulates a Flight client and a buffer allocator to manage memory resources.
  *
- * The primary function of this client is to establish bulk write streams,
+ * The primary function of this manager is to establish bulk write streams,
  * which provide an optimized channel for transmitting block data to the server.
  * These streams handle the serialization and transfer of data in an efficient manner.
+ *
+ * <p>
+ * `ZERO_COPY_WRITE` is disabled by default, if you want to enable it, you can set the system property
+ * `arrow.flight.enable_zero_copy_write` to `true`.
+ * </p>
  */
-public class BulkWriteClient implements AutoCloseable {
+public class BulkWriteManager implements AutoCloseable {
 
-    private static final Logger LOG = LoggerFactory.getLogger(BulkWriteClient.class);
+    private static final Logger LOG = LoggerFactory.getLogger(BulkWriteManager.class);
 
-    private static final BufferAllocator ROOT_ALLOCATOR;
+    // Lazy initialization of the root allocator
+    private static class RootAllocatorHolder {
 
-    static {
-        // max allocation size in bytes
-        long allocationLimit = SystemPropertyUtil.getLong(Keys.FLIGHT_ALLOCATION_LIMIT, Long.MAX_VALUE);
-        ROOT_ALLOCATOR = new RootAllocator(new FlightAllocationListener(), allocationLimit);
+        private static final BufferAllocator ROOT_ALLOCATOR = createRootAllocator();
+
+        private static BufferAllocator createRootAllocator() {
+            // max allocation size in bytes
+            long allocationLimit = SystemPropertyUtil.getLong(Keys.FLIGHT_ALLOCATION_LIMIT, Long.MAX_VALUE);
+            BufferAllocator rootAllocator = new RootAllocator(new FlightAllocationListener(), allocationLimit);
+
+            // Add a shutdown hook to close the root allocator when the JVM exits
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                try {
+                    AutoCloseables.close(rootAllocator);
+                } catch (Exception e) {
+                    LOG.error("Failed to close root buffer allocator", e);
+                }
+            }));
+
+            return rootAllocator;
+        }
+    }
+
+    private static BufferAllocator getRootAllocator() {
+        return RootAllocatorHolder.ROOT_ALLOCATOR;
     }
 
     private final Endpoint endpoint;
     private final FlightClient flightClient;
     private final BufferAllocator allocator;
 
-    private BulkWriteClient(Endpoint endpoint, FlightClient flightClient, BufferAllocator allocator) {
+    private BulkWriteManager(Endpoint endpoint, FlightClient flightClient, BufferAllocator allocator) {
         this.endpoint = Ensures.ensureNonNull(endpoint, "null `endpoint`");
         this.flightClient = Ensures.ensureNonNull(flightClient, "null `flightClient`");
         this.allocator = Ensures.ensureNonNull(allocator, "null `allocator`");
     }
 
     /**
-     * Creates a bulk write client for efficiently writing data to the server.
+     * Creates a bulk write manager for efficiently writing data to the server.
      *
      * @param endpoint the endpoint of the server
      * @param allocatorInitReservation the initial space reservation (obtained from this allocator)
      * @param allocatorMaxAllocation the maximum amount of space the new child allocator can allocate
-     * @return a BulkWriteClient instance
+     * @return a BulkWriteManager instance
      */
-    public static BulkWriteClient create(
+    public static BulkWriteManager create(
             Endpoint endpoint, long allocatorInitReservation, long allocatorMaxAllocation) {
         Location location = Location.forGrpcInsecure(endpoint.getAddr(), endpoint.getPort());
 
         String allocatorName = String.format("BufferAllocator(%s)", location);
         BufferAllocator allocator =
-                ROOT_ALLOCATOR.newChildAllocator(allocatorName, allocatorInitReservation, allocatorMaxAllocation);
+                getRootAllocator().newChildAllocator(allocatorName, allocatorInitReservation, allocatorMaxAllocation);
         Ensures.ensureNonNull(
                 allocator,
                 "Failed to create child buffer allocator, initReservation: %s, maxAllocation: %s",
@@ -92,11 +117,19 @@ public class BulkWriteClient implements AutoCloseable {
 
         FlightClient flightClient =
                 FlightClient.builder().location(location).allocator(allocator).build();
-        BulkWriteClient client = new BulkWriteClient(endpoint, flightClient, allocator);
+        BulkWriteManager client = new BulkWriteManager(endpoint, flightClient, allocator);
 
-        LOG.info("BulkWriteClient created: {}", client);
+        LOG.info("BulkWriteManager created: {}", client);
 
         return client;
+    }
+
+    /**
+     * @see #bulkWriteStream(String, String, Schema, long, CallOption...)
+     */
+    public BulkWriteService bulkWriteStream(
+            String database, String table, Schema schema, long timeoutMs, CallOption... options) {
+        return this.bulkWriteStream(database, table, schema, timeoutMs, new AsyncPutListener(), options);
     }
 
     /**
@@ -105,16 +138,22 @@ public class BulkWriteClient implements AutoCloseable {
      * @param database the name of the target database
      * @param table the name of the target table
      * @param schema the Arrow schema defining the structure of the data to be written
+     * @param timeoutMs the timeout in milliseconds for the write operation
      * @param metadataListener listener for handling server metadata responses during the write operation
      * @param options optional RPC-layer hints to configure the underlying Flight client call
      * @return a BulkStreamWriter instance that manages the data transfer process
      */
-    public BulkStreamWriter bulkWriteStream(
-            String database, String table, Schema schema, PutListener metadataListener, CallOption... options) {
+    public BulkWriteService bulkWriteStream(
+            String database,
+            String table,
+            Schema schema,
+            long timeoutMs,
+            PutListener metadataListener,
+            CallOption... options) {
         VectorSchemaRoot root = VectorSchemaRoot.create(schema, this.allocator);
         FlightDescriptor descriptor = FlightDescriptor.path(database, table);
         ClientStreamListener listener = this.flightClient.startPut(descriptor, root, metadataListener, options);
-        return new BulkStreamWriter(listener, root);
+        return new BulkWriteService(root, listener, timeoutMs);
     }
 
     @Override
@@ -124,7 +163,7 @@ public class BulkWriteClient implements AutoCloseable {
 
     @Override
     public String toString() {
-        return "BulkWriteClient{" + "endpoint=" + endpoint + ", flightClient=" + flightClient + ", allocator="
+        return "BulkWriteManager{" + "endpoint=" + endpoint + ", flightClient=" + flightClient + ", allocator="
                 + allocator + '}';
     }
 

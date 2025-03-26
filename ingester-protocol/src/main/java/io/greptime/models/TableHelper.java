@@ -23,7 +23,7 @@ import io.greptime.v1.Database;
 import java.util.Collection;
 
 /**
- *
+ * Helper class for table data to GreptimeRequest.
  */
 public class TableHelper {
 
