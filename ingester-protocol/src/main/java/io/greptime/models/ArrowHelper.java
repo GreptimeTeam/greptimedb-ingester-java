@@ -100,102 +100,102 @@ public class ArrowHelper {
 
         switch (dataType) {
             case INT8:
-                ((TinyIntVector) vector).set(rowIndex, (int) value);
+                ((TinyIntVector) vector).setSafe(rowIndex, (int) value);
                 break;
             case INT16:
-                ((SmallIntVector) vector).set(rowIndex, (int) value);
+                ((SmallIntVector) vector).setSafe(rowIndex, (int) value);
                 break;
             case INT32:
-                ((IntVector) vector).set(rowIndex, (int) value);
+                ((IntVector) vector).setSafe(rowIndex, (int) value);
                 break;
             case INT64:
-                ((BigIntVector) vector).set(rowIndex, (long) value);
+                ((BigIntVector) vector).setSafe(rowIndex, (long) value);
                 break;
             case UINT8:
-                ((UInt1Vector) vector).set(rowIndex, (int) value);
+                ((UInt1Vector) vector).setSafe(rowIndex, (int) value);
                 break;
             case UINT16:
-                ((UInt2Vector) vector).set(rowIndex, (int) value);
+                ((UInt2Vector) vector).setSafe(rowIndex, (int) value);
                 break;
             case UINT32:
-                ((UInt4Vector) vector).set(rowIndex, (int) value);
+                ((UInt4Vector) vector).setSafe(rowIndex, ((Long) value).intValue());
                 break;
             case UINT64:
-                ((UInt8Vector) vector).set(rowIndex, (long) value);
+                ((UInt8Vector) vector).setSafe(rowIndex, (long) value);
                 break;
             case FLOAT32:
-                ((Float4Vector) vector).set(rowIndex, (float) value);
+                ((Float4Vector) vector).setSafe(rowIndex, (float) value);
                 break;
             case FLOAT64:
-                ((Float8Vector) vector).set(rowIndex, (double) value);
+                ((Float8Vector) vector).setSafe(rowIndex, (double) value);
                 break;
             case BOOLEAN:
-                ((BitVector) vector).set(rowIndex, (boolean) value ? 1 : 0);
+                ((BitVector) vector).setSafe(rowIndex, (boolean) value ? 1 : 0);
                 break;
             case BINARY:
-                ((VarBinaryVector) vector).set(rowIndex, (byte[]) value);
+                ((VarBinaryVector) vector).setSafe(rowIndex, (byte[]) value);
                 break;
             case STRING:
-                ((VarCharVector) vector).set(rowIndex, ((String) value).getBytes(StandardCharsets.UTF_8));
+                ((VarCharVector) vector).setSafe(rowIndex, ((String) value).getBytes(StandardCharsets.UTF_8));
                 break;
             case DATE:
-                ((DateDayVector) vector).set(rowIndex, ValueUtil.getDateValue(value));
+                ((DateDayVector) vector).setSafe(rowIndex, ValueUtil.getDateValue(value));
                 break;
             case TIMESTAMP_SECOND: {
                 TimeStampSecHolder holder = new TimeStampSecHolder();
                 holder.value = ValueUtil.getTimestamp(value, java.util.concurrent.TimeUnit.SECONDS);
-                ((TimeStampSecVector) vector).set(rowIndex, holder);
+                ((TimeStampSecVector) vector).setSafe(rowIndex, holder);
                 break;
             }
             case TIMESTAMP_MILLISECOND: {
                 TimeStampMilliHolder holder = new TimeStampMilliHolder();
                 holder.value = ValueUtil.getTimestamp(value, java.util.concurrent.TimeUnit.MILLISECONDS);
-                ((TimeStampMilliVector) vector).set(rowIndex, holder);
+                ((TimeStampMilliVector) vector).setSafe(rowIndex, holder);
                 break;
             }
             case TIMESTAMP_MICROSECOND: {
                 TimeStampMicroHolder holder = new TimeStampMicroHolder();
                 holder.value = ValueUtil.getTimestamp(value, java.util.concurrent.TimeUnit.MICROSECONDS);
-                ((TimeStampMicroVector) vector).set(rowIndex, holder);
+                ((TimeStampMicroVector) vector).setSafe(rowIndex, holder);
                 break;
             }
             case TIMESTAMP_NANOSECOND: {
                 TimeStampNanoHolder holder = new TimeStampNanoHolder();
                 holder.value = ValueUtil.getTimestamp(value, java.util.concurrent.TimeUnit.NANOSECONDS);
-                ((TimeStampNanoVector) vector).set(rowIndex, holder);
+                ((TimeStampNanoVector) vector).setSafe(rowIndex, holder);
                 break;
             }
             case TIME_SECOND: {
                 TimeSecHolder holder = new TimeSecHolder();
                 holder.value = (int) ValueUtil.getLongValue(value);
-                ((TimeSecVector) vector).set(rowIndex, holder);
+                ((TimeSecVector) vector).setSafe(rowIndex, holder);
                 break;
             }
             case TIME_MILLISECOND: {
                 TimeMilliHolder holder = new TimeMilliHolder();
                 holder.value = (int) ValueUtil.getLongValue(value);
-                ((TimeMilliVector) vector).set(rowIndex, holder);
+                ((TimeMilliVector) vector).setSafe(rowIndex, holder);
                 break;
             }
             case TIME_MICROSECOND: {
                 TimeMicroHolder holder = new TimeMicroHolder();
                 holder.value = ValueUtil.getLongValue(value);
-                ((TimeMicroVector) vector).set(rowIndex, holder);
+                ((TimeMicroVector) vector).setSafe(rowIndex, holder);
                 break;
             }
             case TIME_NANOSECOND: {
                 TimeNanoHolder holder = new TimeNanoHolder();
                 holder.value = ValueUtil.getLongValue(value);
-                ((TimeNanoVector) vector).set(rowIndex, holder);
+                ((TimeNanoVector) vector).setSafe(rowIndex, holder);
                 break;
             }
             case DECIMAL128:
                 byte[] bytes = ValueUtil.getDecimal128BigEndianBytes(dataTypeExtension, value);
-                ((DecimalVector) vector).setBigEndian(rowIndex, bytes);
+                ((DecimalVector) vector).setBigEndianSafe(rowIndex, bytes);
                 break;
             case JSON:
                 byte[] jsonBytes = ValueUtil.getJsonString(value).getBytes(StandardCharsets.UTF_8);
-                ((VarCharVector) vector).set(rowIndex, jsonBytes);
+                ((VarCharVector) vector).setSafe(rowIndex, jsonBytes);
                 break;
             default:
                 throw new IllegalArgumentException("Unsupported data type: " + dataType);

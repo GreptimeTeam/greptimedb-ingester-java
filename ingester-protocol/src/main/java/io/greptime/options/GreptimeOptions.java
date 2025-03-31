@@ -383,6 +383,7 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
             bulkWriteOpts.setAuthInfo(this.authInfo);
             bulkWriteOpts.setAsyncPool(this.asyncPool);
             bulkWriteOpts.setUseZeroCopyWrite(this.useZeroCopyWriteInBulkWrite);
+            bulkWriteOpts.setTlsOptions(this.tlsOptions);
             return bulkWriteOpts;
         }
     }

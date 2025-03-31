@@ -43,5 +43,5 @@ public interface BulkStreamWriter extends AutoCloseable {
      * must be called to ensure all data is properly written and to receive
      * any errors that may have occurred during the operation.
      */
-    void completed();
+    void completed() throws Exception;
 }

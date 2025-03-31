@@ -29,6 +29,7 @@ import java.util.concurrent.TimeoutException;
 public class TimeoutCompletableFuture<T> extends CompletableFuture<T> {
 
     private static final ScheduledExecutorService SCHEDULER = ThreadPoolUtil.newScheduledBuilder()
+            .enableMetric(false)
             .coreThreads(1)
             .poolName("timeout-future-scheduler")
             .threadFactory(new NamedThreadFactory("timeout-future-scheduler", true))

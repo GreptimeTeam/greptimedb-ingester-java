@@ -91,9 +91,11 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
 
         Schema arrowSchema = ArrowHelper.createSchema(schema);
 
-        BulkWriteManager manager = BulkWriteManager.create(endpoint, allocatorInitReservation, allocatorMaxAllocation);
-        BulkWriteService writer =
-                manager.bulkWriteStream(database, table, arrowSchema, timeoutMsPerMessage, headerOption, execOption);
+        BulkWriteManager manager = BulkWriteManager.create(
+                endpoint, allocatorInitReservation, allocatorMaxAllocation, this.opts.getTlsOptions());
+        BulkWriteService writer = manager.intoBulkWriteStream(
+                database, table, arrowSchema, timeoutMsPerMessage, headerOption, execOption);
+        writer.start();
         if (this.opts.isUseZeroCopyWrite()) {
             writer.tryUseZeroCopyWrite();
         }
@@ -137,9 +139,10 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
         }
 
         @Override
-        public void completed() {
+        public void completed() throws Exception {
             this.writer.completed();
             this.writer.waitServerCompleted();
+            this.writer.close();
         }
 
         @Override

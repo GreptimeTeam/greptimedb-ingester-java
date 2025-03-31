@@ -20,9 +20,14 @@ import io.greptime.common.TimeoutCompletableFuture;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import org.apache.arrow.flight.FlightClient.ClientStreamListener;
+import org.apache.arrow.flight.BulkFlightClient.ClientStreamListener;
+import org.apache.arrow.flight.BulkFlightClient.PutListener;
+import org.apache.arrow.flight.CallOption;
+import org.apache.arrow.flight.FlightDescriptor;
 import org.apache.arrow.util.AutoCloseables;
 import org.apache.arrow.vector.VectorSchemaRoot;
+import org.apache.arrow.vector.ipc.message.IpcOption;
+import org.apache.arrow.vector.types.pojo.Schema;
 
 /**
  * BulkWriteService is a specialized class for efficiently writing data to the server in bulk operations.
@@ -35,17 +40,32 @@ import org.apache.arrow.vector.VectorSchemaRoot;
  * providing a streamlined interface for bulk write operations.
  */
 public class BulkWriteService implements AutoCloseable {
+    private final BulkWriteManager manager;
     private final VectorSchemaRoot root;
     private final ClientStreamListener listener;
     private final OnReadyHandler onReadyHandler;
     private final long timeoutMs;
 
-    public BulkWriteService(VectorSchemaRoot root, ClientStreamListener listener, long timeoutMs) {
-        this.root = root;
-        this.listener = listener;
+    public BulkWriteService(
+            BulkWriteManager manager,
+            Schema schema,
+            FlightDescriptor descriptor,
+            PutListener metadataListener,
+            long timeoutMs,
+            CallOption... options) {
+        this.manager = manager;
+        this.root = manager.createSchemaRoot(schema);
         this.onReadyHandler = new OnReadyHandler();
-        this.listener.setOnReadyHandler(this.onReadyHandler);
+        this.listener = manager.startPut(descriptor, metadataListener, this.onReadyHandler, options);
         this.timeoutMs = timeoutMs;
+    }
+
+    public void start() {
+        this.listener.start(this.root, this.manager.newDefaultDictionaryProvider());
+    }
+
+    public void start(IpcOption ipcOption) {
+        this.listener.start(this.root, this.manager.newDefaultDictionaryProvider(), ipcOption);
     }
 
     /**
@@ -89,6 +109,7 @@ public class BulkWriteService implements AutoCloseable {
         // The future may be null if the previous `putNext()` is not completed.
         TimeoutCompletableFuture<Boolean> future = this.onReadyHandler.nextFuture();
         this.listener.putNext();
+        this.root.clear();
         // If the future is null, we just return a completed future with the current ready state.
         return future == null ? CompletableFuture.completedFuture(isReady()) : future.scheduleTimeout();
     }
@@ -110,7 +131,7 @@ public class BulkWriteService implements AutoCloseable {
 
     @Override
     public void close() throws Exception {
-        AutoCloseables.close(this.root);
+        AutoCloseables.close(this.root, this.manager);
     }
 
     class OnReadyHandler implements Runnable {
