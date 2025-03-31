@@ -370,7 +370,9 @@ public interface Table {
             int rowCount = this.root.getRowCount();
             for (int i = 0; i < values.length; i++) {
                 FieldVector vector = this.root.getVector(i);
-                vector.allocateNew();
+                if (vector.getValueCapacity() < rowCount + 1) {
+                    vector.allocateNew();
+                }
                 ArrowHelper.addValue(
                         vector, rowCount, this.dataTypes.get(i), this.dataTypeExtensions.get(i), values[i]);
             }

@@ -34,12 +34,8 @@ import java.util.concurrent.Executor;
 import org.apache.arrow.flight.FlightCallHeaders;
 import org.apache.arrow.flight.HeaderCallOption;
 import org.apache.arrow.vector.types.pojo.Schema;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOptions>, Display {
-
-    private static final Logger LOG = LoggerFactory.getLogger(BulkWriteManager.class);
 
     private BulkWriteOptions opts;
     private RouterClient routerClient;
@@ -112,6 +108,12 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
     @Override
     public void display(Printer out) {
         out.println("--- BulkWriteClient ---").print("asyncPool=").println(this.asyncPool);
+    }
+
+    @Override
+    public String toString() {
+        return "BulkWriteClient{" + "opts=" + opts + ", routerClient=" + routerClient + ", asyncPool=" + asyncPool
+                + '}';
     }
 
     static class DefaultBulkStreamWriter implements BulkStreamWriter {
