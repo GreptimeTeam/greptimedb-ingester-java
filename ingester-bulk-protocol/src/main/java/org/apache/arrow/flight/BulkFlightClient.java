@@ -16,6 +16,7 @@
 
 package org.apache.arrow.flight;
 
+import io.greptime.ArrowCompressionType;
 import io.greptime.rpc.TlsOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -37,6 +38,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 import javax.net.ssl.SSLException;
+import org.apache.arrow.compression.CommonsCompressionFactory;
 import org.apache.arrow.flight.FlightProducer.StreamListener;
 import org.apache.arrow.flight.auth.BasicClientAuthHandler;
 import org.apache.arrow.flight.auth.ClientAuthInterceptor;
@@ -54,8 +56,11 @@ import org.apache.arrow.flight.impl.FlightServiceGrpc.FlightServiceStub;
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.util.Preconditions;
 import org.apache.arrow.vector.VectorSchemaRoot;
+import org.apache.arrow.vector.VectorUnloader;
+import org.apache.arrow.vector.compression.CompressionCodec;
 import org.apache.arrow.vector.dictionary.DictionaryProvider;
 import org.apache.arrow.vector.dictionary.DictionaryProvider.MapDictionaryProvider;
+import org.apache.arrow.vector.ipc.message.IpcOption;
 
 /**
  * Client for Flight services.
@@ -75,17 +80,20 @@ public class BulkFlightClient implements AutoCloseable {
     private final MethodDescriptor<ArrowMessage, Flight.PutResult> doPutDescriptor;
     private final List<FlightClientMiddleware.Factory> middleware;
 
+    private final ArrowCompressionType compressionType;
+
     /**
      * Create a Flight client from an allocator and a gRPC channel.
      */
     BulkFlightClient(
             BufferAllocator incomingAllocator,
             ManagedChannel channel,
-            List<FlightClientMiddleware.Factory> middleware) {
+            List<FlightClientMiddleware.Factory> middleware,
+            ArrowCompressionType compressionType) {
         this.allocator = incomingAllocator.newChildAllocator("flight-client", 0, Long.MAX_VALUE);
         this.channel = channel;
         this.middleware = middleware;
-
+        this.compressionType = compressionType;
         ClientInterceptor[] interceptors =
                 new ClientInterceptor[] {authInterceptor, new ClientInterceptorAdapter(middleware)};
 
@@ -204,7 +212,12 @@ public class BulkFlightClient implements AutoCloseable {
             SetStreamObserver resultObserver = new SetStreamObserver(this.allocator, metadataListener, onReadyHandler);
             ClientCallStreamObserver<ArrowMessage> observer =
                     (ClientCallStreamObserver<ArrowMessage>) ClientCalls.asyncBidiStreamingCall(call, resultObserver);
-            return new PutObserver(descriptor, observer, metadataListener::isCancelled, metadataListener::getResult);
+            return new PutObserver(
+                    descriptor,
+                    observer,
+                    metadataListener::isCancelled,
+                    metadataListener::getResult,
+                    this.compressionType);
         } catch (StatusRuntimeException sre) {
             throw StatusUtils.fromGrpcRuntimeException(sre);
         }
@@ -256,8 +269,10 @@ public class BulkFlightClient implements AutoCloseable {
      * The implementation of a {@link ClientStreamListener} for writing data to a Flight server.
      */
     static class PutObserver extends OutboundStreamListenerImpl implements ClientStreamListener {
+        private final FlightDescriptor descriptor;
         private final BooleanSupplier isCancelled;
         private final Runnable getResult;
+        private final ArrowCompressionType compressionType;
 
         /**
          * Create a new client stream listener.
@@ -271,14 +286,51 @@ public class BulkFlightClient implements AutoCloseable {
                 FlightDescriptor descriptor,
                 ClientCallStreamObserver<ArrowMessage> observer,
                 BooleanSupplier isCancelled,
-                Runnable getResult) {
+                Runnable getResult,
+                ArrowCompressionType compressionType) {
             super(descriptor, observer);
             Preconditions.checkNotNull(descriptor, "descriptor must be provided");
             Preconditions.checkNotNull(isCancelled, "isCancelled must be provided");
             Preconditions.checkNotNull(getResult, "getResult must be provided");
+            this.descriptor = descriptor;
             this.isCancelled = isCancelled;
             this.getResult = getResult;
+            this.compressionType = compressionType;
             this.unloader = null;
+        }
+
+        @Override
+        public void start(VectorSchemaRoot root, DictionaryProvider dictionaries, IpcOption option) {
+            this.option = option;
+            try {
+                DictionaryUtils.generateSchemaMessages(
+                        root.getSchema(), this.descriptor, dictionaries, option, super.responseObserver::onNext);
+            } catch (RuntimeException e) {
+                // Propagate runtime exceptions, like those raised when trying to write unions with V4 metadata
+                throw e;
+            } catch (Exception e) {
+                // Only happens if closing buffers somehow fails - indicates application is an unknown state so
+                // propagate
+                // the exception
+                throw new RuntimeException("Could not generate and send all schema messages", e);
+            }
+
+            CompressionCodec codec = null;
+            switch (this.compressionType) {
+                case Zstd:
+                    codec = CommonsCompressionFactory.INSTANCE.createCodec(
+                            org.apache.arrow.vector.compression.CompressionUtil.CodecType.ZSTD);
+                    break;
+                case Lz4:
+                    // codec = CommonsCompressionFactory.INSTANCE.createCodec(
+                    //         org.apache.arrow.vector.compression.CompressionUtil.CodecType.LZ4_FRAME);
+                    throw new UnsupportedOperationException(
+                            "LZ4 compression is not currently supported by the database");
+                default:
+                    break;
+            }
+            // We include the null count and align buffers to be compatible with Flight/C++
+            super.unloader = new VectorUnloader(root, /* includeNullCount */ true, codec, /* alignBuffers */ true);
         }
 
         @Override
@@ -374,6 +426,7 @@ public class BulkFlightClient implements AutoCloseable {
         private Location location;
         private int maxInboundMessageSize = FlightServer.MAX_GRPC_MESSAGE_SIZE;
         private List<FlightClientMiddleware.Factory> middleware = new ArrayList<>();
+        private ArrowCompressionType compressionType = ArrowCompressionType.None;
         private TlsOptions tlsOptions;
 
         private Builder() {}
@@ -402,6 +455,11 @@ public class BulkFlightClient implements AutoCloseable {
 
         public Builder intercept(FlightClientMiddleware.Factory factory) {
             middleware.add(factory);
+            return this;
+        }
+
+        public Builder compressionType(ArrowCompressionType compressionType) {
+            this.compressionType = compressionType;
             return this;
         }
 
@@ -455,7 +513,7 @@ public class BulkFlightClient implements AutoCloseable {
             }
 
             builder.maxTraceEvents(MAX_CHANNEL_TRACE_EVENTS).maxInboundMessageSize(this.maxInboundMessageSize);
-            return new BulkFlightClient(this.allocator, builder.build(), this.middleware);
+            return new BulkFlightClient(this.allocator, builder.build(), this.middleware, this.compressionType);
         }
     }
 
