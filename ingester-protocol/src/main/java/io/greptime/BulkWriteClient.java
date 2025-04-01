@@ -91,8 +91,23 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
 
         Schema arrowSchema = ArrowHelper.createSchema(schema);
 
+        ArrowCompressionType compressionType = null;
+        switch (ctx.getCompression()) {
+            case Zstd:
+                compressionType = ArrowCompressionType.Zstd;
+                break;
+            case Lz4:
+                compressionType = ArrowCompressionType.Lz4;
+                break;
+            case None:
+                compressionType = ArrowCompressionType.None;
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported compression type: " + ctx.getCompression());
+        }
+
         BulkWriteManager manager = BulkWriteManager.create(
-                endpoint, allocatorInitReservation, allocatorMaxAllocation, this.opts.getTlsOptions());
+                endpoint, allocatorInitReservation, allocatorMaxAllocation, compressionType, this.opts.getTlsOptions());
         BulkWriteService writer = manager.intoBulkWriteStream(
                 database, table, arrowSchema, timeoutMsPerMessage, headerOption, execOption);
         writer.start();

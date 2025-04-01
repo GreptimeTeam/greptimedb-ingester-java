@@ -14,24 +14,22 @@
  * limitations under the License.
  */
 
-package io.greptime.rpc;
+package io.greptime;
 
 /**
- * Compression type for RPC.
+ * The compression type for Arrow messages.
  */
-public enum Compression {
-    Zstd("zstd"),
-    Gzip("gzip"),
-    Lz4("lz4"),
-    None("none");
-
-    private final String name;
-
-    Compression(String name) {
-        this.name = name;
-    }
-
-    public String getName() {
-        return this.name;
-    }
+public enum ArrowCompressionType {
+    /**
+     * Zstd compression.
+     */
+    Zstd,
+    /**
+     * Lz4 compression.
+     */
+    Lz4,
+    /**
+     * No compression.
+     */
+    None
 }

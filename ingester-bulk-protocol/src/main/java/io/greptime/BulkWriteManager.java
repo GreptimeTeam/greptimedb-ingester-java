@@ -102,11 +102,16 @@ public class BulkWriteManager implements AutoCloseable {
      * @param endpoint the endpoint of the server
      * @param allocatorInitReservation the initial space reservation (obtained from this allocator)
      * @param allocatorMaxAllocation the maximum amount of space the new child allocator can allocate
+     * @param compressionType the compression type to use for arrow messages
      * @param tlsOptions the TLS options for the Flight client
      * @return a BulkWriteManager instance
      */
     public static BulkWriteManager create(
-            Endpoint endpoint, long allocatorInitReservation, long allocatorMaxAllocation, TlsOptions tlsOptions) {
+            Endpoint endpoint,
+            long allocatorInitReservation,
+            long allocatorMaxAllocation,
+            ArrowCompressionType compressionType,
+            TlsOptions tlsOptions) {
         Location location = Location.forGrpcInsecure(endpoint.getAddr(), endpoint.getPort());
 
         String allocatorName = String.format("BufferAllocator(%s)", location);
@@ -121,6 +126,7 @@ public class BulkWriteManager implements AutoCloseable {
         BulkFlightClient flightClient = BulkFlightClient.builder()
                 .location(location)
                 .allocator(allocator)
+                .compressionType(compressionType)
                 .tlsOptions(tlsOptions)
                 .build();
         BulkWriteManager client = new BulkWriteManager(endpoint, flightClient, allocator);

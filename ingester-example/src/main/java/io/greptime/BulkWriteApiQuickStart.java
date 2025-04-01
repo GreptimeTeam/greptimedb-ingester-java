@@ -20,6 +20,8 @@ import io.greptime.common.util.StringBuilderHelper;
 import io.greptime.models.DataType;
 import io.greptime.models.Table;
 import io.greptime.models.TableSchema;
+import io.greptime.rpc.Compression;
+import io.greptime.rpc.Context;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.HashMap;
@@ -77,7 +79,12 @@ public class BulkWriteApiQuickStart {
                 .addField("field_json", DataType.Json)
                 .build();
 
-        try (BulkStreamWriter bulkStreamWriter = greptimeDB.bulkStreamWriter(schema)) {
+        Context ctx = Context.newDefault().withCompression(Compression.None);
+        long allocatorInitReservation = 0;
+        long allocatorMaxAllocation = 1024 * 1024 * 1024;
+        long timeoutMsPerMessage = 10000;
+        try (BulkStreamWriter bulkStreamWriter = greptimeDB.bulkStreamWriter(
+                schema, allocatorInitReservation, allocatorMaxAllocation, timeoutMsPerMessage, ctx)) {
 
             // Write 10 times, each time write 100000 rows
             for (int i = 0; i < 100; i++) {
@@ -88,7 +95,9 @@ public class BulkWriteApiQuickStart {
                     Object[] row = generateOneRow(100000);
                     table.addRow(row);
                 }
+                // Complete the table; adding rows is no longer permitted.
                 table.complete();
+
                 LOG.info("Prepare data, time cost: {}ms", System.currentTimeMillis() - start);
 
                 start = System.currentTimeMillis();
