@@ -190,11 +190,13 @@ public class BulkWriteManager implements AutoCloseable {
 
         @Override
         public void onAllocation(long size) {
+            LOG.debug("onAllocation: {}", size);
             ALLOCATION_BYTES.inc(size);
         }
 
         @Override
         public void onRelease(long size) {
+            LOG.debug("onRelease: {}", size);
             ALLOCATION_BYTES.dec(size);
         }
 
