@@ -130,6 +130,16 @@ public interface Table {
     }
 
     /**
+     * `TableBufferRoot` is an internal interface that represents a reference to table data stored in direct memory.
+     * It provides access to the underlying memory allocation for efficient bulk data operations.
+     *
+     * <p>
+     * `TableBufferRoot` is not thread-safe.
+     * </p>
+     */
+    interface TableBufferRoot extends Table {}
+
+    /**
      * Create a table from a table schema.
      *
      * @param tableSchema the table schema
@@ -140,13 +150,13 @@ public interface Table {
     }
 
     /**
-     * Create a bulk table from a table schema and a vector schema root.
+     * Create a bulk table buffer root from a table schema and a vector schema root.
      *
      * @param tableSchema the table schema
      * @param root the vector schema root
-     * @return a table
+     * @return a table buffer root
      */
-    static Table from(TableSchema tableSchema, VectorSchemaRoot root) {
+    static TableBufferRoot tableBufferRoot(TableSchema tableSchema, VectorSchemaRoot root) {
         return new BulkTableBuilder(tableSchema, root).build();
     }
 
@@ -324,7 +334,7 @@ public interface Table {
         }
     }
 
-    class BulkTable implements Table {
+    class BulkTable implements TableBufferRoot {
 
         private volatile boolean completed = false;
 

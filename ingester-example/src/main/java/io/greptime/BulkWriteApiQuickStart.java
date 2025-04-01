@@ -80,9 +80,9 @@ public class BulkWriteApiQuickStart {
         try (BulkStreamWriter bulkStreamWriter = greptimeDB.bulkStreamWriter(schema)) {
 
             // Write 10 times, each time write 100000 rows
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 100; i++) {
                 long start = System.currentTimeMillis();
-                Table table = bulkStreamWriter.allocateTableBuffer();
+                Table.TableBufferRoot table = bulkStreamWriter.tableBufferRoot();
                 for (int j = 0; j < 100000; j++) {
                     // with 100000 cardinality
                     Object[] row = generateOneRow(100000);

@@ -129,8 +129,8 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
         }
 
         @Override
-        public Table allocateTableBuffer() {
-            return Table.from(this.tableSchema, this.writer.getRoot());
+        public Table.TableBufferRoot tableBufferRoot() {
+            return Table.tableBufferRoot(this.tableSchema, this.writer.getRoot());
         }
 
         @Override
