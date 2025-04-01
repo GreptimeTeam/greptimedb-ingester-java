@@ -88,7 +88,9 @@ public class BulkWriteApiQuickStart {
                     Object[] row = generateOneRow(100000);
                     table.addRow(row);
                 }
+                // Complete the table; adding rows is no longer permitted.
                 table.complete();
+
                 LOG.info("Prepare data, time cost: {}ms", System.currentTimeMillis() - start);
 
                 start = System.currentTimeMillis();

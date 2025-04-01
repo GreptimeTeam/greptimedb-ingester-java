@@ -70,6 +70,9 @@ public class TestConnector {
                 // The default is 10 * 65536
                 .defaultStreamMaxWritePointsPerSecond(10 * 65536)
                 // Optional, the default value is fine.
+                // Use zero copy write in bulk write.
+                .useZeroCopyWriteInBulkWrite(true)
+                // Optional, the default value is fine.
                 // Refresh frequency of route tables. The background refreshes all route tables
                 // periodically. By default, the route tables will not be refreshed.
                 .routeTableRefreshPeriodSeconds(-1)
