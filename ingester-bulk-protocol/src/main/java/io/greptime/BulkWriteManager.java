@@ -66,7 +66,7 @@ public class BulkWriteManager implements AutoCloseable {
 
         private static BufferAllocator createRootAllocator() {
             // max allocation size in bytes
-            long allocationLimit = SystemPropertyUtil.getLong(Keys.FLIGHT_ALLOCATION_LIMIT, Long.MAX_VALUE);
+            long allocationLimit = SystemPropertyUtil.getLong(Keys.FLIGHT_ALLOCATION_LIMIT, 1024 * 1024 * 1024);
             BufferAllocator rootAllocator = new RootAllocator(new FlightAllocationListener(), allocationLimit);
 
             // Add a shutdown hook to close the root allocator when the JVM exits
