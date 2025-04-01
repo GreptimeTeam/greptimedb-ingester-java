@@ -373,7 +373,6 @@ public class BulkFlightClient implements AutoCloseable {
         private BufferAllocator allocator;
         private Location location;
         private int maxInboundMessageSize = FlightServer.MAX_GRPC_MESSAGE_SIZE;
-        private String overrideHostname = null;
         private List<FlightClientMiddleware.Factory> middleware = new ArrayList<>();
         private TlsOptions tlsOptions;
 
@@ -382,12 +381,6 @@ public class BulkFlightClient implements AutoCloseable {
         private Builder(BufferAllocator allocator, Location location) {
             this.allocator = Preconditions.checkNotNull(allocator);
             this.location = Preconditions.checkNotNull(location);
-        }
-
-        /** Override the hostname checked for TLS. Use with caution in production. */
-        public Builder overrideHostname(final String hostname) {
-            this.overrideHostname = hostname;
-            return this;
         }
 
         /** Set the maximum inbound message size. */
@@ -423,25 +416,25 @@ public class BulkFlightClient implements AutoCloseable {
         public BulkFlightClient build() {
             NettyChannelBuilder builder;
 
-            switch (location.getUri().getScheme()) {
+            switch (this.location.getUri().getScheme()) {
                 case LocationSchemes.GRPC:
                 case LocationSchemes.GRPC_INSECURE:
                 case LocationSchemes.GRPC_TLS: {
-                    builder = NettyChannelBuilder.forAddress(location.toSocketAddress());
+                    builder = NettyChannelBuilder.forAddress(this.location.toSocketAddress());
                     break;
                 }
                 default:
                     throw new IllegalArgumentException(
-                            "Scheme is not supported: " + location.getUri().getScheme());
+                            "Scheme is not supported: " + this.location.getUri().getScheme());
             }
 
             if (this.tlsOptions != null) {
                 builder.useTransportSecurity();
                 try {
                     SslContextBuilder sslContextBuilder = GrpcSslContexts.forClient();
-                    Optional<File> clientCertChain = tlsOptions.getClientCertChain();
-                    Optional<File> privateKey = tlsOptions.getPrivateKey();
-                    Optional<String> privateKeyPassword = tlsOptions.getPrivateKeyPassword();
+                    Optional<File> clientCertChain = this.tlsOptions.getClientCertChain();
+                    Optional<File> privateKey = this.tlsOptions.getPrivateKey();
+                    Optional<String> privateKeyPassword = this.tlsOptions.getPrivateKeyPassword();
 
                     if (clientCertChain.isPresent() && privateKey.isPresent()) {
                         if (privateKeyPassword.isPresent()) {
@@ -452,21 +445,17 @@ public class BulkFlightClient implements AutoCloseable {
                         }
                     }
 
-                    tlsOptions.getRootCerts().ifPresent(sslContextBuilder::trustManager);
+                    this.tlsOptions.getRootCerts().ifPresent(sslContextBuilder::trustManager);
                     builder.sslContext(sslContextBuilder.build());
                 } catch (SSLException e) {
                     throw new RuntimeException("Failed to configure SslContext", e);
-                }
-
-                if (this.overrideHostname != null) {
-                    builder.overrideAuthority(this.overrideHostname);
                 }
             } else {
                 builder.usePlaintext();
             }
 
-            builder.maxTraceEvents(MAX_CHANNEL_TRACE_EVENTS).maxInboundMessageSize(maxInboundMessageSize);
-            return new BulkFlightClient(allocator, builder.build(), middleware);
+            builder.maxTraceEvents(MAX_CHANNEL_TRACE_EVENTS).maxInboundMessageSize(this.maxInboundMessageSize);
+            return new BulkFlightClient(this.allocator, builder.build(), this.middleware);
         }
     }
 
