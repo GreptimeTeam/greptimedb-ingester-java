@@ -29,7 +29,9 @@ import io.greptime.common.util.Strings;
 import io.greptime.models.Err;
 import io.greptime.models.Result;
 import io.greptime.models.Table;
+import io.greptime.models.TableSchema;
 import io.greptime.models.WriteOk;
+import io.greptime.options.BulkWriteOptions;
 import io.greptime.options.GreptimeOptions;
 import io.greptime.options.RouterOptions;
 import io.greptime.options.WriteOptions;
@@ -53,7 +55,7 @@ import org.slf4j.LoggerFactory;
 /**
  * The GreptimeDB client.
  */
-public class GreptimeDB implements Write, WriteObject, Lifecycle<GreptimeOptions>, Health, Display {
+public class GreptimeDB implements Write, WriteObject, BulkWrite, Health, Lifecycle<GreptimeOptions>, Display {
 
     private static final Logger LOG = LoggerFactory.getLogger(GreptimeDB.class);
 
@@ -70,6 +72,7 @@ public class GreptimeDB implements Write, WriteObject, Lifecycle<GreptimeOptions
     private GreptimeOptions opts;
     private RouterClient routerClient;
     private WriteClient writeClient;
+    private BulkWriteClient bulkWriteClient;
 
     /**
      * Returns all instances of {@link GreptimeDB}.
@@ -105,6 +108,7 @@ public class GreptimeDB implements Write, WriteObject, Lifecycle<GreptimeOptions
 
         this.routerClient = makeRouteClient(opts);
         this.writeClient = makeWriteClient(opts, this.routerClient);
+        this.bulkWriteClient = makeBulkWriteClient(opts, this.routerClient);
 
         INSTANCES.put(this.id, this);
 
@@ -117,6 +121,10 @@ public class GreptimeDB implements Write, WriteObject, Lifecycle<GreptimeOptions
     public void shutdownGracefully() {
         if (!this.started.compareAndSet(true, false)) {
             return;
+        }
+
+        if (this.bulkWriteClient != null) {
+            this.bulkWriteClient.shutdownGracefully();
         }
 
         if (this.writeClient != null) {
@@ -174,11 +182,25 @@ public class GreptimeDB implements Write, WriteObject, Lifecycle<GreptimeOptions
 
     @Override
     public StreamWriter<Table, WriteOk> streamWriter(int maxPointsPerSecond, Context ctx) {
+        ensureInitialized();
         return this.writeClient.streamWriter(maxPointsPerSecond, attachCtx(ctx));
     }
 
     @Override
+    public BulkStreamWriter bulkStreamWriter(
+            TableSchema schema,
+            long allocatorInitReservation,
+            long allocatorMaxAllocation,
+            long timeoutMsPerMessage,
+            Context ctx) {
+        ensureInitialized();
+        return this.bulkWriteClient.bulkStreamWriter(
+                schema, allocatorInitReservation, allocatorMaxAllocation, timeoutMsPerMessage, attachCtx(ctx));
+    }
+
+    @Override
     public CompletableFuture<Map<Endpoint, Boolean>> checkHealth() {
+        ensureInitialized();
         return this.routerClient.checkHealth();
     }
 
@@ -206,17 +228,24 @@ public class GreptimeDB implements Write, WriteObject, Lifecycle<GreptimeOptions
             this.writeClient.display(out);
         }
 
+        if (this.bulkWriteClient != null) {
+            out.println("");
+            this.bulkWriteClient.display(out);
+        }
+
         out.println("");
     }
 
     @Override
     public String toString() {
-        return "GreptimeDB{" + "id="
-                + id + "version="
-                + VERSION + ", opts="
-                + opts + ", routerClient="
-                + routerClient + ", writeClient="
-                + writeClient + '}';
+        return "GreptimeDB{"
+                + "id=" + id
+                + ", version=" + VERSION
+                + ", opts=" + opts
+                + ", routerClient=" + routerClient
+                + ", writeClient=" + writeClient
+                + ", bulkWriteClient=" + bulkWriteClient
+                + '}';
     }
 
     private Context attachCtx(Context ctx) {
@@ -251,9 +280,19 @@ public class GreptimeDB implements Write, WriteObject, Lifecycle<GreptimeOptions
         writeOpts.setRouterClient(routerClient);
         WriteClient writeClient = new WriteClient();
         if (!writeClient.init(writeOpts)) {
-            throw new IllegalStateException("Failed to start the write client failed");
+            throw new IllegalStateException("Failed to start the write client");
         }
         return writeClient;
+    }
+
+    private static BulkWriteClient makeBulkWriteClient(GreptimeOptions opts, RouterClient routerClient) {
+        BulkWriteOptions bulkWriteOpts = opts.getBulkWriteOptions();
+        bulkWriteOpts.setRouterClient(routerClient);
+        BulkWriteClient bulkWriteClient = new BulkWriteClient();
+        if (!bulkWriteClient.init(bulkWriteOpts)) {
+            throw new IllegalStateException("Failed to start the bulk write client");
+        }
+        return bulkWriteClient;
     }
 
     static final class RpcConnectionObserver implements RpcClient.ConnectionObserver {

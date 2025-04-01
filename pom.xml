@@ -51,6 +51,7 @@
         <module>ingester-protocol</module>
         <module>ingester-example</module>
         <module>ingester-all</module>
+        <module>ingester-bulk-protocol</module>
     </modules>
 
     <scm>
@@ -79,7 +80,7 @@
         <!-- libs -->
         <gson.version>2.9.1</gson.version>
         <guava.version>32.0.1-jre</guava.version>
-        <protobuf.version>3.21.12</protobuf.version>
+        <protobuf.version>3.25.1</protobuf.version>
         <slf4j.version>1.7.36</slf4j.version>
 
         <!-- tests -->
@@ -101,6 +102,11 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>ingester-bulk-protocol</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>ingester-common</artifactId>

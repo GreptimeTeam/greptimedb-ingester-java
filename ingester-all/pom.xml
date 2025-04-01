@@ -43,5 +43,9 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>ingester-protocol</artifactId>
         </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>ingester-bulk-protocol</artifactId>
+        </dependency>
     </dependencies>
 </project>

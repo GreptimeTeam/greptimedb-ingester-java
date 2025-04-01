@@ -45,6 +45,7 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
     private RpcOptions rpcOptions;
     private RouterOptions routerOptions;
     private WriteOptions writeOptions;
+    private BulkWriteOptions bulkWriteOptions;
     private String database;
 
     public List<Endpoint> getEndpoints() {
@@ -79,6 +80,14 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         this.writeOptions = writeOptions;
     }
 
+    public BulkWriteOptions getBulkWriteOptions() {
+        return bulkWriteOptions;
+    }
+
+    public void setBulkWriteOptions(BulkWriteOptions bulkWriteOptions) {
+        this.bulkWriteOptions = bulkWriteOptions;
+    }
+
     public String getDatabase() {
         return database;
     }
@@ -110,7 +119,8 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
                 + endpoints + ", rpcOptions="
                 + rpcOptions + ", routerOptions="
                 + routerOptions + ", writeOptions="
-                + writeOptions + ", database='"
+                + writeOptions + ", bulkWriteOptions="
+                + bulkWriteOptions + ", database='"
                 + database + '\'' + '}';
     }
 
@@ -121,7 +131,7 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         Ensures.ensureNonNull(opts.getRpcOptions(), "null `rpcOptions`");
         Ensures.ensureNonNull(opts.getRouterOptions(), "null `routerOptions`");
         Ensures.ensureNonNull(opts.getWriteOptions(), "null `writeOptions`");
-
+        Ensures.ensureNonNull(opts.getBulkWriteOptions(), "null `bulkWriteOptions`");
         return opts;
     }
 
@@ -156,6 +166,8 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         private int maxInFlightWritePoints = DEFAULT_MAX_IN_FLIGHT_WRITE_POINTS;
         private LimitedPolicy writeLimitedPolicy = LimitedPolicy.defaultWriteLimitedPolicy();
         private int defaultStreamMaxWritePointsPerSecond = DEFAULT_DEFAULT_STREAM_MAX_WRITE_POINTS_PER_SECOND;
+        // Use zero copy write in bulk write
+        private boolean useZeroCopyWriteInBulkWrite = false;
         // Refresh frequency of route tables. The background refreshes all route tables periodically.
         // If the value is less than or equal to 0, the route tables will not be refreshed.
         private long routeTableRefreshPeriodSeconds = DEFAULT_ROUTE_TABLE_REFRESH_PERIOD_SECONDS;
@@ -265,6 +277,17 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         }
 
         /**
+         * Use zero copy write in bulk write.
+         *
+         * @param useZeroCopyWriteInBulkWrite use zero copy write in bulk write
+         * @return this builder
+         */
+        public Builder useZeroCopyWriteInBulkWrite(boolean useZeroCopyWriteInBulkWrite) {
+            this.useZeroCopyWriteInBulkWrite = useZeroCopyWriteInBulkWrite;
+            return this;
+        }
+
+        /**
          * Refresh frequency of route tables. The background refreshes all route tables
          * periodically. By default, By default, the route tables will not be refreshed.
          *
@@ -329,6 +352,7 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
             opts.setDatabase(this.database);
             opts.setRouterOptions(routerOptions());
             opts.setWriteOptions(writeOptions());
+            opts.setBulkWriteOptions(bulkWriteOptions());
             return GreptimeOptions.checkSelf(opts);
         }
 
@@ -351,6 +375,16 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
             writeOpts.setLimitedPolicy(this.writeLimitedPolicy);
             writeOpts.setDefaultStreamMaxWritePointsPerSecond(this.defaultStreamMaxWritePointsPerSecond);
             return writeOpts;
+        }
+
+        private BulkWriteOptions bulkWriteOptions() {
+            BulkWriteOptions bulkWriteOpts = new BulkWriteOptions();
+            bulkWriteOpts.setDatabase(this.database);
+            bulkWriteOpts.setAuthInfo(this.authInfo);
+            bulkWriteOpts.setAsyncPool(this.asyncPool);
+            bulkWriteOpts.setUseZeroCopyWrite(this.useZeroCopyWriteInBulkWrite);
+            bulkWriteOpts.setTlsOptions(this.tlsOptions);
+            return bulkWriteOpts;
         }
     }
 }

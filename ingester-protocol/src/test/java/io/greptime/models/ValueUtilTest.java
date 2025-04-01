@@ -140,6 +140,23 @@ public class ValueUtilTest {
     }
 
     @Test
+    public void testGetDecimal128BigEndianBytes() {
+        Common.DecimalTypeExtension decimalTypeExtension = Common.DecimalTypeExtension.newBuilder()
+                .setPrecision(38)
+                .setScale(9)
+                .build();
+        Common.ColumnDataTypeExtension dataTypeExtension = Common.ColumnDataTypeExtension.newBuilder()
+                .setDecimalType(decimalTypeExtension)
+                .build();
+        byte[] bytes = ValueUtil.getDecimal128BigEndianBytes(dataTypeExtension, new BigDecimal("123.456"));
+        Assert.assertEquals(bytes.length, 16);
+        // Convert bytes to BigDecimal
+        BigInteger unscaledValue = new BigInteger(bytes);
+        BigDecimal value = new BigDecimal(unscaledValue, decimalTypeExtension.getScale());
+        Assert.assertEquals(new BigDecimal("123.456000000"), value);
+    }
+
+    @Test
     public void testGetJsonStringShouldReturnJsonStringForObject() {
         String jsonString = ValueUtil.getJsonString(new TestObject("test", 123));
         Assert.assertEquals("{\"name\":\"test\",\"value\":123}", jsonString);
