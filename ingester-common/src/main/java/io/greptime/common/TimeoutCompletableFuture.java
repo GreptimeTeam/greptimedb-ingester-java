@@ -51,10 +51,11 @@ public class TimeoutCompletableFuture<T> extends CompletableFuture<T> {
     public TimeoutCompletableFuture<T> scheduleTimeout() {
         SCHEDULER.schedule(
                 () -> {
-                    if (!isDone()) {
-                        completeExceptionally(
-                                new TimeoutException("Operation timed out after " + this.timeout + " " + this.unit));
+                    if (isCancelled() || isDone()) {
+                        return;
                     }
+                    completeExceptionally(
+                            new TimeoutException("Operation timed out after " + this.timeout + " " + this.unit));
                 },
                 this.timeout,
                 this.unit);
