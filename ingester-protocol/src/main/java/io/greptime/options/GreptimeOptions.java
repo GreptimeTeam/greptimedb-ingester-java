@@ -167,7 +167,7 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         private LimitedPolicy writeLimitedPolicy = LimitedPolicy.defaultWriteLimitedPolicy();
         private int defaultStreamMaxWritePointsPerSecond = DEFAULT_DEFAULT_STREAM_MAX_WRITE_POINTS_PER_SECOND;
         // Use zero copy write in bulk write
-        private boolean useZeroCopyWriteInBulkWrite = false;
+        private boolean useZeroCopyWriteInBulkWrite = true;
         // Refresh frequency of route tables. The background refreshes all route tables periodically.
         // If the value is less than or equal to 0, the route tables will not be refreshed.
         private long routeTableRefreshPeriodSeconds = DEFAULT_ROUTE_TABLE_REFRESH_PERIOD_SECONDS;

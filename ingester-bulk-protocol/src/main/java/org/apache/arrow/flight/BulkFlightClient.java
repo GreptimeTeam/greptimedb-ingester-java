@@ -201,7 +201,7 @@ public class BulkFlightClient implements AutoCloseable {
 
         try {
             ClientCall<ArrowMessage, Flight.PutResult> call = asyncStubNewCall(this.doPutDescriptor, options);
-            SetStreamObserver resultObserver = new SetStreamObserver(allocator, metadataListener, onReadyHandler);
+            SetStreamObserver resultObserver = new SetStreamObserver(this.allocator, metadataListener, onReadyHandler);
             ClientCallStreamObserver<ArrowMessage> observer =
                     (ClientCallStreamObserver<ArrowMessage>) ClientCalls.asyncBidiStreamingCall(call, resultObserver);
             return new PutObserver(descriptor, observer, metadataListener::isCancelled, metadataListener::getResult);
