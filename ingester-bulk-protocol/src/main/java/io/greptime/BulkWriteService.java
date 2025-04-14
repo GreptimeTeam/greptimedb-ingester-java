@@ -16,7 +16,11 @@
 
 package io.greptime;
 
+import com.google.gson.Gson;
+import com.google.gson.annotations.SerializedName;
+import com.google.protobuf.ByteString;
 import io.greptime.common.TimeoutCompletableFuture;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -48,6 +52,9 @@ import org.apache.arrow.vector.types.pojo.Schema;
  * providing a streamlined interface for bulk write operations.
  */
 public class BulkWriteService implements AutoCloseable {
+
+    // Gson's instances are Thread-safe we can reuse them freely across multiple threads.
+    private static final Gson GSON = new Gson();
 
     private final AtomicLong requestIdGenerator = new AtomicLong(0);
 
@@ -111,40 +118,30 @@ public class BulkWriteService implements AutoCloseable {
     }
 
     /**
-     * Wait for the stream to be ready.
-     *
-     * @return true if the stream is ready to send the next message, false otherwise
-     * @throws InterruptedException if the thread is interrupted
-     * @throws ExecutionException if the future is completed with an exception
-     * @throws TimeoutException if the future is not completed within the timeout
-     *
-     * <p>
-     * Note: This method typically blocks until the stream is ready, but you should still check its return value.
-     * If it returns false, it indicates the stream is still not ready. Attempting new writes in this state
-     * would waste CPU resources on spinning to check readiness.
-     */
-    public boolean tryWaitStreamReady() throws InterruptedException, ExecutionException {
-        return this.onReadyHandler.waitStreamReady();
-    }
-
-    /**
      * Send the current contents of the associated {@link VectorSchemaRoot}.
      *
      * <p>This will not necessarily block until the message is actually sent; it may buffer messages
      * in memory. Use {@link #isStreamReady()} to check if there is backpressure and avoid excessive buffering.
      *
-     * @return a future that completes with the put result.
+     * @return a PutStage object that contains the stream ready future, the write result future and the number of in-flight requests.
      */
-    public CompletableFuture<PutResult> putNext() {
-        this.onReadyHandler.trySetCurrentFuture();
-        try (ArrowBuf metadataBuf = this.allocator.buffer(8)) {
-            long requestId = this.requestIdGenerator.incrementAndGet();
-            // TODO(jeremy): Use RequestHeader
-            metadataBuf.setLong(0, requestId);
-            CompletableFutureWithRequest future = new CompletableFutureWithRequest(requestId, this.timeoutMs);
-            this.metadataListener.attach(requestId, future);
+    public PutStage putNext() {
+        CompletableFuture<Boolean> streamReadyFuture = this.onReadyHandler.nextReadyFuture();
+        long requestId = this.requestIdGenerator.incrementAndGet();
+        byte[] metadata = new RequestMetadata(requestId).toJsonBytesUtf8();
+        try (ArrowBuf metadataBuf = this.allocator.buffer(metadata.length)) {
+            metadataBuf.setBytes(0, metadata);
+            CompletableFutureWithRequest writeResultFuture =
+                    new CompletableFutureWithRequest(requestId, this.timeoutMs);
+            this.metadataListener.attach(requestId, writeResultFuture);
+            writeResultFuture.whenComplete((affectedRows, t) -> {
+                if (t != null) {
+                    // The stream ready future cannot catch the exception, so we need to complete it here.
+                    streamReadyFuture.completeExceptionally(t);
+                }
+            });
             this.listener.putNext(metadataBuf);
-            return future;
+            return new PutStage(streamReadyFuture, writeResultFuture, this.metadataListener.numInFlight());
         } finally {
             this.root.clear();
         }
@@ -170,6 +167,33 @@ public class BulkWriteService implements AutoCloseable {
         AutoCloseables.close(this.root, this.manager);
     }
 
+    public static class PutStage {
+        private final CompletableFuture<Boolean> streamReadyFuture;
+        private final CompletableFuture<Integer> writeResultFuture;
+        private final int numInFlight;
+
+        public PutStage(
+                CompletableFuture<Boolean> streamReadyFuture,
+                CompletableFuture<Integer> writeResultFuture,
+                int numInFlight) {
+            this.streamReadyFuture = streamReadyFuture;
+            this.writeResultFuture = writeResultFuture;
+            this.numInFlight = numInFlight;
+        }
+
+        public CompletableFuture<Boolean> streamReadyFuture() {
+            return this.streamReadyFuture;
+        }
+
+        public CompletableFuture<Integer> writeResultFuture() {
+            return this.writeResultFuture;
+        }
+
+        public int numInFlight() {
+            return this.numInFlight;
+        }
+    }
+
     class OnReadyHandler implements Runnable {
         private final AtomicReference<TimeoutCompletableFuture<Boolean>> futureRef = new AtomicReference<>();
 
@@ -181,23 +205,20 @@ public class BulkWriteService implements AutoCloseable {
             }
         }
 
-        public boolean waitStreamReady() throws InterruptedException, ExecutionException {
-            TimeoutCompletableFuture<Boolean> future = this.futureRef.get();
-            if (future == null) {
-                return BulkWriteService.this.listener.isReady();
-            }
-            future.scheduleTimeout();
-            return future.get();
-        }
-
-        public boolean trySetCurrentFuture() {
+        public CompletableFuture<Boolean> nextReadyFuture() {
             TimeoutCompletableFuture<Boolean> future =
                     new TimeoutCompletableFuture<Boolean>(BulkWriteService.this.timeoutMs, TimeUnit.MILLISECONDS);
-            return this.futureRef.compareAndSet(null, future);
+            if (this.futureRef.compareAndSet(null, future)) {
+                future.scheduleTimeout();
+                return future;
+            }
+            // If CAS failed, we just return a completed future with the current status,
+            // maybe the stream is not ready yet.
+            return CompletableFuture.completedFuture(BulkWriteService.this.listener.isReady());
         }
     }
 
-    static class CompletableFutureWithRequest extends TimeoutCompletableFuture<PutResult> {
+    static class CompletableFutureWithRequest extends TimeoutCompletableFuture<Integer> {
         private final long requestId;
 
         public CompletableFutureWithRequest(long requestId, long timeoutMs) {
@@ -207,6 +228,57 @@ public class BulkWriteService implements AutoCloseable {
 
         public long getRequestId() {
             return this.requestId;
+        }
+    }
+
+    static class RequestMetadata {
+        @SerializedName("request_id")
+        private long requestId;
+
+        RequestMetadata() {}
+
+        RequestMetadata(long requestId) {
+            this.requestId = requestId;
+        }
+
+        byte[] toJsonBytesUtf8() {
+            return GSON.toJson(this).getBytes(StandardCharsets.UTF_8);
+        }
+
+        public long getRequestId() {
+            return requestId;
+        }
+
+        public void setRequestId(long requestId) {
+            this.requestId = requestId;
+        }
+    }
+
+    static class ResponseMetadata {
+        @SerializedName("request_id")
+        private long requestId;
+
+        @SerializedName("affected_rows")
+        private int affectedRows;
+
+        static ResponseMetadata fromJson(String json) {
+            return GSON.fromJson(json, ResponseMetadata.class);
+        }
+
+        public long getRequestId() {
+            return requestId;
+        }
+
+        public void setRequestId(long requestId) {
+            this.requestId = requestId;
+        }
+
+        public int getAffectedRows() {
+            return affectedRows;
+        }
+
+        public void setAffectedRows(int affectedRows) {
+            this.affectedRows = affectedRows;
         }
     }
 
@@ -233,17 +305,23 @@ public class BulkWriteService implements AutoCloseable {
             this.futuresInFlight.put(requestId, future);
         }
 
+        public int numInFlight() {
+            return this.futuresInFlight.size();
+        }
+
         @Override
         public void onNext(PutResult val) {
-            ArrowBuf metadata = val.getApplicationMetadata();
-            if (metadata == null || metadata.readableBytes() < 8) {
-                return;
-            }
-            // TODO(jeremy): Use ResponseHeader
-            long requestId = metadata.getLong(0);
-            CompletableFutureWithRequest future = this.futuresInFlight.remove(requestId);
-            if (future != null) {
-                future.complete(val);
+            try (ArrowBuf metadata = val.getApplicationMetadata()) {
+                if (metadata == null) {
+                    return;
+                }
+                String metadataString =
+                        ByteString.copyFrom(metadata.nioBuffer()).toStringUtf8();
+                ResponseMetadata responseMetadata = ResponseMetadata.fromJson(metadataString);
+                CompletableFutureWithRequest future = this.futuresInFlight.remove(responseMetadata.getRequestId());
+                if (future != null) {
+                    future.complete(responseMetadata.getAffectedRows());
+                }
             }
         }
 

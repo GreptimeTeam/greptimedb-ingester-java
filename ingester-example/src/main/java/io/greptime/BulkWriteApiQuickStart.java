@@ -101,9 +101,9 @@ public class BulkWriteApiQuickStart {
                 LOG.info("Prepare data, time cost: {}ms", System.currentTimeMillis() - start);
 
                 start = System.currentTimeMillis();
-                CompletableFuture<Boolean> future = bulkStreamWriter.writeNext();
-                Boolean result = future.get();
-                LOG.info("Write result: {}, time cost: {}ms", result, System.currentTimeMillis() - start);
+                CompletableFuture<Integer> future = bulkStreamWriter.writeNext();
+                Integer result = future.get();
+                LOG.info("Wrote rows: {}, time cost: {}ms", result, System.currentTimeMillis() - start);
             }
 
             bulkStreamWriter.completed();

@@ -16,11 +16,14 @@
 
 package io.greptime;
 
+import com.codahale.metrics.Timer;
 import io.greptime.common.Display;
 import io.greptime.common.Endpoint;
 import io.greptime.common.Lifecycle;
+import io.greptime.common.util.Clock;
 import io.greptime.common.util.Ensures;
 import io.greptime.common.util.MetricExecutor;
+import io.greptime.common.util.MetricsUtil;
 import io.greptime.common.util.SerializingExecutor;
 import io.greptime.models.ArrowHelper;
 import io.greptime.models.AuthInfo;
@@ -31,11 +34,16 @@ import io.greptime.rpc.Context;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import org.apache.arrow.flight.FlightCallHeaders;
 import org.apache.arrow.flight.HeaderCallOption;
 import org.apache.arrow.vector.types.pojo.Schema;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOptions>, Display {
+
+    private static final Logger LOG = LoggerFactory.getLogger(BulkWriteClient.class);
 
     private BulkWriteOptions opts;
     private RouterClient routerClient;
@@ -133,6 +141,24 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
                 + '}';
     }
 
+    static final class InnerMetricHelper {
+        static final Timer BULK_WRITE_WAIT_STREAM_READY_TIME = MetricsUtil.timer("bulk_write_wait_stream_ready_time");
+        static final Timer BULK_WRITE_PREPARE_DATA_TIME = MetricsUtil.timer("bulk_write_prepare_data_time");
+        static final Timer BULK_WRITE_SINGLE_PUT_TIME = MetricsUtil.timer("bulk_write_single_put_time");
+
+        static Timer waitStreamReadyTime() {
+            return BULK_WRITE_WAIT_STREAM_READY_TIME;
+        }
+
+        static Timer prepareDataTime() {
+            return BULK_WRITE_PREPARE_DATA_TIME;
+        }
+
+        static Timer singlePutTime() {
+            return BULK_WRITE_SINGLE_PUT_TIME;
+        }
+    }
+
     static class DefaultBulkStreamWriter implements BulkStreamWriter {
 
         private final BulkWriteService writer;
@@ -149,8 +175,31 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
         }
 
         @Override
-        public CompletableFuture<Boolean> writeNext() {
-            return this.writer.putNext();
+        public CompletableFuture<Integer> writeNext() throws Exception {
+            Clock clock = Clock.defaultClock();
+
+            long startPut = clock.getTick();
+            BulkWriteService.PutStage stage = this.writer.putNext();
+            InnerMetricHelper.prepareDataTime().update(clock.duration(startPut), TimeUnit.MILLISECONDS);
+
+            long startCall = clock.getTick();
+            CompletableFuture<Boolean> streamReady = stage.streamReadyFuture();
+            streamReady.whenComplete((r, t) -> {
+                InnerMetricHelper.waitStreamReadyTime().update(clock.duration(startCall), TimeUnit.MILLISECONDS);
+            });
+
+            CompletableFuture<Integer> writeResult = stage.writeResultFuture();
+            writeResult.whenComplete((r, t) -> {
+                InnerMetricHelper.singlePutTime().update(clock.duration(startCall), TimeUnit.MILLISECONDS);
+            });
+
+            // Wait for the stream ready
+            boolean isReady = streamReady.get();
+            if (!isReady) {
+                LOG.warn("Stream is busy while a new write request is incoming. This may cause CPU busy spinning.");
+            }
+
+            return writeResult;
         }
 
         @Override
