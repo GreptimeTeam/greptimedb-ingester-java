@@ -18,12 +18,20 @@ package io.greptime;
 
 import io.greptime.common.TimeoutCompletableFuture;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.arrow.flight.BulkFlightClient.ClientStreamListener;
 import org.apache.arrow.flight.BulkFlightClient.PutListener;
 import org.apache.arrow.flight.CallOption;
 import org.apache.arrow.flight.FlightDescriptor;
+import org.apache.arrow.flight.PutResult;
+import org.apache.arrow.flight.grpc.StatusUtils;
+import org.apache.arrow.memory.ArrowBuf;
+import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.util.AutoCloseables;
 import org.apache.arrow.vector.VectorSchemaRoot;
 import org.apache.arrow.vector.ipc.message.IpcOption;
@@ -40,23 +48,30 @@ import org.apache.arrow.vector.types.pojo.Schema;
  * providing a streamlined interface for bulk write operations.
  */
 public class BulkWriteService implements AutoCloseable {
+
+    private final AtomicLong requestIdGenerator = new AtomicLong(0);
+
     private final BulkWriteManager manager;
+    private final BufferAllocator allocator;
     private final VectorSchemaRoot root;
     private final ClientStreamListener listener;
     private final OnReadyHandler onReadyHandler;
+    private final AsyncPutListener metadataListener;
     private final long timeoutMs;
 
     public BulkWriteService(
             BulkWriteManager manager,
+            BufferAllocator allocator,
             Schema schema,
             FlightDescriptor descriptor,
-            PutListener metadataListener,
             long timeoutMs,
             CallOption... options) {
         this.manager = manager;
+        this.allocator = allocator;
         this.root = manager.createSchemaRoot(schema);
         this.onReadyHandler = new OnReadyHandler();
-        this.listener = manager.startPut(descriptor, metadataListener, this.onReadyHandler, options);
+        this.metadataListener = new AsyncPutListener();
+        this.listener = manager.startPut(descriptor, this.metadataListener, this.onReadyHandler, options);
         this.timeoutMs = timeoutMs;
     }
 
@@ -91,27 +106,48 @@ public class BulkWriteService implements AutoCloseable {
      *
      * @return true if the stream is ready to send the next message, false otherwise
      */
-    public boolean isReady() {
+    public boolean isStreamReady() {
         return this.listener.isReady();
+    }
+
+    /**
+     * Wait for the stream to be ready.
+     *
+     * @return true if the stream is ready to send the next message, false otherwise
+     * @throws InterruptedException if the thread is interrupted
+     * @throws ExecutionException if the future is completed with an exception
+     * @throws TimeoutException if the future is not completed within the timeout
+     *
+     * <p>
+     * Note: This method typically blocks until the stream is ready, but you should still check its return value.
+     * If it returns false, it indicates the stream is still not ready. Attempting new writes in this state
+     * would waste CPU resources on spinning to check readiness.
+     */
+    public boolean tryWaitStreamReady() throws InterruptedException, ExecutionException {
+        return this.onReadyHandler.waitStreamReady();
     }
 
     /**
      * Send the current contents of the associated {@link VectorSchemaRoot}.
      *
      * <p>This will not necessarily block until the message is actually sent; it may buffer messages
-     * in memory. Use {@link #isReady()} to check if there is backpressure and avoid excessive buffering.
+     * in memory. Use {@link #isStreamReady()} to check if there is backpressure and avoid excessive buffering.
      *
-     * @return a future that completes with true if the message was sent, false otherwise. Note that this future
-     *         may be delayed in completion or may never complete if all executor threads on the server are busy,
-     *         or the RPC method body is implemented in a blocking fashion.
+     * @return a future that completes with the put result.
      */
-    public CompletableFuture<Boolean> putNext() {
-        // The future may be null if the previous `putNext()` is not completed.
-        TimeoutCompletableFuture<Boolean> future = this.onReadyHandler.nextFuture();
-        this.listener.putNext();
-        this.root.clear();
-        // If the future is null, we just return a completed future with the current ready state.
-        return future == null ? CompletableFuture.completedFuture(isReady()) : future.scheduleTimeout();
+    public CompletableFuture<PutResult> putNext() {
+        this.onReadyHandler.trySetCurrentFuture();
+        try (ArrowBuf metadataBuf = this.allocator.buffer(8)) {
+            long requestId = this.requestIdGenerator.incrementAndGet();
+            // TODO(jeremy): Use RequestHeader
+            metadataBuf.setLong(0, requestId);
+            CompletableFutureWithRequest future = new CompletableFutureWithRequest(requestId, this.timeoutMs);
+            this.metadataListener.attach(requestId, future);
+            this.listener.putNext(metadataBuf);
+            return future;
+        } finally {
+            this.root.clear();
+        }
     }
 
     /**
@@ -145,13 +181,96 @@ public class BulkWriteService implements AutoCloseable {
             }
         }
 
-        public TimeoutCompletableFuture<Boolean> nextFuture() {
+        public boolean waitStreamReady() throws InterruptedException, ExecutionException {
+            TimeoutCompletableFuture<Boolean> future = this.futureRef.get();
+            if (future == null) {
+                return BulkWriteService.this.listener.isReady();
+            }
+            future.scheduleTimeout();
+            return future.get();
+        }
+
+        public boolean trySetCurrentFuture() {
             TimeoutCompletableFuture<Boolean> future =
                     new TimeoutCompletableFuture<Boolean>(BulkWriteService.this.timeoutMs, TimeUnit.MILLISECONDS);
-            if (this.futureRef.compareAndSet(null, future)) {
-                return future;
+            return this.futureRef.compareAndSet(null, future);
+        }
+    }
+
+    static class CompletableFutureWithRequest extends TimeoutCompletableFuture<PutResult> {
+        private final long requestId;
+
+        public CompletableFutureWithRequest(long requestId, long timeoutMs) {
+            super(timeoutMs, TimeUnit.MILLISECONDS);
+            this.requestId = requestId;
+        }
+
+        public long getRequestId() {
+            return this.requestId;
+        }
+    }
+
+    class AsyncPutListener implements PutListener {
+        private final ConcurrentMap<Long, CompletableFutureWithRequest> futuresInFlight;
+        private final CompletableFuture<Void> completed;
+
+        AsyncPutListener() {
+            this.futuresInFlight = new ConcurrentHashMap<>();
+            this.completed = new CompletableFuture<>();
+            this.completed.whenComplete((v, t) -> {
+                if (t != null) {
+                    // Also complete all the futures with the same exception
+                    for (CompletableFutureWithRequest future : this.futuresInFlight.values()) {
+                        future.completeExceptionally(t);
+                    }
+                }
+                // When completed, clear the futuresInFlight
+                this.futuresInFlight.clear();
+            });
+        }
+
+        public void attach(long requestId, CompletableFutureWithRequest future) {
+            this.futuresInFlight.put(requestId, future);
+        }
+
+        @Override
+        public void onNext(PutResult val) {
+            ArrowBuf metadata = val.getApplicationMetadata();
+            if (metadata == null || metadata.readableBytes() < 8) {
+                return;
             }
-            return null;
+            // TODO(jeremy): Use ResponseHeader
+            long requestId = metadata.getLong(0);
+            CompletableFutureWithRequest future = this.futuresInFlight.remove(requestId);
+            if (future != null) {
+                future.complete(val);
+            }
+        }
+
+        @Override
+        public void onError(Throwable t) {
+            this.completed.completeExceptionally(StatusUtils.fromThrowable(t));
+        }
+
+        @Override
+        public final void onCompleted() {
+            this.completed.complete(null);
+        }
+
+        @Override
+        public boolean isCancelled() {
+            return this.completed.isDone();
+        }
+
+        @Override
+        public void getResult() {
+            try {
+                this.completed.get();
+            } catch (InterruptedException e) {
+                throw StatusUtils.fromThrowable(e);
+            } catch (ExecutionException e) {
+                throw StatusUtils.fromThrowable(e.getCause());
+            }
         }
     }
 }

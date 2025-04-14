@@ -23,7 +23,6 @@ import io.greptime.common.util.Ensures;
 import io.greptime.common.util.MetricsUtil;
 import io.greptime.rpc.TlsOptions;
 import io.netty.util.internal.SystemPropertyUtil;
-import org.apache.arrow.flight.AsyncPutListener;
 import org.apache.arrow.flight.BulkFlightClient;
 import org.apache.arrow.flight.BulkFlightClient.ClientStreamListener;
 import org.apache.arrow.flight.BulkFlightClient.PutListener;
@@ -137,33 +136,19 @@ public class BulkWriteManager implements AutoCloseable {
     }
 
     /**
-     * @see #intoBulkWriteStream(String, String, Schema, long, CallOption...)
-     */
-    public BulkWriteService intoBulkWriteStream(
-            String database, String table, Schema schema, long timeoutMs, CallOption... options) {
-        return intoBulkWriteStream(database, table, schema, timeoutMs, new AsyncPutListener(), options);
-    }
-
-    /**
      * Creates a bulk write stream for efficiently writing data to the server.
      *
      * @param database the name of the target database
      * @param table the name of the target table
      * @param schema the Arrow schema defining the structure of the data to be written
      * @param timeoutMs the timeout in milliseconds for the write operation
-     * @param metadataListener listener for handling server metadata responses during the write operation
      * @param options optional RPC-layer hints to configure the underlying Flight client call
      * @return a BulkStreamWriter instance that manages the data transfer process
      */
     public BulkWriteService intoBulkWriteStream(
-            String database,
-            String table,
-            Schema schema,
-            long timeoutMs,
-            PutListener metadataListener,
-            CallOption... options) {
+            String database, String table, Schema schema, long timeoutMs, CallOption... options) {
         FlightDescriptor descriptor = FlightDescriptor.path(database, table);
-        return new BulkWriteService(this, schema, descriptor, metadataListener, timeoutMs, options);
+        return new BulkWriteService(this, this.allocator, schema, descriptor, timeoutMs, options);
     }
 
     VectorSchemaRoot createSchemaRoot(Schema schema) {
