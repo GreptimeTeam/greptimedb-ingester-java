@@ -40,15 +40,7 @@ import java.util.function.BooleanSupplier;
 import javax.net.ssl.SSLException;
 import org.apache.arrow.compression.CommonsCompressionFactory;
 import org.apache.arrow.flight.FlightProducer.StreamListener;
-import org.apache.arrow.flight.auth.BasicClientAuthHandler;
-import org.apache.arrow.flight.auth.ClientAuthInterceptor;
-import org.apache.arrow.flight.auth.ClientAuthWrapper;
-import org.apache.arrow.flight.auth2.BasicAuthCredentialWriter;
-import org.apache.arrow.flight.auth2.ClientBearerHeaderHandler;
-import org.apache.arrow.flight.auth2.ClientHandshakeWrapper;
-import org.apache.arrow.flight.auth2.ClientIncomingAuthHeaderMiddleware;
 import org.apache.arrow.flight.grpc.ClientInterceptorAdapter;
-import org.apache.arrow.flight.grpc.CredentialCallOption;
 import org.apache.arrow.flight.grpc.StatusUtils;
 import org.apache.arrow.flight.impl.Flight;
 import org.apache.arrow.flight.impl.FlightServiceGrpc;
@@ -76,7 +68,6 @@ public class BulkFlightClient implements AutoCloseable {
     private final ManagedChannel channel;
 
     private final FlightServiceStub asyncStub;
-    private final ClientAuthInterceptor authInterceptor = new ClientAuthInterceptor();
     private final MethodDescriptor<ArrowMessage, Flight.PutResult> doPutDescriptor;
     private final List<FlightClientMiddleware.Factory> middleware;
 
@@ -94,8 +85,7 @@ public class BulkFlightClient implements AutoCloseable {
         this.channel = channel;
         this.middleware = middleware;
         this.compressionType = compressionType;
-        ClientInterceptor[] interceptors =
-                new ClientInterceptor[] {authInterceptor, new ClientInterceptorAdapter(middleware)};
+        ClientInterceptor[] interceptors = new ClientInterceptor[] {new ClientInterceptorAdapter(middleware)};
 
         // Create a channel with interceptors pre-applied for DoGet and DoPut
         Channel interceptedChannel = ClientInterceptors.intercept(channel, interceptors);
@@ -105,51 +95,12 @@ public class BulkFlightClient implements AutoCloseable {
     }
 
     /**
-     * Authenticates with a username and password.
-     */
-    public void authenticateBasic(String username, String password) {
-        BasicClientAuthHandler basicClient = new BasicClientAuthHandler(username, password);
-        authenticate(basicClient);
-    }
-
-    /**
-     * Authenticates against the Flight service.
+     * Add a middleware to the client.
      *
-     * @param options RPC-layer hints for this call.
-     * @param handler The auth mechanism to use.
+     * @param factory The factory to add.
      */
-    public void authenticate(
-            @SuppressWarnings("deprecation") org.apache.arrow.flight.auth.ClientAuthHandler handler,
-            CallOption... options) {
-        Preconditions.checkArgument(!this.authInterceptor.hasAuthHandler(), "Auth already completed.");
-        ClientAuthWrapper.doClientAuth(handler, CallOptions.wrapStub(this.asyncStub, options));
-        this.authInterceptor.setAuthHandler(handler);
-    }
-
-    /**
-     * Authenticates with a username and password.
-     *
-     * @param username the username.
-     * @param password the password.
-     * @return a CredentialCallOption containing a bearer token if the server emitted one, or
-     *     empty if no bearer token was returned. This can be used in subsequent API calls.
-     */
-    public Optional<CredentialCallOption> authenticateBasicToken(String username, String password) {
-        final ClientIncomingAuthHeaderMiddleware.Factory clientAuthMiddleware =
-                new ClientIncomingAuthHeaderMiddleware.Factory(new ClientBearerHeaderHandler());
-        this.middleware.add(clientAuthMiddleware);
-        handshake(new CredentialCallOption(new BasicAuthCredentialWriter(username, password)));
-
-        return Optional.ofNullable(clientAuthMiddleware.getCredentialCallOption());
-    }
-
-    /**
-     * Executes the handshake against the Flight service.
-     *
-     * @param options RPC-layer hints for this call.
-     */
-    public void handshake(CallOption... options) {
-        ClientHandshakeWrapper.doClientHandshake(CallOptions.wrapStub(this.asyncStub, options));
+    public void addClientMiddleware(FlightClientMiddleware.Factory factory) {
+        this.middleware.add(factory);
     }
 
     /**
@@ -244,7 +195,7 @@ public class BulkFlightClient implements AutoCloseable {
 
         @Override
         public void onNext(Flight.PutResult value) {
-            try (final PutResult message = PutResult.fromProtocol(this.allocator, value)) {
+            try (PutResult message = PutResult.fromProtocol(this.allocator, value)) {
                 this.listener.onNext(message);
             }
         }
