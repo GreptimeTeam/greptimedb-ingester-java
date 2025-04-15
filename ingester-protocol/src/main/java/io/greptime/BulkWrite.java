@@ -40,28 +40,113 @@ public interface BulkWrite {
     long DEFAULT_ALLOCATOR_MAX_ALLOCATION = 1024 * 1024 * 1024;
 
     /**
-     * @see #bulkStreamWriter(TableSchema, long, long, Context)
+     * The default max in-flight requests in the stream.
+     *
+     * This value should be determined based on the size of each request packet. A higher value means more in-flight requests,
+     * which could potentially saturate network bandwidth or exceed the actual processing capacity of the database.
      */
-    default BulkStreamWriter bulkStreamWriter(TableSchema schema) {
-        return bulkStreamWriter(
-                schema,
-                DEFAULT_ALLOCATOR_INIT_RESERVATION,
-                DEFAULT_ALLOCATOR_MAX_ALLOCATION,
-                DEFAULT_TIMEOUT_MS_PER_MESSAGE,
-                Context.newDefault());
+    int DEFAULT_MAX_REQUESTS_IN_FLIGHT = 32;
+
+    static class Config {
+        private long allocatorInitReservation = DEFAULT_ALLOCATOR_INIT_RESERVATION;
+        private long allocatorMaxAllocation = DEFAULT_ALLOCATOR_MAX_ALLOCATION;
+        private long timeoutMsPerMessage = DEFAULT_TIMEOUT_MS_PER_MESSAGE;
+        private int maxRequestsInFlight = DEFAULT_MAX_REQUESTS_IN_FLIGHT;
+
+        private Config() {}
+
+        public static Builder newBuilder() {
+            return new Builder();
+        }
+
+        public long getAllocatorInitReservation() {
+            return allocatorInitReservation;
+        }
+
+        public long getAllocatorMaxAllocation() {
+            return allocatorMaxAllocation;
+        }
+
+        public long getTimeoutMsPerMessage() {
+            return timeoutMsPerMessage;
+        }
+
+        public int getMaxRequestsInFlight() {
+            return maxRequestsInFlight;
+        }
+
+        public static class Builder {
+            private final Config config = new Config();
+
+            /**
+             * Set the initial space reservation for the allocator.
+             *
+             * @param allocatorInitReservation the initial space reservation
+             * @return this builder
+             */
+            public Builder allocatorInitReservation(long allocatorInitReservation) {
+                config.allocatorInitReservation = allocatorInitReservation;
+                return this;
+            }
+
+            /**
+             * Set the maximum amount of space the new child allocator can allocate.
+             *
+             * @param allocatorMaxAllocation the maximum amount of space
+             * @return this builder
+             */
+            public Builder allocatorMaxAllocation(long allocatorMaxAllocation) {
+                config.allocatorMaxAllocation = allocatorMaxAllocation;
+                return this;
+            }
+
+            /**
+             * Set the timeout in milliseconds for each message.
+             *
+             * @param timeoutMsPerMessage the timeout in milliseconds
+             * @return this builder
+             */
+            public Builder timeoutMsPerMessage(long timeoutMsPerMessage) {
+                config.timeoutMsPerMessage = timeoutMsPerMessage;
+                return this;
+            }
+
+            /**
+             * Set the max in-flight requests in the stream.
+             *
+             * This value should be determined based on the size of each request packet. A higher value means more in-flight requests,
+             * which could potentially saturate network bandwidth or exceed the actual processing capacity of the database.
+             *
+             * @param maxRequestsInFlight the max in-flight requests
+             * @return this builder
+             */
+            public Builder maxRequestsInFlight(int maxRequestsInFlight) {
+                config.maxRequestsInFlight = maxRequestsInFlight;
+                return this;
+            }
+
+            public Config build() {
+                return config;
+            }
+        }
     }
 
-    /**
-     * @see #bulkStreamWriter(TableSchema, long, long, Context)
-     */
-    default BulkStreamWriter bulkStreamWriter(
-            TableSchema schema, long allocatorInitReservation, long allocatorMaxAllocation) {
+    default BulkStreamWriter bulkStreamWriter(TableSchema schema) {
+        return bulkStreamWriter(schema, Config.newBuilder().build());
+    }
+
+    default BulkStreamWriter bulkStreamWriter(TableSchema schema, Config config) {
+        return bulkStreamWriter(schema, config, Context.newDefault());
+    }
+
+    default BulkStreamWriter bulkStreamWriter(TableSchema schema, Config config, Context ctx) {
         return bulkStreamWriter(
                 schema,
-                allocatorInitReservation,
-                allocatorMaxAllocation,
-                DEFAULT_TIMEOUT_MS_PER_MESSAGE,
-                Context.newDefault());
+                config.getAllocatorInitReservation(),
+                config.getAllocatorMaxAllocation(),
+                config.getTimeoutMsPerMessage(),
+                config.getMaxRequestsInFlight(),
+                ctx);
     }
 
     /**
@@ -71,6 +156,7 @@ public interface BulkWrite {
      * @param allocatorInitReservation the initial space reservation (obtained from this allocator)
      * @param allocatorMaxAllocation the maximum amount of space the new child allocator can allocate
      * @param timeoutMsPerMessage the timeout in milliseconds for each message
+     * @param maxRequestsInFlight the max in-flight requests in the stream
      * @param ctx invoke context
      * @return a bulk stream writer instance
      */
@@ -79,5 +165,6 @@ public interface BulkWrite {
             long allocatorInitReservation,
             long allocatorMaxAllocation,
             long timeoutMsPerMessage,
+            int maxRequestsInFlight,
             Context ctx);
 }

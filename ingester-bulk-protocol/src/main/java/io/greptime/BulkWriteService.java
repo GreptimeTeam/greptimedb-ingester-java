@@ -16,11 +16,8 @@
 
 package io.greptime;
 
-import com.google.gson.Gson;
-import com.google.gson.annotations.SerializedName;
 import com.google.protobuf.ByteString;
 import io.greptime.common.TimeoutCompletableFuture;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -53,10 +50,7 @@ import org.apache.arrow.vector.types.pojo.Schema;
  */
 public class BulkWriteService implements AutoCloseable {
 
-    // Gson's instances are Thread-safe we can reuse them freely across multiple threads.
-    private static final Gson GSON = new Gson();
-
-    private final AtomicLong requestIdGenerator = new AtomicLong(0);
+    private final AtomicLong idGenerator = new AtomicLong(0);
 
     private final BulkWriteManager manager;
     private final BufferAllocator allocator;
@@ -127,14 +121,13 @@ public class BulkWriteService implements AutoCloseable {
      */
     public PutStage putNext() {
         CompletableFuture<Boolean> streamReadyFuture = this.onReadyHandler.nextReadyFuture();
-        long requestId = this.requestIdGenerator.incrementAndGet();
-        byte[] metadata = new RequestMetadata(requestId).toJsonBytesUtf8();
+        long id = this.idGenerator.incrementAndGet();
+        byte[] metadata = new Metadata.RequestMetadata(id).toJsonBytesUtf8();
         try (ArrowBuf metadataBuf = this.allocator.buffer(metadata.length)) {
             metadataBuf.setBytes(0, metadata);
-            CompletableFutureWithRequest writeResultFuture =
-                    new CompletableFutureWithRequest(requestId, this.timeoutMs);
-            this.metadataListener.attach(requestId, writeResultFuture);
-            writeResultFuture.whenComplete((affectedRows, t) -> {
+            IdentifiableCompletableFuture writeResultFuture = new IdentifiableCompletableFuture(id, this.timeoutMs);
+            this.metadataListener.attach(id, writeResultFuture);
+            writeResultFuture.whenComplete((r, t) -> {
                 if (t != null) {
                     // The stream ready future cannot catch the exception, so we need to complete it here.
                     streamReadyFuture.completeExceptionally(t);
@@ -218,81 +211,30 @@ public class BulkWriteService implements AutoCloseable {
         }
     }
 
-    static class CompletableFutureWithRequest extends TimeoutCompletableFuture<Integer> {
-        private final long requestId;
+    static class IdentifiableCompletableFuture extends TimeoutCompletableFuture<Integer> {
+        private final long id;
 
-        public CompletableFutureWithRequest(long requestId, long timeoutMs) {
+        public IdentifiableCompletableFuture(long id, long timeoutMs) {
             super(timeoutMs, TimeUnit.MILLISECONDS);
-            this.requestId = requestId;
+            this.id = id;
         }
 
-        public long getRequestId() {
-            return this.requestId;
-        }
-    }
-
-    static class RequestMetadata {
-        @SerializedName("request_id")
-        private long requestId;
-
-        RequestMetadata() {}
-
-        RequestMetadata(long requestId) {
-            this.requestId = requestId;
-        }
-
-        byte[] toJsonBytesUtf8() {
-            return GSON.toJson(this).getBytes(StandardCharsets.UTF_8);
-        }
-
-        public long getRequestId() {
-            return requestId;
-        }
-
-        public void setRequestId(long requestId) {
-            this.requestId = requestId;
-        }
-    }
-
-    static class ResponseMetadata {
-        @SerializedName("request_id")
-        private long requestId;
-
-        @SerializedName("affected_rows")
-        private int affectedRows;
-
-        static ResponseMetadata fromJson(String json) {
-            return GSON.fromJson(json, ResponseMetadata.class);
-        }
-
-        public long getRequestId() {
-            return requestId;
-        }
-
-        public void setRequestId(long requestId) {
-            this.requestId = requestId;
-        }
-
-        public int getAffectedRows() {
-            return affectedRows;
-        }
-
-        public void setAffectedRows(int affectedRows) {
-            this.affectedRows = affectedRows;
+        public long getId() {
+            return this.id;
         }
     }
 
     class AsyncPutListener implements PutListener {
-        private final ConcurrentMap<Long, CompletableFutureWithRequest> futuresInFlight;
+        private final ConcurrentMap<Long, IdentifiableCompletableFuture> futuresInFlight;
         private final CompletableFuture<Void> completed;
 
         AsyncPutListener() {
             this.futuresInFlight = new ConcurrentHashMap<>();
             this.completed = new CompletableFuture<>();
-            this.completed.whenComplete((v, t) -> {
+            this.completed.whenComplete((r, t) -> {
                 if (t != null) {
                     // Also complete all the futures with the same exception
-                    for (CompletableFutureWithRequest future : this.futuresInFlight.values()) {
+                    for (IdentifiableCompletableFuture future : this.futuresInFlight.values()) {
                         future.completeExceptionally(t);
                     }
                 }
@@ -301,8 +243,12 @@ public class BulkWriteService implements AutoCloseable {
             });
         }
 
-        public void attach(long requestId, CompletableFutureWithRequest future) {
-            this.futuresInFlight.put(requestId, future);
+        public void attach(long id, IdentifiableCompletableFuture future) {
+            future.whenComplete((r, t) -> {
+                // Remove the future from the map when it's completed
+                this.futuresInFlight.remove(id);
+            });
+            this.futuresInFlight.put(id, future);
         }
 
         public int numInFlight() {
@@ -317,8 +263,8 @@ public class BulkWriteService implements AutoCloseable {
                 }
                 String metadataString =
                         ByteString.copyFrom(metadata.nioBuffer()).toStringUtf8();
-                ResponseMetadata responseMetadata = ResponseMetadata.fromJson(metadataString);
-                CompletableFutureWithRequest future = this.futuresInFlight.remove(responseMetadata.getRequestId());
+                Metadata.ResponseMetadata responseMetadata = Metadata.ResponseMetadata.fromJson(metadataString);
+                IdentifiableCompletableFuture future = this.futuresInFlight.get(responseMetadata.getRequestId());
                 if (future != null) {
                     future.complete(responseMetadata.getAffectedRows());
                 }
