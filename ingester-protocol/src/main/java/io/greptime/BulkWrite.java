@@ -45,7 +45,7 @@ public interface BulkWrite {
      * This value should be determined based on the size of each request packet. A higher value means more in-flight requests,
      * which could potentially saturate network bandwidth or exceed the actual processing capacity of the database.
      */
-    int DEFAULT_MAX_REQUESTS_IN_FLIGHT = 32;
+    int DEFAULT_MAX_REQUESTS_IN_FLIGHT = 8;
 
     static class Config {
         private long allocatorInitReservation = DEFAULT_ALLOCATOR_INIT_RESERVATION;

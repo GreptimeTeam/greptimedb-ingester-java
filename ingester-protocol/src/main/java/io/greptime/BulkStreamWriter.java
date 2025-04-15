@@ -86,4 +86,14 @@ public interface BulkStreamWriter extends AutoCloseable {
      * any errors that may have occurred during the operation.
      */
     void completed() throws Exception;
+
+    /**
+     * If the stream is not ready, calling `writeNext()` will block until the stream
+     * becomes ready for writing, potentially using a busy-wait mechanism.
+     *
+     * @return true if the stream is ready to write data, false otherwise
+     */
+    default boolean isStreamReady() {
+        return true;
+    }
 }

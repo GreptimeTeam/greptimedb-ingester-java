@@ -24,10 +24,12 @@ public enum ArrowCompressionType {
      * Zstd compression.
      */
     Zstd,
+
     /**
      * Lz4 compression.
      */
     Lz4,
+
     /**
      * No compression.
      */

@@ -16,6 +16,7 @@
 
 package io.greptime.rpc;
 
+import io.greptime.common.Keys;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -26,8 +27,6 @@ import java.util.Set;
  */
 @SuppressWarnings({"unchecked"})
 public class Context {
-
-    private static final String HINTS_KEY = "x-greptime-hints";
 
     private final Map<String, Object> ctx = new HashMap<>();
 
@@ -98,7 +97,7 @@ public class Context {
      */
     public Context withHint(String key, String value) {
         synchronized (this) {
-            this.ctx.compute(HINTS_KEY, (k, v) -> {
+            this.ctx.compute(Keys.Headers.HINTS, (k, v) -> {
                 if (v == null) {
                     v = String.format("%s=%s", key, value);
                 } else {
@@ -117,7 +116,7 @@ public class Context {
      */
     public String getHints() {
         synchronized (this) {
-            return (String) this.ctx.get(HINTS_KEY);
+            return (String) this.ctx.get(Keys.Headers.HINTS);
         }
     }
 

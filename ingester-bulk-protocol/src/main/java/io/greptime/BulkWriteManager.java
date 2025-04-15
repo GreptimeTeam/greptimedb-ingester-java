@@ -44,15 +44,9 @@ import org.slf4j.LoggerFactory;
  * BulkWriteManager is a specialized manager for efficiently writing block data to the server.
  *
  * It encapsulates a Flight client and a buffer allocator to manage memory resources.
- *
  * The primary function of this manager is to establish bulk write streams,
  * which provide an optimized channel for transmitting block data to the server.
  * These streams handle the serialization and transfer of data in an efficient manner.
- *
- * <p>
- * `ZERO_COPY_WRITE` is disabled by default, if you want to enable it, you can set the system property
- * `arrow.flight.enable_zero_copy_write` to `true`.
- * </p>
  */
 public class BulkWriteManager implements AutoCloseable {
 
@@ -138,16 +132,14 @@ public class BulkWriteManager implements AutoCloseable {
     /**
      * Creates a bulk write stream for efficiently writing data to the server.
      *
-     * @param database the name of the target database
      * @param table the name of the target table
      * @param schema the Arrow schema defining the structure of the data to be written
      * @param timeoutMs the timeout in milliseconds for the write operation
      * @param options optional RPC-layer hints to configure the underlying Flight client call
      * @return a BulkStreamWriter instance that manages the data transfer process
      */
-    public BulkWriteService intoBulkWriteStream(
-            String database, String table, Schema schema, long timeoutMs, CallOption... options) {
-        FlightDescriptor descriptor = FlightDescriptor.path(database, table);
+    public BulkWriteService intoBulkWriteStream(String table, Schema schema, long timeoutMs, CallOption... options) {
+        FlightDescriptor descriptor = FlightDescriptor.path(table);
         return new BulkWriteService(this, this.allocator, schema, descriptor, timeoutMs, options);
     }
 
@@ -155,9 +147,8 @@ public class BulkWriteManager implements AutoCloseable {
         return VectorSchemaRoot.create(schema, this.allocator);
     }
 
-    ClientStreamListener startPut(
-            FlightDescriptor descriptor, PutListener metadataListener, Runnable onReadyHandler, CallOption... options) {
-        return this.flightClient.startPut(descriptor, metadataListener, onReadyHandler, options);
+    ClientStreamListener startPut(FlightDescriptor descriptor, PutListener metadataListener, CallOption... options) {
+        return this.flightClient.startPut(descriptor, metadataListener, options);
     }
 
     DictionaryProvider newDefaultDictionaryProvider() {
@@ -181,13 +172,13 @@ public class BulkWriteManager implements AutoCloseable {
 
         @Override
         public void onAllocation(long size) {
-            LOG.debug("onAllocation: {}", size);
+            LOG.trace("onAllocation: {}", size);
             ALLOCATION_BYTES.inc(size);
         }
 
         @Override
         public void onRelease(long size) {
-            LOG.debug("onRelease: {}", size);
+            LOG.trace("onRelease: {}", size);
             ALLOCATION_BYTES.dec(size);
         }
 
