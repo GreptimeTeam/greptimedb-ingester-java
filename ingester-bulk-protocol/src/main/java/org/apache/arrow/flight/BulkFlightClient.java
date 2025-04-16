@@ -35,6 +35,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 import javax.net.ssl.SSLException;
@@ -53,6 +54,8 @@ import org.apache.arrow.vector.compression.CompressionCodec;
 import org.apache.arrow.vector.dictionary.DictionaryProvider;
 import org.apache.arrow.vector.dictionary.DictionaryProvider.MapDictionaryProvider;
 import org.apache.arrow.vector.ipc.message.IpcOption;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Client for Flight services.
@@ -61,6 +64,8 @@ import org.apache.arrow.vector.ipc.message.IpcOption;
  * with some changes to support bulk write.
  */
 public class BulkFlightClient implements AutoCloseable {
+    private static final Logger LOG = LoggerFactory.getLogger(BulkFlightClient.class);
+
     /** The maximum number of trace events to keep on the gRPC Channel. This value disables channel tracing. */
     private static final int MAX_CHANNEL_TRACE_EVENTS = 0;
 
@@ -158,7 +163,9 @@ public class BulkFlightClient implements AutoCloseable {
 
         try {
             ClientCall<ArrowMessage, Flight.PutResult> call = asyncStubNewCall(this.doPutDescriptor, options);
-            SetStreamObserver resultObserver = new SetStreamObserver(this.allocator, metadataListener);
+            OnStreamReadyHandler onStreamReadyHandler = new OnStreamReadyHandler();
+            SetStreamObserver resultObserver =
+                    new SetStreamObserver(this.allocator, metadataListener, onStreamReadyHandler);
             ClientCallStreamObserver<ArrowMessage> observer =
                     (ClientCallStreamObserver<ArrowMessage>) ClientCalls.asyncBidiStreamingCall(call, resultObserver);
             return new PutObserver(
@@ -167,6 +174,7 @@ public class BulkFlightClient implements AutoCloseable {
                     metadataListener::isCancelled,
                     metadataListener::isCompletedExceptionally,
                     metadataListener::getResult,
+                    onStreamReadyHandler,
                     this.compressionType);
         } catch (StatusRuntimeException sre) {
             throw StatusUtils.fromGrpcRuntimeException(sre);
@@ -177,17 +185,44 @@ public class BulkFlightClient implements AutoCloseable {
         return new MapDictionaryProvider();
     }
 
+    private static class OnStreamReadyHandler implements Runnable {
+        private final Semaphore semaphore = new Semaphore(0);
+
+        @Override
+        public void run() {
+            this.semaphore.release();
+        }
+
+        /**
+         * Awaits for the stream to be ready for writing. Since the {@link #run()} method is not guaranteed
+         * to be called in all circumstances, a timeout is always used to prevent indefinite blocking.
+         *
+         * @param timeout The timeout to wait for the stream to be ready.
+         * @param unit The unit of the timeout.
+         * @return True if the stream is ready, false if the timeout is reached.
+         * @throws InterruptedException If the current thread is interrupted while waiting.
+         */
+        public boolean await(long timeout, TimeUnit unit) throws InterruptedException {
+            return this.semaphore.tryAcquire(timeout, unit);
+        }
+    }
+
     /**
      * A stream observer for Flight.PutResult
      */
     private static class SetStreamObserver implements ClientResponseObserver<ArrowMessage, Flight.PutResult> {
         private final BufferAllocator allocator;
         private final StreamListener<PutResult> listener;
+        private final OnStreamReadyHandler onStreamReadyHandler;
 
-        SetStreamObserver(BufferAllocator allocator, StreamListener<PutResult> listener) {
+        SetStreamObserver(
+                BufferAllocator allocator,
+                StreamListener<PutResult> listener,
+                OnStreamReadyHandler onStreamReadyHandler) {
             super();
             this.allocator = allocator;
             this.listener = listener == null ? NoOpStreamListener.getInstance() : listener;
+            this.onStreamReadyHandler = onStreamReadyHandler;
         }
 
         @Override
@@ -209,7 +244,7 @@ public class BulkFlightClient implements AutoCloseable {
 
         @Override
         public void beforeStart(ClientCallStreamObserver<ArrowMessage> requestStream) {
-            // do nothing
+            requestStream.setOnReadyHandler(this.onStreamReadyHandler);
         }
     }
 
@@ -221,6 +256,7 @@ public class BulkFlightClient implements AutoCloseable {
         private final BooleanSupplier isCancelled;
         private final BooleanSupplier isCompletedExceptionally;
         private final Runnable getResult;
+        private final OnStreamReadyHandler onStreamReadyHandler;
         private final ArrowCompressionType compressionType;
 
         /**
@@ -239,6 +275,7 @@ public class BulkFlightClient implements AutoCloseable {
                 BooleanSupplier isCancelled,
                 BooleanSupplier isCompletedExceptionally,
                 Runnable getResult,
+                OnStreamReadyHandler onStreamReadyHandler,
                 ArrowCompressionType compressionType) {
             super(descriptor, observer);
             Preconditions.checkNotNull(descriptor, "descriptor must be provided");
@@ -248,6 +285,7 @@ public class BulkFlightClient implements AutoCloseable {
             this.isCancelled = isCancelled;
             this.isCompletedExceptionally = isCompletedExceptionally;
             this.getResult = getResult;
+            this.onStreamReadyHandler = onStreamReadyHandler;
             this.compressionType = compressionType;
             this.unloader = null;
         }
@@ -292,10 +330,18 @@ public class BulkFlightClient implements AutoCloseable {
             // (so long as PutListener properly implements it)
             while (!super.responseObserver.isReady() && !this.isCancelled.getAsBoolean()) {
                 if (this.isCompletedExceptionally.getAsBoolean()) {
-                    // Will return the error immediately
+                    // Will throw the error immediately
                     getResult();
                 }
-                /* busy wait */
+
+                // If the stream is not ready, wait for a short time to avoid busy waiting
+                // This helps reduce CPU usage while still being responsive
+                try {
+                    this.onStreamReadyHandler.await(10, TimeUnit.MILLISECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("Interrupted while waiting for stream to be ready", e);
+                }
             }
         }
 

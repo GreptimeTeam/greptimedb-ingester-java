@@ -84,7 +84,7 @@ public class BulkWriteApiQuickStart {
                 .allocatorInitReservation(0)
                 .allocatorMaxAllocation(1024 * 1024 * 1024)
                 .timeoutMsPerMessage(10000)
-                .maxRequestsInFlight(32)
+                .maxRequestsInFlight(8)
                 .build();
         Context ctx = Context.newDefault().withCompression(Compression.None);
 

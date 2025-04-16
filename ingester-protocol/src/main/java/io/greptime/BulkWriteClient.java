@@ -201,7 +201,7 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
         public CompletableFuture<Integer> writeNext() throws Exception {
             // Check if the stream is ready
             if (!isStreamReady()) {
-                LOG.warn(
+                LOG.debug(
                         "Stream busy with pending requests. Check `isStreamReady()` before calling `writeNext()` to avoid busy-waiting.");
             }
 
