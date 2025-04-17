@@ -80,7 +80,7 @@ public class BulkWriteApiQuickStart {
                 .addField("field_json", DataType.Json)
                 .build();
 
-        Config config = Config.newBuilder()
+        Config cfg = Config.newBuilder()
                 .allocatorInitReservation(0)
                 .allocatorMaxAllocation(1024 * 1024 * 1024)
                 .timeoutMsPerMessage(10000)
@@ -88,7 +88,7 @@ public class BulkWriteApiQuickStart {
                 .build();
         Context ctx = Context.newDefault().withCompression(Compression.None);
 
-        try (BulkStreamWriter bulkStreamWriter = greptimeDB.bulkStreamWriter(schema, config, ctx)) {
+        try (BulkStreamWriter bulkStreamWriter = greptimeDB.bulkStreamWriter(schema, cfg, ctx)) {
 
             // Write 100 times, each time write 100000 rows
             for (int i = 0; i < 100; i++) {
