@@ -16,26 +16,42 @@
 
 package io.greptime;
 
+import com.codahale.metrics.Timer;
 import io.greptime.common.Display;
 import io.greptime.common.Endpoint;
+import io.greptime.common.Keys;
 import io.greptime.common.Lifecycle;
+import io.greptime.common.util.Clock;
 import io.greptime.common.util.Ensures;
 import io.greptime.common.util.MetricExecutor;
+import io.greptime.common.util.MetricsUtil;
 import io.greptime.common.util.SerializingExecutor;
+import io.greptime.limit.AbstractLimiter;
+import io.greptime.limit.LimitedPolicy;
 import io.greptime.models.ArrowHelper;
 import io.greptime.models.AuthInfo;
 import io.greptime.models.Table;
 import io.greptime.models.TableSchema;
 import io.greptime.options.BulkWriteOptions;
 import io.greptime.rpc.Context;
+import io.greptime.rpc.TlsOptions;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import org.apache.arrow.flight.FlightCallHeaders;
 import org.apache.arrow.flight.HeaderCallOption;
 import org.apache.arrow.vector.types.pojo.Schema;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/**
+ * Client for bulk writing data to GreptimeDB.
+ * This client provides high-performance data ingestion capabilities through Arrow Flight protocol.
+ */
 public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOptions>, Display {
+
+    private static final Logger LOG = LoggerFactory.getLogger(BulkWriteClient.class);
 
     private BulkWriteOptions opts;
     private RouterClient routerClient;
@@ -62,59 +78,70 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
             long allocatorInitReservation,
             long allocatorMaxAllocation,
             long timeoutMsPerMessage,
+            int maxRequestsInFlight,
             Context ctx) {
         return this.routerClient
                 .route()
                 .thenApply(endpoint -> bulkStreamWriteTo(
-                        endpoint, schema, allocatorInitReservation, allocatorMaxAllocation, timeoutMsPerMessage, ctx))
+                        endpoint,
+                        schema,
+                        allocatorInitReservation,
+                        allocatorMaxAllocation,
+                        timeoutMsPerMessage,
+                        maxRequestsInFlight,
+                        ctx))
                 .join();
     }
 
+    /**
+     * Creates a BulkStreamWriter for the specified endpoint and schema.
+     *
+     * @param endpoint the target server endpoint
+     * @param schema the table schema for the data to be written
+     * @param allocatorInitReservation initial memory reservation for Arrow allocator
+     * @param allocatorMaxAllocation maximum memory allocation for Arrow allocator
+     * @param timeoutMsPerMessage timeout in milliseconds for each message
+     * @param maxRequestsInFlight maximum number of concurrent requests
+     * @param ctx context containing additional parameters like compression
+     * @return a BulkStreamWriter instance
+     */
     private BulkStreamWriter bulkStreamWriteTo(
             Endpoint endpoint,
             TableSchema schema,
             long allocatorInitReservation,
             long allocatorMaxAllocation,
             long timeoutMsPerMessage,
+            int maxRequestsInFlight,
             Context ctx) {
+        // Creates the bulk write manager
+        TlsOptions tlsOptions = this.opts.getTlsOptions();
+
+        Schema arrowSchema = ArrowHelper.createSchema(schema);
+        ArrowCompressionType compressionType = ArrowHelper.getArrowCompressionType(ctx);
+
+        BulkWriteManager manager = BulkWriteManager.create(
+                endpoint, allocatorInitReservation, allocatorMaxAllocation, compressionType, tlsOptions);
+
+        // Creates the bulk write service
         String database = this.opts.getDatabase();
         String table = schema.getTableName();
         AuthInfo authInfo = this.opts.getAuthInfo();
-
         FlightCallHeaders headers = new FlightCallHeaders();
         ctx.entrySet().forEach(e -> headers.insert(e.getKey(), String.valueOf(e.getValue())));
+        headers.insert(Keys.Headers.GREPTIMEDB_DBNAME, database);
         if (authInfo != null) {
-            headers.insert("authorization-bin", authInfo.into().toByteString().toByteArray());
+            headers.insert(Keys.Headers.GREPTIMEDB_AUTH, authInfo.toBase64());
         }
         HeaderCallOption headerOption = new HeaderCallOption(headers);
         AsyncExecCallOption execOption = new AsyncExecCallOption(this.asyncPool);
 
-        Schema arrowSchema = ArrowHelper.createSchema(schema);
-
-        ArrowCompressionType compressionType = null;
-        switch (ctx.getCompression()) {
-            case Zstd:
-                compressionType = ArrowCompressionType.Zstd;
-                break;
-            case Lz4:
-                compressionType = ArrowCompressionType.Lz4;
-                break;
-            case None:
-                compressionType = ArrowCompressionType.None;
-                break;
-            default:
-                throw new IllegalArgumentException("Unsupported compression type: " + ctx.getCompression());
-        }
-
-        BulkWriteManager manager = BulkWriteManager.create(
-                endpoint, allocatorInitReservation, allocatorMaxAllocation, compressionType, this.opts.getTlsOptions());
-        BulkWriteService writer = manager.intoBulkWriteStream(
-                database, table, arrowSchema, timeoutMsPerMessage, headerOption, execOption);
+        BulkWriteService writer =
+                manager.intoBulkWriteStream(table, arrowSchema, timeoutMsPerMessage, headerOption, execOption);
         writer.start();
         if (this.opts.isUseZeroCopyWrite()) {
             writer.tryUseZeroCopyWrite();
         }
-        return new DefaultBulkStreamWriter(writer, schema);
+        return new DefaultBulkStreamWriter(writer, schema, maxRequestsInFlight);
     }
 
     @Override
@@ -133,14 +160,36 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
                 + '}';
     }
 
+    /**
+     * Helper class for metrics collection in bulk write operations.
+     */
+    static final class InnerMetricHelper {
+        static final Timer BULK_WRITE_PREPARE_TIME = MetricsUtil.timer("bulk_write_prepare_time");
+        static final Timer BULK_WRITE_PUT_TIME = MetricsUtil.timer("bulk_write_put_time");
+
+        static Timer prepareTime() {
+            return BULK_WRITE_PREPARE_TIME;
+        }
+
+        static Timer putTime() {
+            return BULK_WRITE_PUT_TIME;
+        }
+    }
+
+    /**
+     * Default implementation of BulkStreamWriter that manages the writing process
+     * and enforces limits on concurrent requests.
+     */
     static class DefaultBulkStreamWriter implements BulkStreamWriter {
 
+        private final BulkWriteLimiter pipelineWriteLimiter;
         private final BulkWriteService writer;
         private final TableSchema tableSchema;
 
-        public DefaultBulkStreamWriter(BulkWriteService writer, TableSchema tableSchema) {
+        public DefaultBulkStreamWriter(BulkWriteService writer, TableSchema tableSchema, int maxRequestsInFlight) {
             this.writer = writer;
             this.tableSchema = tableSchema;
+            this.pipelineWriteLimiter = new BulkWriteLimiter(maxRequestsInFlight);
         }
 
         @Override
@@ -149,8 +198,30 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
         }
 
         @Override
-        public CompletableFuture<Boolean> writeNext() {
-            return this.writer.putNext();
+        public CompletableFuture<Integer> writeNext() throws Exception {
+            // Check if the stream is ready
+            if (!isStreamReady()) {
+                LOG.debug(
+                        "Stream busy with pending requests. Check `isStreamReady()` before calling `writeNext()` to avoid busy-waiting.");
+            }
+
+            return this.pipelineWriteLimiter.acquireAndDo(null, () -> {
+                Clock clock = Clock.defaultClock();
+
+                long startPut = clock.getTick();
+                BulkWriteService.PutStage stage = this.writer.putNext();
+                InnerMetricHelper.prepareTime().update(clock.duration(startPut), TimeUnit.MILLISECONDS);
+
+                long startCall = clock.getTick();
+                CompletableFuture<Integer> future = stage.future();
+                future.whenComplete((r, t) -> {
+                    InnerMetricHelper.putTime().update(clock.duration(startCall), TimeUnit.MILLISECONDS);
+                });
+
+                LOG.debug("Write request sent successfully, in-flight requests: {}", stage.numInFlight());
+
+                return future;
+            });
         }
 
         @Override
@@ -161,8 +232,34 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
         }
 
         @Override
+        public boolean isStreamReady() {
+            return this.writer.isStreamReady();
+        }
+
+        @Override
         public void close() throws Exception {
             this.writer.close();
+        }
+    }
+
+    /**
+     * Limiter that controls the number of concurrent bulk write operations.
+     * Uses a blocking policy to ensure the maximum number of in-flight requests is not exceeded.
+     */
+    static class BulkWriteLimiter extends AbstractLimiter<Void, Integer> {
+
+        public BulkWriteLimiter(int maxInFlight) {
+            super(maxInFlight, new LimitedPolicy.BlockingPolicy(), "bulk_write_limiter_acquire");
+        }
+
+        @Override
+        public int calculatePermits(Void in) {
+            return 1;
+        }
+
+        @Override
+        public Integer rejected(Void in, RejectedState state) {
+            throw new IllegalStateException("A blocking limiter should never get here");
         }
     }
 }

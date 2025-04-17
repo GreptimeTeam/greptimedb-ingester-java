@@ -35,5 +35,14 @@ public final class Keys {
     public static final String RW_LOGGING = "greptimedb.read.write.rw_logging";
     public static final String FLIGHT_ALLOCATION_LIMIT = "greptimedb.flight.allocation.limit";
 
+    // Greptime headers
+    public static final class Headers {
+        public static final String GREPTIMEDB_DBNAME = "x-greptime-db-name";
+        public static final String GREPTIMEDB_AUTH = "x-greptime-auth";
+        public static final String HINTS = "x-greptime-hints";
+
+        private Headers() {}
+    }
+
     private Keys() {}
 }

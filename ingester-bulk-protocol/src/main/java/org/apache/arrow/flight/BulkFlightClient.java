@@ -35,20 +35,13 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 import javax.net.ssl.SSLException;
 import org.apache.arrow.compression.CommonsCompressionFactory;
 import org.apache.arrow.flight.FlightProducer.StreamListener;
-import org.apache.arrow.flight.auth.BasicClientAuthHandler;
-import org.apache.arrow.flight.auth.ClientAuthInterceptor;
-import org.apache.arrow.flight.auth.ClientAuthWrapper;
-import org.apache.arrow.flight.auth2.BasicAuthCredentialWriter;
-import org.apache.arrow.flight.auth2.ClientBearerHeaderHandler;
-import org.apache.arrow.flight.auth2.ClientHandshakeWrapper;
-import org.apache.arrow.flight.auth2.ClientIncomingAuthHeaderMiddleware;
 import org.apache.arrow.flight.grpc.ClientInterceptorAdapter;
-import org.apache.arrow.flight.grpc.CredentialCallOption;
 import org.apache.arrow.flight.grpc.StatusUtils;
 import org.apache.arrow.flight.impl.Flight;
 import org.apache.arrow.flight.impl.FlightServiceGrpc;
@@ -61,6 +54,8 @@ import org.apache.arrow.vector.compression.CompressionCodec;
 import org.apache.arrow.vector.dictionary.DictionaryProvider;
 import org.apache.arrow.vector.dictionary.DictionaryProvider.MapDictionaryProvider;
 import org.apache.arrow.vector.ipc.message.IpcOption;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Client for Flight services.
@@ -69,6 +64,8 @@ import org.apache.arrow.vector.ipc.message.IpcOption;
  * with some changes to support bulk write.
  */
 public class BulkFlightClient implements AutoCloseable {
+    private static final Logger LOG = LoggerFactory.getLogger(BulkFlightClient.class);
+
     /** The maximum number of trace events to keep on the gRPC Channel. This value disables channel tracing. */
     private static final int MAX_CHANNEL_TRACE_EVENTS = 0;
 
@@ -76,7 +73,6 @@ public class BulkFlightClient implements AutoCloseable {
     private final ManagedChannel channel;
 
     private final FlightServiceStub asyncStub;
-    private final ClientAuthInterceptor authInterceptor = new ClientAuthInterceptor();
     private final MethodDescriptor<ArrowMessage, Flight.PutResult> doPutDescriptor;
     private final List<FlightClientMiddleware.Factory> middleware;
 
@@ -94,8 +90,7 @@ public class BulkFlightClient implements AutoCloseable {
         this.channel = channel;
         this.middleware = middleware;
         this.compressionType = compressionType;
-        ClientInterceptor[] interceptors =
-                new ClientInterceptor[] {authInterceptor, new ClientInterceptorAdapter(middleware)};
+        ClientInterceptor[] interceptors = new ClientInterceptor[] {new ClientInterceptorAdapter(middleware)};
 
         // Create a channel with interceptors pre-applied for DoGet and DoPut
         Channel interceptedChannel = ClientInterceptors.intercept(channel, interceptors);
@@ -105,51 +100,12 @@ public class BulkFlightClient implements AutoCloseable {
     }
 
     /**
-     * Authenticates with a username and password.
-     */
-    public void authenticateBasic(String username, String password) {
-        BasicClientAuthHandler basicClient = new BasicClientAuthHandler(username, password);
-        authenticate(basicClient);
-    }
-
-    /**
-     * Authenticates against the Flight service.
+     * Add a middleware to the client.
      *
-     * @param options RPC-layer hints for this call.
-     * @param handler The auth mechanism to use.
+     * @param factory The factory to add.
      */
-    public void authenticate(
-            @SuppressWarnings("deprecation") org.apache.arrow.flight.auth.ClientAuthHandler handler,
-            CallOption... options) {
-        Preconditions.checkArgument(!this.authInterceptor.hasAuthHandler(), "Auth already completed.");
-        ClientAuthWrapper.doClientAuth(handler, CallOptions.wrapStub(this.asyncStub, options));
-        this.authInterceptor.setAuthHandler(handler);
-    }
-
-    /**
-     * Authenticates with a username and password.
-     *
-     * @param username the username.
-     * @param password the password.
-     * @return a CredentialCallOption containing a bearer token if the server emitted one, or
-     *     empty if no bearer token was returned. This can be used in subsequent API calls.
-     */
-    public Optional<CredentialCallOption> authenticateBasicToken(String username, String password) {
-        final ClientIncomingAuthHeaderMiddleware.Factory clientAuthMiddleware =
-                new ClientIncomingAuthHeaderMiddleware.Factory(new ClientBearerHeaderHandler());
-        this.middleware.add(clientAuthMiddleware);
-        handshake(new CredentialCallOption(new BasicAuthCredentialWriter(username, password)));
-
-        return Optional.ofNullable(clientAuthMiddleware.getCredentialCallOption());
-    }
-
-    /**
-     * Executes the handshake against the Flight service.
-     *
-     * @param options RPC-layer hints for this call.
-     */
-    public void handshake(CallOption... options) {
-        ClientHandshakeWrapper.doClientHandshake(CallOptions.wrapStub(this.asyncStub, options));
+    public void addClientMiddleware(FlightClientMiddleware.Factory factory) {
+        this.middleware.add(factory);
     }
 
     /**
@@ -163,18 +119,16 @@ public class BulkFlightClient implements AutoCloseable {
      * @return ClientStreamListener an interface to control uploading data
      */
     public ClientStreamListener startPut(
-            FlightDescriptor descriptor,
-            VectorSchemaRoot root,
-            PutListener metadataListener,
-            Runnable onReadyHandler,
-            CallOption... options) {
-        return startPut(descriptor, root, new MapDictionaryProvider(), metadataListener, onReadyHandler, options);
+            FlightDescriptor descriptor, VectorSchemaRoot root, PutListener metadataListener, CallOption... options) {
+        return startPut(descriptor, root, new MapDictionaryProvider(), metadataListener, options);
     }
 
     /**
      * Create or append a descriptor with another stream.
+     *
      * @param descriptor FlightDescriptor the descriptor for the data
      * @param root VectorSchemaRoot the root containing data
+     * @param provider A dictionary provider for the root.
      * @param metadataListener A handler for metadata messages from the server.
      * @param options RPC-layer hints for this call.
      * @return ClientStreamListener an interface to control uploading data.
@@ -185,17 +139,17 @@ public class BulkFlightClient implements AutoCloseable {
             VectorSchemaRoot root,
             DictionaryProvider provider,
             PutListener metadataListener,
-            Runnable onReadyHandler,
             CallOption... options) {
         Preconditions.checkNotNull(root, "root must not be null");
         Preconditions.checkNotNull(provider, "provider must not be null");
-        ClientStreamListener writer = startPut(descriptor, metadataListener, onReadyHandler, options);
+        ClientStreamListener writer = startPut(descriptor, metadataListener, options);
         writer.start(root, provider);
         return writer;
     }
 
     /**
      * Create or append a descriptor with another stream.
+     *
      * @param descriptor FlightDescriptor the descriptor for the data
      * @param metadataListener A handler for metadata messages from the server.
      * @param options RPC-layer hints for this call.
@@ -203,20 +157,24 @@ public class BulkFlightClient implements AutoCloseable {
      *     {@link ClientStreamListener#start(VectorSchemaRoot, DictionaryProvider)} will NOT already have been called.
      */
     public ClientStreamListener startPut(
-            FlightDescriptor descriptor, PutListener metadataListener, Runnable onReadyHandler, CallOption... options) {
+            FlightDescriptor descriptor, PutListener metadataListener, CallOption... options) {
         Preconditions.checkNotNull(descriptor, "descriptor must not be null");
         Preconditions.checkNotNull(metadataListener, "metadataListener must not be null");
 
         try {
             ClientCall<ArrowMessage, Flight.PutResult> call = asyncStubNewCall(this.doPutDescriptor, options);
-            SetStreamObserver resultObserver = new SetStreamObserver(this.allocator, metadataListener, onReadyHandler);
+            OnStreamReadyHandler onStreamReadyHandler = new OnStreamReadyHandler();
+            SetStreamObserver resultObserver =
+                    new SetStreamObserver(this.allocator, metadataListener, onStreamReadyHandler);
             ClientCallStreamObserver<ArrowMessage> observer =
                     (ClientCallStreamObserver<ArrowMessage>) ClientCalls.asyncBidiStreamingCall(call, resultObserver);
             return new PutObserver(
                     descriptor,
                     observer,
                     metadataListener::isCancelled,
+                    metadataListener::isCompletedExceptionally,
                     metadataListener::getResult,
+                    onStreamReadyHandler,
                     this.compressionType);
         } catch (StatusRuntimeException sre) {
             throw StatusUtils.fromGrpcRuntimeException(sre);
@@ -227,24 +185,49 @@ public class BulkFlightClient implements AutoCloseable {
         return new MapDictionaryProvider();
     }
 
+    private static class OnStreamReadyHandler implements Runnable {
+        private final Semaphore semaphore = new Semaphore(0);
+
+        @Override
+        public void run() {
+            this.semaphore.release();
+        }
+
+        /**
+         * Awaits for the stream to be ready for writing. Since the {@link #run()} method is not guaranteed
+         * to be called in all circumstances, a timeout is always used to prevent indefinite blocking.
+         *
+         * @param timeout The timeout to wait for the stream to be ready.
+         * @param unit The unit of the timeout.
+         * @return True if the stream is ready, false if the timeout is reached.
+         * @throws InterruptedException If the current thread is interrupted while waiting.
+         */
+        public boolean await(long timeout, TimeUnit unit) throws InterruptedException {
+            return this.semaphore.tryAcquire(timeout, unit);
+        }
+    }
+
     /**
      * A stream observer for Flight.PutResult
      */
     private static class SetStreamObserver implements ClientResponseObserver<ArrowMessage, Flight.PutResult> {
         private final BufferAllocator allocator;
         private final StreamListener<PutResult> listener;
-        private final Runnable onReadyHandler;
+        private final OnStreamReadyHandler onStreamReadyHandler;
 
-        SetStreamObserver(BufferAllocator allocator, StreamListener<PutResult> listener, Runnable onReadyHandler) {
+        SetStreamObserver(
+                BufferAllocator allocator,
+                StreamListener<PutResult> listener,
+                OnStreamReadyHandler onStreamReadyHandler) {
             super();
             this.allocator = allocator;
             this.listener = listener == null ? NoOpStreamListener.getInstance() : listener;
-            this.onReadyHandler = onReadyHandler;
+            this.onStreamReadyHandler = onStreamReadyHandler;
         }
 
         @Override
         public void onNext(Flight.PutResult value) {
-            try (final PutResult message = PutResult.fromProtocol(this.allocator, value)) {
+            try (PutResult message = PutResult.fromProtocol(this.allocator, value)) {
                 this.listener.onNext(message);
             }
         }
@@ -261,7 +244,7 @@ public class BulkFlightClient implements AutoCloseable {
 
         @Override
         public void beforeStart(ClientCallStreamObserver<ArrowMessage> requestStream) {
-            requestStream.setOnReadyHandler(this.onReadyHandler);
+            requestStream.setOnReadyHandler(this.onStreamReadyHandler);
         }
     }
 
@@ -271,7 +254,9 @@ public class BulkFlightClient implements AutoCloseable {
     static class PutObserver extends OutboundStreamListenerImpl implements ClientStreamListener {
         private final FlightDescriptor descriptor;
         private final BooleanSupplier isCancelled;
+        private final BooleanSupplier isCompletedExceptionally;
         private final Runnable getResult;
+        private final OnStreamReadyHandler onStreamReadyHandler;
         private final ArrowCompressionType compressionType;
 
         /**
@@ -280,13 +265,17 @@ public class BulkFlightClient implements AutoCloseable {
          * @param descriptor The descriptor for the stream.
          * @param observer The write-side gRPC StreamObserver.
          * @param isCancelled A flag to check if the call has been cancelled.
+         * @param isCompletedExceptionally A flag to check if the call has been completed exceptionally.
          * @param getResult A flag that blocks until the overall call completes.
+         * @param compressionType The compression type to use.
          */
         PutObserver(
                 FlightDescriptor descriptor,
                 ClientCallStreamObserver<ArrowMessage> observer,
                 BooleanSupplier isCancelled,
+                BooleanSupplier isCompletedExceptionally,
                 Runnable getResult,
+                OnStreamReadyHandler onStreamReadyHandler,
                 ArrowCompressionType compressionType) {
             super(descriptor, observer);
             Preconditions.checkNotNull(descriptor, "descriptor must be provided");
@@ -294,7 +283,9 @@ public class BulkFlightClient implements AutoCloseable {
             Preconditions.checkNotNull(getResult, "getResult must be provided");
             this.descriptor = descriptor;
             this.isCancelled = isCancelled;
+            this.isCompletedExceptionally = isCompletedExceptionally;
             this.getResult = getResult;
+            this.onStreamReadyHandler = onStreamReadyHandler;
             this.compressionType = compressionType;
             this.unloader = null;
         }
@@ -338,7 +329,19 @@ public class BulkFlightClient implements AutoCloseable {
             // Check isCancelled as well to avoid inadvertently blocking forever
             // (so long as PutListener properly implements it)
             while (!super.responseObserver.isReady() && !this.isCancelled.getAsBoolean()) {
-                /* busy wait */
+                if (this.isCompletedExceptionally.getAsBoolean()) {
+                    // Will throw the error immediately
+                    getResult();
+                }
+
+                // If the stream is not ready, wait for a short time to avoid busy waiting
+                // This helps reduce CPU usage while still being responsive
+                try {
+                    this.onStreamReadyHandler.await(10, TimeUnit.MILLISECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("Interrupted while waiting for stream to be ready", e);
+                }
             }
         }
 
@@ -390,6 +393,16 @@ public class BulkFlightClient implements AutoCloseable {
          * otherwise, a DoPut operation may inadvertently block forever.
          */
         default boolean isCancelled() {
+            return false;
+        }
+
+        /**
+         * Check if the call has been completed exceptionally.
+         *
+         * <p>By default, this always returns false. Implementations should provide an appropriate implementation, as
+         * otherwise, a DoPut operation may inadvertently block forever.
+         */
+        default boolean isCompletedExceptionally() {
             return false;
         }
     }

@@ -16,7 +16,9 @@
 
 package io.greptime.models;
 
+import io.greptime.ArrowCompressionType;
 import io.greptime.common.util.Ensures;
+import io.greptime.rpc.Context;
 import io.greptime.v1.Common;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -65,6 +67,31 @@ import org.apache.arrow.vector.types.pojo.Schema;
  */
 public class ArrowHelper {
 
+    /**
+     * Get the Arrow compression type from the context.
+     *
+     * @param ctx the context
+     * @return the Arrow compression type
+     */
+    public static ArrowCompressionType getArrowCompressionType(Context ctx) {
+        switch (ctx.getCompression()) {
+            case Zstd:
+                return ArrowCompressionType.Zstd;
+            case Lz4:
+                return ArrowCompressionType.Lz4;
+            case None:
+                return ArrowCompressionType.None;
+            default:
+                throw new IllegalArgumentException("Unsupported compression type: " + ctx.getCompression());
+        }
+    }
+
+    /**
+     * Create an Arrow schema from a table schema.
+     *
+     * @param tableSchema the table schema
+     * @return the Arrow schema
+     */
     public static Schema createSchema(TableSchema tableSchema) {
         Ensures.ensureNonNull(tableSchema, "tableSchema is null");
 

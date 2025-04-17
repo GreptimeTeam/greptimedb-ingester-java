@@ -16,6 +16,7 @@
 
 package io.greptime;
 
+import io.greptime.BulkWrite.Config;
 import io.greptime.common.util.StringBuilderHelper;
 import io.greptime.models.DataType;
 import io.greptime.models.Table;
@@ -79,14 +80,17 @@ public class BulkWriteApiQuickStart {
                 .addField("field_json", DataType.Json)
                 .build();
 
+        Config config = Config.newBuilder()
+                .allocatorInitReservation(0)
+                .allocatorMaxAllocation(1024 * 1024 * 1024)
+                .timeoutMsPerMessage(10000)
+                .maxRequestsInFlight(8)
+                .build();
         Context ctx = Context.newDefault().withCompression(Compression.None);
-        long allocatorInitReservation = 0;
-        long allocatorMaxAllocation = 1024 * 1024 * 1024;
-        long timeoutMsPerMessage = 10000;
-        try (BulkStreamWriter bulkStreamWriter = greptimeDB.bulkStreamWriter(
-                schema, allocatorInitReservation, allocatorMaxAllocation, timeoutMsPerMessage, ctx)) {
 
-            // Write 10 times, each time write 100000 rows
+        try (BulkStreamWriter bulkStreamWriter = greptimeDB.bulkStreamWriter(schema, config, ctx)) {
+
+            // Write 100 times, each time write 100000 rows
             for (int i = 0; i < 100; i++) {
                 long start = System.currentTimeMillis();
                 Table.TableBufferRoot table = bulkStreamWriter.tableBufferRoot();
@@ -101,9 +105,9 @@ public class BulkWriteApiQuickStart {
                 LOG.info("Prepare data, time cost: {}ms", System.currentTimeMillis() - start);
 
                 start = System.currentTimeMillis();
-                CompletableFuture<Boolean> future = bulkStreamWriter.writeNext();
-                Boolean result = future.get();
-                LOG.info("Write result: {}, time cost: {}ms", result, System.currentTimeMillis() - start);
+                CompletableFuture<Integer> future = bulkStreamWriter.writeNext();
+                Integer result = future.get();
+                LOG.info("Wrote rows: {}, time cost: {}ms", result, System.currentTimeMillis() - start);
             }
 
             bulkStreamWriter.completed();

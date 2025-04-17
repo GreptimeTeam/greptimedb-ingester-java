@@ -192,10 +192,16 @@ public class GreptimeDB implements Write, WriteObject, BulkWrite, Health, Lifecy
             long allocatorInitReservation,
             long allocatorMaxAllocation,
             long timeoutMsPerMessage,
+            int maxRequestsInFlight,
             Context ctx) {
         ensureInitialized();
         return this.bulkWriteClient.bulkStreamWriter(
-                schema, allocatorInitReservation, allocatorMaxAllocation, timeoutMsPerMessage, attachCtx(ctx));
+                schema,
+                allocatorInitReservation,
+                allocatorMaxAllocation,
+                timeoutMsPerMessage,
+                maxRequestsInFlight,
+                attachCtx(ctx));
     }
 
     @Override

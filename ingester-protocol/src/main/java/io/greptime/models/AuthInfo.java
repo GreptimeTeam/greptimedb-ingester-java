@@ -18,6 +18,8 @@ package io.greptime.models;
 
 import io.greptime.common.Into;
 import io.greptime.v1.Common;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 /**
  * Greptime authentication information
@@ -37,6 +39,11 @@ public class AuthInfo implements Into<Common.AuthHeader> {
 
     public static AuthInfo noAuthorization() {
         return null;
+    }
+
+    public String toBase64() {
+        String authInfoStr = String.format("%s:%s", this.username, this.password);
+        return Base64.getEncoder().encodeToString(authInfoStr.getBytes(StandardCharsets.UTF_8));
     }
 
     @Override

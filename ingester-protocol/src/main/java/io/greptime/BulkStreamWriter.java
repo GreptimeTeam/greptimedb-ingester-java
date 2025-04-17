@@ -52,9 +52,9 @@ import java.util.concurrent.CompletableFuture;
  *         LOG.info("Prepare data, time cost: {}ms", System.currentTimeMillis() - start);
  *
  *         start = System.currentTimeMillis();
- *         CompletableFuture<Boolean> future = bulkStreamWriter.writeNext();
- *         Boolean result = future.get();
- *         LOG.info("Write result: {}, time cost: {}ms", result, System.currentTimeMillis() - start);
+ *         CompletableFuture<Integer> future = bulkStreamWriter.writeNext();
+ *         Integer result = future.get();
+ *         LOG.info("Wrote rows: {}, time cost: {}ms", result, System.currentTimeMillis() - start);
  *     }
  *
  *     bulkStreamWriter.completed();
@@ -75,9 +75,9 @@ public interface BulkStreamWriter extends AutoCloseable {
     /**
      * Writes currenttable data to the stream.
      *
-     * @return a future that completes with true if the message was sent, false otherwise.
+     * @return a future that completes with the number of rows affected.
      */
-    CompletableFuture<Boolean> writeNext();
+    CompletableFuture<Integer> writeNext() throws Exception;
 
     /**
      * Completes the bulk write operation by signaling the end of transmission
@@ -86,4 +86,14 @@ public interface BulkStreamWriter extends AutoCloseable {
      * any errors that may have occurred during the operation.
      */
     void completed() throws Exception;
+
+    /**
+     * If the stream is not ready, calling `writeNext()` will block until the stream
+     * becomes ready for writing, potentially using a busy-wait mechanism.
+     *
+     * @return true if the stream is ready to write data, false otherwise
+     */
+    default boolean isStreamReady() {
+        return true;
+    }
 }
