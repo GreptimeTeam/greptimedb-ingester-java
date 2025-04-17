@@ -306,7 +306,7 @@ public class BulkWriteService implements AutoCloseable {
          * @param future The future to track
          */
         public void attach(long id, IdentifiableCompletableFuture future) {
-            future.scheduleTimeout();
+            this.futuresInFlight.put(id, future);
             future.whenComplete((r, t) -> {
                 // Remove the future from the map when it's completed
                 this.futuresInFlight.remove(id);
@@ -320,7 +320,7 @@ public class BulkWriteService implements AutoCloseable {
                     LOG.debug("Put operation succeeded [id={}], affected rows: {}", id, r);
                 }
             });
-            this.futuresInFlight.put(id, future);
+            future.scheduleTimeout();
 
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Attached future [id={}], current in-flight count: {}", id, this.futuresInFlight.size());
@@ -356,7 +356,7 @@ public class BulkWriteService implements AutoCloseable {
                 if (future != null) {
                     future.complete(affectedRows);
                 } else {
-                    LOG.warn("Received response for unknown request [id={}]", requestId);
+                    LOG.warn("A timeout response [id={}] finally received", requestId);
                 }
             }
         }
