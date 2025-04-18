@@ -313,9 +313,11 @@ public class BulkWriteService implements AutoCloseable {
 
                 if (t != null) {
                     LOG.error("Put operation failed [id={}]: {}", id, t.getMessage(), t);
-                    // If a put next operation fails, we complete the future with the exception
-                    // and the stream will be terminated immediately to prevent further operations
-                    onError(t);
+                    if (!(t instanceof TimeoutCompletableFuture.FutureDeadlineExceededException)) {
+                        // If a put next operation fails, we complete the future with the exception
+                        // and the stream will be terminated immediately to prevent further operations
+                        onError(t);
+                    }
                 } else {
                     LOG.debug("Put operation succeeded [id={}], affected rows: {}", id, r);
                 }

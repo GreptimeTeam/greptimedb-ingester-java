@@ -56,8 +56,6 @@ import org.apache.arrow.vector.compression.CompressionCodec;
 import org.apache.arrow.vector.dictionary.DictionaryProvider;
 import org.apache.arrow.vector.dictionary.DictionaryProvider.MapDictionaryProvider;
 import org.apache.arrow.vector.ipc.message.IpcOption;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Client for Flight services.
@@ -66,8 +64,6 @@ import org.slf4j.LoggerFactory;
  * with some changes to support bulk write.
  */
 public class BulkFlightClient implements AutoCloseable {
-    private static final Logger LOG = LoggerFactory.getLogger(BulkFlightClient.class);
-
     /** The maximum number of trace events to keep on the gRPC Channel. This value disables channel tracing. */
     private static final int MAX_CHANNEL_TRACE_EVENTS = 0;
 

@@ -54,12 +54,20 @@ public class TimeoutCompletableFuture<T> extends CompletableFuture<T> {
                     if (isCancelled() || isDone()) {
                         return;
                     }
-                    completeExceptionally(
-                            new TimeoutException("Operation timed out after " + this.timeout + " " + this.unit));
+                    completeExceptionally(new FutureDeadlineExceededException(
+                            "Future deadline exceeded, timeout: " + this.timeout + " " + this.unit));
                 },
                 this.timeout,
                 this.unit);
 
         return this;
+    }
+
+    public static class FutureDeadlineExceededException extends TimeoutException {
+        private static final long serialVersionUID = 1L;
+
+        public FutureDeadlineExceededException(String message) {
+            super(message);
+        }
     }
 }
