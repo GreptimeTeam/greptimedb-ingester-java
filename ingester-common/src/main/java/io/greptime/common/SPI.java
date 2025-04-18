@@ -32,5 +32,11 @@ public @interface SPI {
 
     String name() default "";
 
+    /**
+     * The priority of the SPI implementation.
+     * If multiple SPI implementations are found, the ones with higher priority will be placed first.
+     *
+     * @return the priority of the SPI implementation
+     */
     int priority() default 0;
 }
