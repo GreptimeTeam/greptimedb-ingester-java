@@ -143,7 +143,7 @@ public class BulkWriteService implements AutoCloseable {
      * @return A PutStage object containing the future and the number of in-flight requests
      */
     public PutStage putNext() {
-        long id = this.idGenerator.incrementAndGet();
+        long id = nextId();
         long totalRowCount = this.root.getRowCount();
 
         LOG.debug("Starting putNext operation [id={}], total row count: {}", id, totalRowCount);
@@ -205,6 +205,14 @@ public class BulkWriteService implements AutoCloseable {
     public void close() throws Exception {
         LOG.info("Closing BulkWriteService resources");
         AutoCloseables.close(this.root, this.manager);
+    }
+
+    private long nextId() {
+        long id = this.idGenerator.incrementAndGet();
+        if (id == 0) { // Skip ID 0 as it's reserved for special cases
+            id = this.idGenerator.incrementAndGet();
+        }
+        return id;
     }
 
     /**
@@ -356,7 +364,7 @@ public class BulkWriteService implements AutoCloseable {
             IdentifiableCompletableFuture future = this.futuresInFlight.get(requestId);
             if (future != null) {
                 future.complete(affectedRows);
-            } else {
+            } else if (requestId != 0) { // 0 is reserved for special cases
                 LOG.warn("A timeout response [id={}] finally received", requestId);
             }
         }
