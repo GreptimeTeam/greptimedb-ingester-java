@@ -218,7 +218,7 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
                     InnerMetricHelper.putTime().update(clock.duration(startCall), TimeUnit.MILLISECONDS);
                 });
 
-                LOG.debug("Write request sent successfully, in-flight requests: {}", stage.numInFlight());
+                LOG.info("Write request sent successfully, in-flight requests: {}", stage.numInFlight());
 
                 return future;
             });

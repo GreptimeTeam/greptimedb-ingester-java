@@ -27,7 +27,7 @@ public interface BulkWrite {
     /**
      * The default timeout in milliseconds for each message.
      */
-    long DEFAULT_TIMEOUT_MS_PER_MESSAGE = 10000;
+    long DEFAULT_TIMEOUT_MS_PER_MESSAGE = 60000;
 
     /**
      * The default allocator init reservation bytes.

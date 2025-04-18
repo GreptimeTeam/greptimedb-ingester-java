@@ -52,7 +52,7 @@ public class RandomTableDataProvider implements TableDataProvider {
                 .build();
         // Total number of rows to generate, configurable via system property
         // Default is 1 billion rows if not specified
-        rowCount = SystemPropertyUtil.getLong("table_data_provider.row_count", 1_000_000_000L);
+        rowCount = SystemPropertyUtil.getLong("table_data_provider.row_count", 1_000_000L);
     }
 
     @Override
@@ -97,8 +97,8 @@ public class RandomTableDataProvider implements TableDataProvider {
                 String traceState = "trace_state_" + random.nextInt(1000);
                 String podName = "pod_" + random.nextInt(1000);
                 timerContext.stop();
-                MetricsUtil.counter("random_table_data_provider.log_message_length")
-                        .inc(logMessage.length());
+                MetricsUtil.histogram("random_table_data_provider.log_message_length")
+                        .update(logMessage.length());
 
                 return new Object[] {
                     logTs,
