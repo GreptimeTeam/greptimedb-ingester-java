@@ -61,7 +61,7 @@ public class BulkWriteBenchmark {
         BulkWrite.Config cfg = BulkWrite.Config.newBuilder()
                 .allocatorInitReservation(0)
                 .allocatorMaxAllocation(4 * 1024 * 1024 * 1024L)
-                .timeoutMsPerMessage(10000)
+                .timeoutMsPerMessage(60000)
                 .maxRequestsInFlight(8)
                 .build();
         Compression compression = zstdCompression ? Compression.Zstd : Compression.None;

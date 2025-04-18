@@ -159,7 +159,7 @@ public class BulkWriteService implements AutoCloseable {
             // The buffer will be closed in the putNext method, but if an error occurs during execution,
             // we need to close it ourselves in the catch block to prevent memory leaks.
             metadataBuf = this.allocator.buffer(metadata.length);
-            metadataBuf.setBytes(0, metadata);
+            metadataBuf.writeBytes(metadata);
 
             // Send data to the server
             LOG.debug("Sending data to server [id={}]", id);
@@ -277,7 +277,7 @@ public class BulkWriteService implements AutoCloseable {
      * Listener for handling asynchronous responses from the server during bulk write operations.
      * Manages the lifecycle of in-flight requests and their associated futures.
      */
-    class AsyncPutListener implements PutListener {
+    static class AsyncPutListener implements PutListener {
         private final ConcurrentMap<Long, IdentifiableCompletableFuture> futuresInFlight;
         private final CompletableFuture<Void> completed;
 

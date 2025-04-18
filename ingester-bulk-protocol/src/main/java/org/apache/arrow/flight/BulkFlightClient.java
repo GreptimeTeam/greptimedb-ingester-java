@@ -16,7 +16,9 @@
 
 package org.apache.arrow.flight;
 
+import com.codahale.metrics.Timer;
 import io.greptime.ArrowCompressionType;
+import io.greptime.common.util.MetricsUtil;
 import io.greptime.rpc.TlsOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -86,7 +88,7 @@ public class BulkFlightClient implements AutoCloseable {
             ManagedChannel channel,
             List<FlightClientMiddleware.Factory> middleware,
             ArrowCompressionType compressionType) {
-        this.allocator = incomingAllocator.newChildAllocator("flight-client", 0, Long.MAX_VALUE);
+        this.allocator = incomingAllocator.newChildAllocator("bulk-flight-client", 0, Long.MAX_VALUE);
         this.channel = channel;
         this.middleware = middleware;
         this.compressionType = compressionType;
@@ -326,22 +328,28 @@ public class BulkFlightClient implements AutoCloseable {
 
         @Override
         protected void waitUntilStreamReady() {
-            // Check isCancelled as well to avoid inadvertently blocking forever
-            // (so long as PutListener properly implements it)
-            while (!super.responseObserver.isReady() && !this.isCancelled.getAsBoolean()) {
-                if (this.isCompletedExceptionally.getAsBoolean()) {
-                    // Will throw the error immediately
-                    getResult();
-                }
+            Timer.Context timerCtx = MetricsUtil.timer("bulk_flight_client.wait_until_stream_ready")
+                    .time();
+            try {
+                // Check isCancelled as well to avoid inadvertently blocking forever
+                // (so long as PutListener properly implements it)
+                while (!super.responseObserver.isReady() && !this.isCancelled.getAsBoolean()) {
+                    if (this.isCompletedExceptionally.getAsBoolean()) {
+                        // Will throw the error immediately
+                        getResult();
+                    }
 
-                // If the stream is not ready, wait for a short time to avoid busy waiting
-                // This helps reduce CPU usage while still being responsive
-                try {
-                    this.onStreamReadyHandler.await(10, TimeUnit.MILLISECONDS);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    throw new RuntimeException("Interrupted while waiting for stream to be ready", e);
+                    // If the stream is not ready, wait for a short time to avoid busy waiting
+                    // This helps reduce CPU usage while still being responsive
+                    try {
+                        this.onStreamReadyHandler.await(10, TimeUnit.MILLISECONDS);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        throw new RuntimeException("Interrupted while waiting for stream to be ready", e);
+                    }
                 }
+            } finally {
+                timerCtx.stop();
             }
         }
 

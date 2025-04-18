@@ -97,8 +97,8 @@ public class RandomTableDataProvider implements TableDataProvider {
                 String traceState = "trace_state_" + random.nextInt(1000);
                 String podName = "pod_" + random.nextInt(1000);
                 timerContext.stop();
-                MetricsUtil.counter("random_table_data_provider.log_message_length")
-                        .inc(logMessage.length());
+                MetricsUtil.histogram("random_table_data_provider.log_message_length")
+                        .update(logMessage.length());
 
                 return new Object[] {
                     logTs,

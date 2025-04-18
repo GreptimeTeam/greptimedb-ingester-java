@@ -381,7 +381,7 @@ public interface Table {
             for (int i = 0; i < values.length; i++) {
                 FieldVector vector = this.root.getVector(i);
                 if (vector.getValueCapacity() < rowCount + 1) {
-                    vector.allocateNew();
+                    vector.reAlloc();
                 }
                 ArrowHelper.addValue(
                         vector, rowCount, this.dataTypes.get(i), this.dataTypeExtensions.get(i), values[i]);
