@@ -338,26 +338,24 @@ public class BulkWriteService implements AutoCloseable {
 
         @Override
         public void onNext(PutResult val) {
-            try (ArrowBuf metadata = val.getApplicationMetadata()) {
-                if (metadata == null) {
-                    LOG.warn("Received PutResult with null metadata");
-                    return;
-                }
-                String metadataString =
-                        ByteString.copyFrom(metadata.nioBuffer()).toStringUtf8();
-                Metadata.ResponseMetadata responseMetadata = Metadata.ResponseMetadata.fromJson(metadataString);
+            ArrowBuf metadata = val.getApplicationMetadata();
+            if (metadata == null) {
+                LOG.warn("Received PutResult with null metadata");
+                return;
+            }
+            String metadataString = ByteString.copyFrom(metadata.nioBuffer()).toStringUtf8();
+            Metadata.ResponseMetadata responseMetadata = Metadata.ResponseMetadata.fromJson(metadataString);
 
-                long requestId = responseMetadata.getRequestId();
-                int affectedRows = responseMetadata.getAffectedRows();
+            long requestId = responseMetadata.getRequestId();
+            int affectedRows = responseMetadata.getAffectedRows();
 
-                LOG.debug("Received response [id={}], affected rows: {}", requestId, affectedRows);
+            LOG.debug("Received response [id={}], affected rows: {}", requestId, affectedRows);
 
-                IdentifiableCompletableFuture future = this.futuresInFlight.get(requestId);
-                if (future != null) {
-                    future.complete(affectedRows);
-                } else {
-                    LOG.warn("A timeout response [id={}] finally received", requestId);
-                }
+            IdentifiableCompletableFuture future = this.futuresInFlight.get(requestId);
+            if (future != null) {
+                future.complete(affectedRows);
+            } else {
+                LOG.warn("A timeout response [id={}] finally received", requestId);
             }
         }
 
