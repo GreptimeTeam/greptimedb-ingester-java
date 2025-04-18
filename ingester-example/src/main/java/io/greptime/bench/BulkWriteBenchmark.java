@@ -47,7 +47,7 @@ public class BulkWriteBenchmark {
         String endpoint = SystemPropertyUtil.get("db_endpoint", "127.0.0.1:4001");
         String dbName = SystemPropertyUtil.get("db_name", "public");
         boolean zstdCompression = SystemPropertyUtil.getBool("zstd_compression", false);
-        int batchSize = SystemPropertyUtil.getInt("batch_size_per_request", 100 * 1024);
+        int batchSize = SystemPropertyUtil.getInt("batch_size_per_request", 5 * 1024);
         LOG.info("Connect to db: {}, endpoint: {}", dbName, endpoint);
         LOG.info("Using zstd compression: {}", zstdCompression);
         LOG.info("Batch size: {}", batchSize);
@@ -62,7 +62,7 @@ public class BulkWriteBenchmark {
                 .allocatorInitReservation(0)
                 .allocatorMaxAllocation(4 * 1024 * 1024 * 1024L)
                 .timeoutMsPerMessage(60000)
-                .maxRequestsInFlight(8)
+                .maxRequestsInFlight(32)
                 .build();
         Compression compression = zstdCompression ? Compression.Zstd : Compression.None;
         Context ctx = Context.newDefault().withCompression(compression);

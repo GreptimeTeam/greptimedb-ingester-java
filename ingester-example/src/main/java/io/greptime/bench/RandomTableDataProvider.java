@@ -52,7 +52,7 @@ public class RandomTableDataProvider implements TableDataProvider {
                 .build();
         // Total number of rows to generate, configurable via system property
         // Default is 1 billion rows if not specified
-        rowCount = SystemPropertyUtil.getLong("table_data_provider.row_count", 1_000_000_000L);
+        rowCount = SystemPropertyUtil.getLong("table_data_provider.row_count", 1_000_000L);
     }
 
     @Override

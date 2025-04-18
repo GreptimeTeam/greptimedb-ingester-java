@@ -208,10 +208,10 @@ public class BulkWriteService implements AutoCloseable {
     }
 
     private long nextId() {
-        long id = this.idGenerator.incrementAndGet();
-        if (id == 0) { // Skip ID 0 as it's reserved for special cases
+        long id;
+        do {
             id = this.idGenerator.incrementAndGet();
-        }
+        } while (id == 0); // Skip ID 0 as it's reserved for special cases
         return id;
     }
 
