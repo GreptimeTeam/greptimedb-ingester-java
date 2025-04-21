@@ -143,7 +143,7 @@ public class BulkWriteService implements AutoCloseable {
      * @return A PutStage object containing the future and the number of in-flight requests
      */
     public PutStage putNext() {
-        long id = this.idGenerator.incrementAndGet();
+        long id = nextId();
         long totalRowCount = this.root.getRowCount();
 
         LOG.debug("Starting putNext operation [id={}], total row count: {}", id, totalRowCount);
@@ -159,7 +159,7 @@ public class BulkWriteService implements AutoCloseable {
             // The buffer will be closed in the putNext method, but if an error occurs during execution,
             // we need to close it ourselves in the catch block to prevent memory leaks.
             metadataBuf = this.allocator.buffer(metadata.length);
-            metadataBuf.setBytes(0, metadata);
+            metadataBuf.writeBytes(metadata);
 
             // Send data to the server
             LOG.debug("Sending data to server [id={}]", id);
@@ -205,6 +205,14 @@ public class BulkWriteService implements AutoCloseable {
     public void close() throws Exception {
         LOG.info("Closing BulkWriteService resources");
         AutoCloseables.close(this.root, this.manager);
+    }
+
+    private long nextId() {
+        long id;
+        do {
+            id = this.idGenerator.incrementAndGet();
+        } while (id == 0); // Skip ID 0 as it's reserved for special cases
+        return id;
     }
 
     /**
@@ -277,7 +285,7 @@ public class BulkWriteService implements AutoCloseable {
      * Listener for handling asynchronous responses from the server during bulk write operations.
      * Manages the lifecycle of in-flight requests and their associated futures.
      */
-    class AsyncPutListener implements PutListener {
+    static class AsyncPutListener implements PutListener {
         private final ConcurrentMap<Long, IdentifiableCompletableFuture> futuresInFlight;
         private final CompletableFuture<Void> completed;
 
@@ -313,9 +321,11 @@ public class BulkWriteService implements AutoCloseable {
 
                 if (t != null) {
                     LOG.error("Put operation failed [id={}]: {}", id, t.getMessage(), t);
-                    // If a put next operation fails, we complete the future with the exception
-                    // and the stream will be terminated immediately to prevent further operations
-                    onError(t);
+                    if (!(t instanceof TimeoutCompletableFuture.FutureDeadlineExceededException)) {
+                        // If a put next operation fails, we complete the future with the exception
+                        // and the stream will be terminated immediately to prevent further operations
+                        onError(t);
+                    }
                 } else {
                     LOG.debug("Put operation succeeded [id={}], affected rows: {}", id, r);
                 }
@@ -338,26 +348,24 @@ public class BulkWriteService implements AutoCloseable {
 
         @Override
         public void onNext(PutResult val) {
-            try (ArrowBuf metadata = val.getApplicationMetadata()) {
-                if (metadata == null) {
-                    LOG.warn("Received PutResult with null metadata");
-                    return;
-                }
-                String metadataString =
-                        ByteString.copyFrom(metadata.nioBuffer()).toStringUtf8();
-                Metadata.ResponseMetadata responseMetadata = Metadata.ResponseMetadata.fromJson(metadataString);
+            ArrowBuf metadata = val.getApplicationMetadata();
+            if (metadata == null) {
+                LOG.warn("Received PutResult with null metadata");
+                return;
+            }
+            String metadataString = ByteString.copyFrom(metadata.nioBuffer()).toStringUtf8();
+            Metadata.ResponseMetadata responseMetadata = Metadata.ResponseMetadata.fromJson(metadataString);
 
-                long requestId = responseMetadata.getRequestId();
-                int affectedRows = responseMetadata.getAffectedRows();
+            long requestId = responseMetadata.getRequestId();
+            int affectedRows = responseMetadata.getAffectedRows();
 
-                LOG.debug("Received response [id={}], affected rows: {}", requestId, affectedRows);
+            LOG.debug("Received response [id={}], affected rows: {}", requestId, affectedRows);
 
-                IdentifiableCompletableFuture future = this.futuresInFlight.get(requestId);
-                if (future != null) {
-                    future.complete(affectedRows);
-                } else {
-                    LOG.warn("A timeout response [id={}] finally received", requestId);
-                }
+            IdentifiableCompletableFuture future = this.futuresInFlight.get(requestId);
+            if (future != null) {
+                future.complete(affectedRows);
+            } else if (requestId != 0) { // 0 is reserved for special cases
+                LOG.warn("A timeout response [id={}] finally received", requestId);
             }
         }
 

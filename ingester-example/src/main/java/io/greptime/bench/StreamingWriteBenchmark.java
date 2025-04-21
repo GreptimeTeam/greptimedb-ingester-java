@@ -48,7 +48,7 @@ public class StreamingWriteBenchmark {
         String endpoint = SystemPropertyUtil.get("db_endpoint", "127.0.0.1:4001");
         String dbName = SystemPropertyUtil.get("db_name", "public");
         boolean zstdCompression = SystemPropertyUtil.getBool("zstd_compression", false);
-        int batchSize = SystemPropertyUtil.getInt("batch_size_per_request", 100 * 1024);
+        int batchSize = SystemPropertyUtil.getInt("batch_size_per_request", 5 * 1024);
         int maxPointsPerSecond = SystemPropertyUtil.getInt("max_points_per_second", Integer.MAX_VALUE);
         LOG.info("Connect to db: {}, endpoint: {}", dbName, endpoint);
         LOG.info("Using zstd compression: {}", zstdCompression);
