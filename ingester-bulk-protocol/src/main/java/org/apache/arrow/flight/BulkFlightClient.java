@@ -113,12 +113,17 @@ public class BulkFlightClient implements AutoCloseable {
      * @param root VectorSchemaRoot the root containing data
      * @param metadataListener A handler for metadata messages from the server. This will be passed buffers that will be
      *     freed after {@link StreamListener#onNext(Object)} is called!
+     * @param maxRequestsInFlight the max in-flight requests in the stream
      * @param options RPC-layer hints for this call.
      * @return ClientStreamListener an interface to control uploading data
      */
     public ClientStreamListener startPut(
-            FlightDescriptor descriptor, VectorSchemaRoot root, PutListener metadataListener, CallOption... options) {
-        return startPut(descriptor, root, new MapDictionaryProvider(), metadataListener, options);
+            FlightDescriptor descriptor,
+            VectorSchemaRoot root,
+            PutListener metadataListener,
+            long maxRequestsInFlight,
+            CallOption... options) {
+        return startPut(descriptor, root, new MapDictionaryProvider(), metadataListener, maxRequestsInFlight, options);
     }
 
     /**
@@ -128,6 +133,7 @@ public class BulkFlightClient implements AutoCloseable {
      * @param root VectorSchemaRoot the root containing data
      * @param provider A dictionary provider for the root.
      * @param metadataListener A handler for metadata messages from the server.
+     * @param maxRequestsInFlight the max in-flight requests in the stream
      * @param options RPC-layer hints for this call.
      * @return ClientStreamListener an interface to control uploading data.
      *     {@link ClientStreamListener#start(VectorSchemaRoot, DictionaryProvider)} will already have been called.
@@ -137,10 +143,11 @@ public class BulkFlightClient implements AutoCloseable {
             VectorSchemaRoot root,
             DictionaryProvider provider,
             PutListener metadataListener,
+            long maxRequestsInFlight,
             CallOption... options) {
         Preconditions.checkNotNull(root, "root must not be null");
         Preconditions.checkNotNull(provider, "provider must not be null");
-        ClientStreamListener writer = startPut(descriptor, metadataListener, options);
+        ClientStreamListener writer = startPut(descriptor, metadataListener, maxRequestsInFlight, options);
         writer.start(root, provider);
         return writer;
     }
@@ -150,18 +157,22 @@ public class BulkFlightClient implements AutoCloseable {
      *
      * @param descriptor FlightDescriptor the descriptor for the data
      * @param metadataListener A handler for metadata messages from the server.
+     * @param maxRequestsInFlight the max in-flight requests in the stream
      * @param options RPC-layer hints for this call.
      * @return ClientStreamListener an interface to control uploading data.
      *     {@link ClientStreamListener#start(VectorSchemaRoot, DictionaryProvider)} will NOT already have been called.
      */
     public ClientStreamListener startPut(
-            FlightDescriptor descriptor, PutListener metadataListener, CallOption... options) {
+            FlightDescriptor descriptor,
+            PutListener metadataListener,
+            long maxRequestsInFlight,
+            CallOption... options) {
         Preconditions.checkNotNull(descriptor, "descriptor must not be null");
         Preconditions.checkNotNull(metadataListener, "metadataListener must not be null");
 
         try {
             ClientCall<ArrowMessage, Flight.PutResult> call = asyncStubNewCall(this.doPutDescriptor, options);
-            OnStreamReadyHandler onStreamReadyHandler = new OnStreamReadyHandler();
+            OnStreamReadyHandler onStreamReadyHandler = new OnStreamReadyHandler((int) maxRequestsInFlight);
             SetStreamObserver resultObserver =
                     new SetStreamObserver(this.allocator, metadataListener, onStreamReadyHandler);
             ClientCallStreamObserver<ArrowMessage> observer =
@@ -184,11 +195,20 @@ public class BulkFlightClient implements AutoCloseable {
     }
 
     private static class OnStreamReadyHandler implements Runnable {
-        private final Semaphore semaphore = new Semaphore(0);
+        private final int maxRequestsInFlight;
+        private final Semaphore semaphore;
+
+        OnStreamReadyHandler(int maxRequestsInFlight) {
+            this.maxRequestsInFlight = maxRequestsInFlight;
+            this.semaphore = new Semaphore(maxRequestsInFlight);
+        }
 
         @Override
         public void run() {
-            this.semaphore.release();
+            int mayReleasePermits = this.maxRequestsInFlight - this.semaphore.availablePermits();
+            if (mayReleasePermits > 0) {
+                this.semaphore.release(mayReleasePermits);
+            }
         }
 
         /**
@@ -338,7 +358,10 @@ public class BulkFlightClient implements AutoCloseable {
                     // If the stream is not ready, wait for a short time to avoid busy waiting
                     // This helps reduce CPU usage while still being responsive
                     try {
-                        this.onStreamReadyHandler.await(10, TimeUnit.MILLISECONDS);
+                        if (this.onStreamReadyHandler.await(10, TimeUnit.MILLISECONDS)) {
+                            // Allow some in-flight requests to be sent
+                            break;
+                        }
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                         throw new RuntimeException("Interrupted while waiting for stream to be ready", e);

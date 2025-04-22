@@ -135,20 +135,26 @@ public class BulkWriteManager implements AutoCloseable {
      * @param table the name of the target table
      * @param schema the Arrow schema defining the structure of the data to be written
      * @param timeoutMs the timeout in milliseconds for the write operation
+     * @param maxRequestsInFlight the max in-flight requests in the stream
      * @param options optional RPC-layer hints to configure the underlying Flight client call
      * @return a BulkStreamWriter instance that manages the data transfer process
      */
-    public BulkWriteService intoBulkWriteStream(String table, Schema schema, long timeoutMs, CallOption... options) {
+    public BulkWriteService intoBulkWriteStream(
+            String table, Schema schema, long timeoutMs, int maxRequestsInFlight, CallOption... options) {
         FlightDescriptor descriptor = FlightDescriptor.path(table);
-        return new BulkWriteService(this, this.allocator, schema, descriptor, timeoutMs, options);
+        return new BulkWriteService(this, this.allocator, schema, descriptor, timeoutMs, maxRequestsInFlight, options);
     }
 
     VectorSchemaRoot createSchemaRoot(Schema schema) {
         return VectorSchemaRoot.create(schema, this.allocator);
     }
 
-    ClientStreamListener startPut(FlightDescriptor descriptor, PutListener metadataListener, CallOption... options) {
-        return this.flightClient.startPut(descriptor, metadataListener, options);
+    ClientStreamListener startPut(
+            FlightDescriptor descriptor,
+            PutListener metadataListener,
+            long maxRequestsInFlight,
+            CallOption... options) {
+        return this.flightClient.startPut(descriptor, metadataListener, maxRequestsInFlight, options);
     }
 
     DictionaryProvider newDefaultDictionaryProvider() {

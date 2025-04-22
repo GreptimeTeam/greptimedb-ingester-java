@@ -86,6 +86,11 @@ public interface Table {
     }
 
     /**
+     * The bytes used by the table.
+     */
+    long bytesUsed();
+
+    /**
      * Insets one row with all columns.
      *
      * The order of the values must be the same as the order of the schema.
@@ -245,6 +250,16 @@ public interface Table {
             return this.columnSchemas.size();
         }
 
+        /**
+         * <p>
+         * This is an expensive operation, only used for testing
+         * </p>
+         */
+        @Override
+        public long bytesUsed() {
+            return this.rows.stream().mapToLong(row -> row.getSerializedSize()).sum();
+        }
+
         @Override
         public Table addRow(Object... values) {
             Ensures.ensure(
@@ -367,6 +382,13 @@ public interface Table {
         @Override
         public int columnCount() {
             return this.root.getSchema().getFields().size();
+        }
+
+        @Override
+        public long bytesUsed() {
+            return this.root.getFieldVectors().stream()
+                    .mapToLong(vector -> vector.getBufferSize())
+                    .sum();
         }
 
         @Override

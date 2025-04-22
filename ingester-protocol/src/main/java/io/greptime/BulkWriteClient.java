@@ -135,8 +135,8 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
         HeaderCallOption headerOption = new HeaderCallOption(headers);
         AsyncExecCallOption execOption = new AsyncExecCallOption(this.asyncPool);
 
-        BulkWriteService writer =
-                manager.intoBulkWriteStream(table, arrowSchema, timeoutMsPerMessage, headerOption, execOption);
+        BulkWriteService writer = manager.intoBulkWriteStream(
+                table, arrowSchema, timeoutMsPerMessage, maxRequestsInFlight, headerOption, execOption);
         writer.start();
         if (this.opts.isUseZeroCopyWrite()) {
             writer.tryUseZeroCopyWrite();

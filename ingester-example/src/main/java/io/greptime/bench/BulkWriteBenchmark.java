@@ -46,26 +46,28 @@ public class BulkWriteBenchmark {
     public static void main(String[] args) throws Exception {
         String endpoint = SystemPropertyUtil.get("db_endpoint", "127.0.0.1:4001");
         String dbName = SystemPropertyUtil.get("db_name", "public");
-        boolean zstdCompression = SystemPropertyUtil.getBool("zstd_compression", false);
-        int batchSize = SystemPropertyUtil.getInt("batch_size_per_request", 5 * 1024);
+        boolean zstdCompression = SystemPropertyUtil.getBool("zstd_compression", true);
+        int batchSize = SystemPropertyUtil.getInt("batch_size_per_request", 64 * 1024);
         LOG.info("Connect to db: {}, endpoint: {}", dbName, endpoint);
         LOG.info("Using zstd compression: {}", zstdCompression);
         LOG.info("Batch size: {}", batchSize);
 
         GreptimeDB greptimeDB = DBConnector.connectTo(new String[] {endpoint}, dbName);
-        TableDataProvider tableDataProvider =
-                ServiceLoader.load(TableDataProvider.class).first();
-        tableDataProvider.init();
-        TableSchema tableSchema = tableDataProvider.tableSchema();
 
         BulkWrite.Config cfg = BulkWrite.Config.newBuilder()
                 .allocatorInitReservation(0)
                 .allocatorMaxAllocation(4 * 1024 * 1024 * 1024L)
                 .timeoutMsPerMessage(60000)
-                .maxRequestsInFlight(32)
+                .maxRequestsInFlight(4)
                 .build();
         Compression compression = zstdCompression ? Compression.Zstd : Compression.None;
         Context ctx = Context.newDefault().withCompression(compression);
+
+        TableDataProvider tableDataProvider =
+                ServiceLoader.load(TableDataProvider.class).first();
+        LOG.info("Table data provider: {}", tableDataProvider.getClass().getName());
+        tableDataProvider.init();
+        TableSchema tableSchema = tableDataProvider.tableSchema();
 
         LOG.info("Start writing data");
         try (BulkStreamWriter writer = greptimeDB.bulkStreamWriter(tableSchema, cfg, ctx)) {
@@ -80,16 +82,19 @@ public class BulkWriteBenchmark {
                     }
                     table.addRow(rows.next());
                 }
+                LOG.info("Table bytes used: {}", table.bytesUsed());
                 // Complete the table; adding rows is no longer permitted.
                 table.complete();
 
                 // Write the table data to the server
                 CompletableFuture<Integer> future = writer.writeNext();
+                long fStart = System.nanoTime();
                 future.whenComplete((r, t) -> {
+                    long costMs = (System.nanoTime() - fStart) / 1000000;
                     if (t != null) {
-                        LOG.error("Error writing data", t);
+                        LOG.error("Error writing data, time cost: {}ms", costMs, t);
                     } else {
-                        LOG.info("Wrote rows: {}", r);
+                        LOG.info("Wrote rows: {}, time cost: {}ms", r, costMs);
                     }
                 });
 
@@ -101,6 +106,8 @@ public class BulkWriteBenchmark {
             writer.completed();
 
             LOG.info("Completed writing data, time cost: {}s", (System.nanoTime() - start) / 1000000000);
+        } finally {
+            tableDataProvider.close();
         }
 
         greptimeDB.shutdownGracefully();
