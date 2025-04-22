@@ -22,7 +22,9 @@ import io.greptime.v1.Common;
 import io.greptime.v1.Database;
 import io.greptime.v1.RowData;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.arrow.vector.FieldVector;
 import org.apache.arrow.vector.VectorSchemaRoot;
 
@@ -103,6 +105,12 @@ public interface Table {
      * Completes the table data construction and prevents further row additions.
      * After calling this method, the table will be immutable and ready to be written
      * to the database.
+     *
+     * <p>
+     * This method must be called after all rows have been added to ensure any buffered
+     * rows are properly flushed to the underlying storage. Failure to call this method
+     * may result in data loss, particularly for implementations that use internal buffering.
+     * </p>
      */
     Table complete();
 
@@ -159,10 +167,11 @@ public interface Table {
      *
      * @param tableSchema the table schema
      * @param root the vector schema root
+     * @param columnBufferSize the buffer size for each column
      * @return a table buffer root
      */
-    static TableBufferRoot tableBufferRoot(TableSchema tableSchema, VectorSchemaRoot root) {
-        return new BulkTableBuilder(tableSchema, root).build();
+    static TableBufferRoot tableBufferRoot(TableSchema tableSchema, VectorSchemaRoot root, int columnBufferSize) {
+        return new BulkTableBuilder(tableSchema, root, columnBufferSize).build();
     }
 
     class Builder {
@@ -324,10 +333,12 @@ public interface Table {
     class BulkTableBuilder {
         private final TableSchema tableSchema;
         private final VectorSchemaRoot root;
+        private final int columnBufferSize;
 
-        public BulkTableBuilder(TableSchema tableSchema, VectorSchemaRoot root) {
+        public BulkTableBuilder(TableSchema tableSchema, VectorSchemaRoot root, int columnBufferSize) {
             this.tableSchema = tableSchema;
             this.root = root;
+            this.columnBufferSize = columnBufferSize;
         }
 
         public BulkTable build() {
@@ -344,29 +355,37 @@ public interface Table {
             Ensures.ensure(
                     columnCount == dataTypeExtensions.size(),
                     "Column data types size not equal to data type extensions size");
+            Ensures.ensure(
+                    columnCount == this.root.getSchema().getFields().size(),
+                    "Column count not equal to root schema fields size");
 
-            return new BulkTable(tableName, dataTypes, dataTypeExtensions, this.root);
+            return new BulkTable(tableName, dataTypes, dataTypeExtensions, this.root, this.columnBufferSize);
         }
     }
 
     class BulkTable implements TableBufferRoot {
 
-        private volatile boolean completed = false;
+        private volatile AtomicBoolean completed = new AtomicBoolean(false);
 
         private final String tableName;
         private final List<Common.ColumnDataType> dataTypes;
         private final List<Common.ColumnDataTypeExtension> dataTypeExtensions;
         private final VectorSchemaRoot root;
+        private final int columnBufferSize;
+        private final List<Object[]> buffer;
 
         public BulkTable(
                 String tableName,
                 List<Common.ColumnDataType> dataTypes,
                 List<Common.ColumnDataTypeExtension> dataTypeExtensions,
-                VectorSchemaRoot root) {
+                VectorSchemaRoot root,
+                int columnBufferSize) {
             this.tableName = tableName;
             this.dataTypes = dataTypes;
             this.dataTypeExtensions = dataTypeExtensions;
             this.root = root;
+            this.columnBufferSize = columnBufferSize;
+            this.buffer = new ArrayList<>(columnBufferSize);
         }
 
         @Override
@@ -381,7 +400,7 @@ public interface Table {
 
         @Override
         public int columnCount() {
-            return this.root.getSchema().getFields().size();
+            return this.dataTypes.size();
         }
 
         @Override
@@ -394,21 +413,18 @@ public interface Table {
         @Override
         public Table addRow(Object... values) {
             Ensures.ensure(
-                    !this.completed,
+                    !this.completed.get(),
                     "Table data construction has been completed. Cannot add more rows. Please create a new table instance.");
 
             checkNumValues(values.length);
 
-            int rowCount = this.root.getRowCount();
-            for (int i = 0; i < values.length; i++) {
-                FieldVector vector = this.root.getVector(i);
-                if (vector.getValueCapacity() < rowCount + 1) {
-                    vector.reAlloc();
-                }
-                ArrowHelper.addValue(
-                        vector, rowCount, this.dataTypes.get(i), this.dataTypeExtensions.get(i), values[i]);
+            this.buffer.add(values);
+            if (this.buffer.size() < this.columnBufferSize) {
+                return this;
             }
-            this.root.setRowCount(rowCount + 1);
+
+            addRowInner();
+
             return this;
         }
 
@@ -419,13 +435,50 @@ public interface Table {
 
         @Override
         public Table complete() {
-            this.completed = true;
+            if (this.completed.compareAndSet(false, true)) {
+                if (!this.buffer.isEmpty()) {
+                    addRowInner();
+                }
+            }
             return this;
         }
 
         @Override
         public boolean isCompleted() {
-            return this.completed;
+            return this.completed.get();
+        }
+
+        private void addRowInner() {
+            int rowCount = this.root.getRowCount();
+            int rowCountToAdd = this.buffer.size();
+            int columnCount = columnCount();
+            for (int i = 0; i < columnCount; i++) {
+                FieldVector vector = this.root.getVector(i);
+                while (vector.getValueCapacity() < rowCount + rowCountToAdd) {
+                    vector.reAlloc();
+                }
+                final int colIndex = i;
+                ArrowHelper.addValues(
+                        vector,
+                        rowCount,
+                        this.dataTypes.get(colIndex),
+                        this.dataTypeExtensions.get(colIndex),
+                        new Iterator<Object>() {
+                            private int index = 0;
+
+                            @Override
+                            public boolean hasNext() {
+                                return index < rowCountToAdd;
+                            }
+
+                            @Override
+                            public Object next() {
+                                return buffer.get(index++)[colIndex];
+                            }
+                        });
+            }
+            this.buffer.clear();
+            this.root.setRowCount(rowCount + rowCountToAdd);
         }
     }
 }

@@ -22,6 +22,7 @@ import io.greptime.rpc.Context;
 import io.greptime.v1.Common;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import org.apache.arrow.vector.BigIntVector;
 import org.apache.arrow.vector.BitVector;
@@ -112,6 +113,285 @@ public class ArrowHelper {
         }
 
         return new Schema(fields);
+    }
+
+    public static void addValues(
+            FieldVector vector,
+            int startRowIndex,
+            Common.ColumnDataType dataType,
+            Common.ColumnDataTypeExtension dataTypeExtension,
+            Iterator<Object> values) {
+        switch (dataType) {
+            case INT8:
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        ((TinyIntVector) vector).setSafe(startRowIndex++, (int) value);
+                    }
+                }
+                break;
+            case INT16:
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        ((SmallIntVector) vector).setSafe(startRowIndex++, (int) value);
+                    }
+                }
+                break;
+            case INT32:
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        ((IntVector) vector).setSafe(startRowIndex++, (int) value);
+                    }
+                }
+                break;
+            case INT64:
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        ((BigIntVector) vector).setSafe(startRowIndex++, (long) value);
+                    }
+                }
+                break;
+            case UINT8:
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        ((UInt1Vector) vector).setSafe(startRowIndex++, (int) value);
+                    }
+                }
+                break;
+            case UINT16:
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        ((UInt2Vector) vector).setSafe(startRowIndex++, (int) value);
+                    }
+                }
+                break;
+            case UINT32:
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        ((UInt4Vector) vector).setSafe(startRowIndex++, ((Long) value).intValue());
+                    }
+                }
+                break;
+            case UINT64:
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        ((UInt8Vector) vector).setSafe(startRowIndex++, (long) value);
+                    }
+                }
+                break;
+            case FLOAT32:
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        ((Float4Vector) vector).setSafe(startRowIndex++, (float) value);
+                    }
+                }
+                break;
+            case FLOAT64:
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        ((Float8Vector) vector).setSafe(startRowIndex++, (double) value);
+                    }
+                }
+                break;
+            case BOOLEAN:
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        ((BitVector) vector).setSafe(startRowIndex++, (boolean) value ? 1 : 0);
+                    }
+                }
+                break;
+            case BINARY:
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        ((VarBinaryVector) vector).setSafe(startRowIndex++, (byte[]) value);
+                    }
+                }
+                break;
+            case STRING:
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        ((VarCharVector) vector)
+                                .setSafe(startRowIndex++, ((String) value).getBytes(StandardCharsets.UTF_8));
+                    }
+                }
+                break;
+            case DATE:
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        ((DateDayVector) vector).setSafe(startRowIndex++, ValueUtil.getDateValue(value));
+                    }
+                }
+                break;
+            case TIMESTAMP_SECOND: {
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        TimeStampSecHolder holder = new TimeStampSecHolder();
+                        holder.value = ValueUtil.getTimestamp(value, java.util.concurrent.TimeUnit.SECONDS);
+                        ((TimeStampSecVector) vector).setSafe(startRowIndex++, holder);
+                    }
+                }
+                break;
+            }
+            case TIMESTAMP_MILLISECOND: {
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        TimeStampMilliHolder holder = new TimeStampMilliHolder();
+                        holder.value = ValueUtil.getTimestamp(value, java.util.concurrent.TimeUnit.MILLISECONDS);
+                        ((TimeStampMilliVector) vector).setSafe(startRowIndex++, holder);
+                    }
+                }
+                break;
+            }
+            case TIMESTAMP_MICROSECOND: {
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        TimeStampMicroHolder holder = new TimeStampMicroHolder();
+                        holder.value = ValueUtil.getTimestamp(value, java.util.concurrent.TimeUnit.MICROSECONDS);
+                        ((TimeStampMicroVector) vector).setSafe(startRowIndex++, holder);
+                    }
+                }
+                break;
+            }
+            case TIMESTAMP_NANOSECOND: {
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        TimeStampNanoHolder holder = new TimeStampNanoHolder();
+                        holder.value = ValueUtil.getTimestamp(value, java.util.concurrent.TimeUnit.NANOSECONDS);
+                        ((TimeStampNanoVector) vector).setSafe(startRowIndex++, holder);
+                    }
+                }
+                break;
+            }
+            case TIME_SECOND: {
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        TimeSecHolder holder = new TimeSecHolder();
+                        holder.value = (int) ValueUtil.getLongValue(value);
+                        ((TimeSecVector) vector).setSafe(startRowIndex++, holder);
+                    }
+                }
+                break;
+            }
+            case TIME_MILLISECOND: {
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        TimeMilliHolder holder = new TimeMilliHolder();
+                        holder.value = (int) ValueUtil.getLongValue(value);
+                        ((TimeMilliVector) vector).setSafe(startRowIndex++, holder);
+                    }
+                }
+                break;
+            }
+            case TIME_MICROSECOND: {
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        TimeMicroHolder holder = new TimeMicroHolder();
+                        holder.value = ValueUtil.getLongValue(value);
+                        ((TimeMicroVector) vector).setSafe(startRowIndex++, holder);
+                    }
+                }
+                break;
+            }
+            case TIME_NANOSECOND: {
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        TimeNanoHolder holder = new TimeNanoHolder();
+                        holder.value = ValueUtil.getLongValue(value);
+                        ((TimeNanoVector) vector).setSafe(startRowIndex++, holder);
+                    }
+                }
+                break;
+            }
+            case DECIMAL128:
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        byte[] bytes = ValueUtil.getDecimal128BigEndianBytes(dataTypeExtension, value);
+                        ((DecimalVector) vector).setBigEndianSafe(startRowIndex++, bytes);
+                    }
+                }
+                break;
+            case JSON:
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        byte[] jsonBytes = ValueUtil.getJsonString(value).getBytes(StandardCharsets.UTF_8);
+                        ((VarCharVector) vector).setSafe(startRowIndex++, jsonBytes);
+                    }
+                }
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported data type: " + dataType);
+        }
     }
 
     public static void addValue(

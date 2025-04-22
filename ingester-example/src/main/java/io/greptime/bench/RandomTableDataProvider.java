@@ -27,7 +27,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 @SPI(
         name = "random_table_data_provider",
-        priority = 1 /* newer implementation can use higher priority to override the old one */)
+        priority = 10 /* newer implementation can use higher priority to override the old one */)
 public class RandomTableDataProvider implements TableDataProvider {
 
     private final TableSchema tableSchema;

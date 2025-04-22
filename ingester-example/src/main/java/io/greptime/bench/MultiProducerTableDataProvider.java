@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @SPI(
         name = "multi_producer_table_data_provider",
-        priority = 10 /* newer implementation can use higher priority to override the old one */)
+        priority = 1 /* newer implementation can use higher priority to override the old one */)
 public class MultiProducerTableDataProvider extends RandomTableDataProvider {
 
     private final int producerCount;

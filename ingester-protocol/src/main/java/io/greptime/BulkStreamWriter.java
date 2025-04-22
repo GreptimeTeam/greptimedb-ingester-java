@@ -66,11 +66,13 @@ public interface BulkStreamWriter extends AutoCloseable {
      * The `TableBufferRoot` provides direct access to the underlying memory
      * where table data is stored for efficient bulk operations.
      *
+     * @param columnBufferSize the buffer size for each column
+     *
      * @see Table.TableBufferRoot
      *
      * @return a table buffer root
      */
-    Table.TableBufferRoot tableBufferRoot();
+    Table.TableBufferRoot tableBufferRoot(int columnBufferSize);
 
     /**
      * Writes currenttable data to the stream.

@@ -75,7 +75,7 @@ public class BulkWriteBenchmark {
 
             long start = System.nanoTime();
             for (; ; ) {
-                Table.TableBufferRoot table = writer.tableBufferRoot();
+                Table.TableBufferRoot table = writer.tableBufferRoot(1024);
                 for (int i = 0; i < batchSize; i++) {
                     if (!rows.hasNext()) {
                         break;
