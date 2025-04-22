@@ -30,15 +30,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicLong;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @SPI(
         name = "multi_producer_table_data_provider",
         priority = 10 /* newer implementation can use higher priority to override the old one */)
 public class MultiProducerTableDataProvider extends RandomTableDataProvider {
-
-    private static final Logger LOG = LoggerFactory.getLogger(MultiProducerTableDataProvider.class);
 
     private final int producerCount;
     private final long rowCount;
@@ -91,17 +87,13 @@ public class MultiProducerTableDataProvider extends RandomTableDataProvider {
 
             @Override
             public Object[] next() {
-                index++;
-                Object[] row = buffer.poll();
-                if (row == null) {
-                    try {
-                        LOG.info("Waiting for row from buffer");
-                        row = buffer.take();
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
+                try {
+                    Object[] row = buffer.take();
+                    index++;
+                    return row;
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
                 }
-                return row;
             }
         };
     }

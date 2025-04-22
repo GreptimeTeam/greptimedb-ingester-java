@@ -205,10 +205,7 @@ public class BulkFlightClient implements AutoCloseable {
 
         @Override
         public void run() {
-            int mayReleasePermits = this.maxRequestsInFlight - this.semaphore.availablePermits();
-            if (mayReleasePermits > 0) {
-                this.semaphore.release(mayReleasePermits);
-            }
+            this.semaphore.release(this.maxRequestsInFlight);
         }
 
         /**

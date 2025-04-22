@@ -36,9 +36,9 @@ public class RandomTableDataProvider implements TableDataProvider {
     {
         tableSchema = TableSchema.newBuilder("my_bench_table")
                 .addTimestamp("log_ts", DataType.TimestampMillisecond)
-                .addTag("business_name", DataType.String)
-                .addTag("app_name", DataType.String)
-                .addTag("host_name", DataType.String)
+                .addField("business_name", DataType.String)
+                .addField("app_name", DataType.String)
+                .addField("host_name", DataType.String)
                 .addField("log_message", DataType.String) // 2K
                 .addField("log_level", DataType.String)
                 .addField("log_name", DataType.String)

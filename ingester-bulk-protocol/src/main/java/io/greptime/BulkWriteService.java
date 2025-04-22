@@ -61,7 +61,7 @@ public class BulkWriteService implements AutoCloseable {
     private final ClientStreamListener listener;
     private final AsyncPutListener metadataListener;
     private final long timeoutMs;
-    
+
     /**
      * Constructs a new BulkWriteService.
      *

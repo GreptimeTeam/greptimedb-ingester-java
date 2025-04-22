@@ -58,7 +58,7 @@ public class BulkWriteBenchmark {
                 .allocatorInitReservation(0)
                 .allocatorMaxAllocation(4 * 1024 * 1024 * 1024L)
                 .timeoutMsPerMessage(60000)
-                .maxRequestsInFlight(4)
+                .maxRequestsInFlight(8)
                 .build();
         Compression compression = zstdCompression ? Compression.Zstd : Compression.None;
         Context ctx = Context.newDefault().withCompression(compression);
