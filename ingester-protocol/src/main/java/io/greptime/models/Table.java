@@ -218,8 +218,11 @@ public interface Table {
                 RowData.ColumnSchema.Builder builder = RowData.ColumnSchema.newBuilder();
                 builder.setColumnName(columnNames.get(i))
                         .setSemanticType(semanticTypes.get(i))
-                        .setDatatype(dataTypes.get(i))
-                        .setDatatypeExtension(dataTypeExtensions.get(i));
+                        .setDatatype(dataTypes.get(i));
+                Common.ColumnDataTypeExtension ext = dataTypeExtensions.get(i);
+                if (ext != null) {
+                    builder.setDatatypeExtension(ext);
+                }
                 table.columnSchemas.add(builder.build());
             }
             return table;

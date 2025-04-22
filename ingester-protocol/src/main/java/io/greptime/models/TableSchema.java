@@ -189,14 +189,23 @@ public class TableSchema {
             this.columnNames.add(name);
             this.semanticTypes.add(semanticType.toProtoValue());
             this.dataTypes.add(dataType.toProtoValue());
-            if (decimalTypeExtension == null) {
-                this.dataTypeExtensions.add(Common.ColumnDataTypeExtension.getDefaultInstance());
-            } else {
-                Ensures.ensure(dataType == DataType.Decimal128, "Only decimal type can have decimal type extension");
+
+            if (dataType == DataType.Json) {
+                Common.ColumnDataTypeExtension ext = Common.ColumnDataTypeExtension.newBuilder()
+                        .setJsonType(Common.JsonTypeExtension.JSON_BINARY)
+                        .build();
+                this.dataTypeExtensions.add(ext);
+            } else if (dataType == DataType.Decimal128) {
+                if (decimalTypeExtension == null) {
+                    decimalTypeExtension = DataType.DecimalTypeExtension.DEFAULT;
+                }
                 Common.ColumnDataTypeExtension ext = Common.ColumnDataTypeExtension.newBuilder()
                         .setDecimalType(decimalTypeExtension.into())
                         .build();
                 this.dataTypeExtensions.add(ext);
+            } else {
+                Ensures.ensure(decimalTypeExtension == null, "Only decimal type can have decimal type extension");
+                this.dataTypeExtensions.add(null);
             }
             return this;
         }

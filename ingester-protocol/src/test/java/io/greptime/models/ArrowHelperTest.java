@@ -147,7 +147,7 @@ public class ArrowHelperTest {
                 new ArrowType.Decimal(38, 18, 128).getTypeID(),
                 schema.getFields().get(21).getType().getTypeID());
         Assert.assertEquals(
-                new ArrowType.Utf8().getTypeID(),
+                new ArrowType.Binary().getTypeID(),
                 schema.getFields().get(22).getType().getTypeID());
     }
 }

@@ -34,6 +34,23 @@ public class ValueUtil {
 
     static int ONE_DAY_IN_SECONDS = 86400;
 
+    static int getIntValue(Object value) {
+        if (value instanceof Integer) {
+            return (int) value;
+        }
+
+        if (value instanceof Long) {
+            return ((Long) value).intValue();
+        }
+
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+
+        // Not null
+        throw new IllegalArgumentException("Cannot convert value of type " + value.getClass() + " to int");
+    }
+
     static long getLongValue(Object value) {
         if (value instanceof Integer) {
             return (int) value;
@@ -48,7 +65,7 @@ public class ValueUtil {
         }
 
         // Not null
-        throw new IllegalArgumentException("Unsupported value type: " + value.getClass());
+        throw new IllegalArgumentException("Cannot convert value of type " + value.getClass() + " to long");
     }
 
     static int getDateValue(Object value) {

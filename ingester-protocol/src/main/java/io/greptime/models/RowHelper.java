@@ -57,7 +57,7 @@ public final class RowHelper {
                 valueBuilder.setU16Value((int) value);
                 break;
             case UINT32:
-                valueBuilder.setU32Value((int) value);
+                valueBuilder.setU32Value(ValueUtil.getIntValue(value));
                 break;
             case UINT64:
                 valueBuilder.setU64Value(ValueUtil.getLongValue(value));

@@ -188,7 +188,7 @@ public class ArrowHelper {
                     if (value == null) {
                         vector.setNull(startRowIndex++);
                     } else {
-                        ((UInt4Vector) vector).setSafe(startRowIndex++, ((Long) value).intValue());
+                        ((UInt4Vector) vector).setSafe(startRowIndex++, ValueUtil.getIntValue(value));
                     }
                 }
                 break;
@@ -385,124 +385,9 @@ public class ArrowHelper {
                         vector.setNull(startRowIndex++);
                     } else {
                         byte[] jsonBytes = ValueUtil.getJsonString(value).getBytes(StandardCharsets.UTF_8);
-                        ((VarCharVector) vector).setSafe(startRowIndex++, jsonBytes);
+                        ((VarBinaryVector) vector).setSafe(startRowIndex++, jsonBytes);
                     }
                 }
-                break;
-            default:
-                throw new IllegalArgumentException("Unsupported data type: " + dataType);
-        }
-    }
-
-    public static void addValue(
-            FieldVector vector,
-            int rowIndex,
-            Common.ColumnDataType dataType,
-            Common.ColumnDataTypeExtension dataTypeExtension,
-            Object value) {
-        if (value == null) {
-            vector.setNull(rowIndex);
-            return;
-        }
-
-        switch (dataType) {
-            case INT8:
-                ((TinyIntVector) vector).setSafe(rowIndex, (int) value);
-                break;
-            case INT16:
-                ((SmallIntVector) vector).setSafe(rowIndex, (int) value);
-                break;
-            case INT32:
-                ((IntVector) vector).setSafe(rowIndex, (int) value);
-                break;
-            case INT64:
-                ((BigIntVector) vector).setSafe(rowIndex, (long) value);
-                break;
-            case UINT8:
-                ((UInt1Vector) vector).setSafe(rowIndex, (int) value);
-                break;
-            case UINT16:
-                ((UInt2Vector) vector).setSafe(rowIndex, (int) value);
-                break;
-            case UINT32:
-                ((UInt4Vector) vector).setSafe(rowIndex, ((Long) value).intValue());
-                break;
-            case UINT64:
-                ((UInt8Vector) vector).setSafe(rowIndex, (long) value);
-                break;
-            case FLOAT32:
-                ((Float4Vector) vector).setSafe(rowIndex, (float) value);
-                break;
-            case FLOAT64:
-                ((Float8Vector) vector).setSafe(rowIndex, (double) value);
-                break;
-            case BOOLEAN:
-                ((BitVector) vector).setSafe(rowIndex, (boolean) value ? 1 : 0);
-                break;
-            case BINARY:
-                ((VarBinaryVector) vector).setSafe(rowIndex, (byte[]) value);
-                break;
-            case STRING:
-                ((VarCharVector) vector).setSafe(rowIndex, ((String) value).getBytes(StandardCharsets.UTF_8));
-                break;
-            case DATE:
-                ((DateDayVector) vector).setSafe(rowIndex, ValueUtil.getDateValue(value));
-                break;
-            case TIMESTAMP_SECOND: {
-                TimeStampSecHolder holder = new TimeStampSecHolder();
-                holder.value = ValueUtil.getTimestamp(value, java.util.concurrent.TimeUnit.SECONDS);
-                ((TimeStampSecVector) vector).setSafe(rowIndex, holder);
-                break;
-            }
-            case TIMESTAMP_MILLISECOND: {
-                TimeStampMilliHolder holder = new TimeStampMilliHolder();
-                holder.value = ValueUtil.getTimestamp(value, java.util.concurrent.TimeUnit.MILLISECONDS);
-                ((TimeStampMilliVector) vector).setSafe(rowIndex, holder);
-                break;
-            }
-            case TIMESTAMP_MICROSECOND: {
-                TimeStampMicroHolder holder = new TimeStampMicroHolder();
-                holder.value = ValueUtil.getTimestamp(value, java.util.concurrent.TimeUnit.MICROSECONDS);
-                ((TimeStampMicroVector) vector).setSafe(rowIndex, holder);
-                break;
-            }
-            case TIMESTAMP_NANOSECOND: {
-                TimeStampNanoHolder holder = new TimeStampNanoHolder();
-                holder.value = ValueUtil.getTimestamp(value, java.util.concurrent.TimeUnit.NANOSECONDS);
-                ((TimeStampNanoVector) vector).setSafe(rowIndex, holder);
-                break;
-            }
-            case TIME_SECOND: {
-                TimeSecHolder holder = new TimeSecHolder();
-                holder.value = (int) ValueUtil.getLongValue(value);
-                ((TimeSecVector) vector).setSafe(rowIndex, holder);
-                break;
-            }
-            case TIME_MILLISECOND: {
-                TimeMilliHolder holder = new TimeMilliHolder();
-                holder.value = (int) ValueUtil.getLongValue(value);
-                ((TimeMilliVector) vector).setSafe(rowIndex, holder);
-                break;
-            }
-            case TIME_MICROSECOND: {
-                TimeMicroHolder holder = new TimeMicroHolder();
-                holder.value = ValueUtil.getLongValue(value);
-                ((TimeMicroVector) vector).setSafe(rowIndex, holder);
-                break;
-            }
-            case TIME_NANOSECOND: {
-                TimeNanoHolder holder = new TimeNanoHolder();
-                holder.value = ValueUtil.getLongValue(value);
-                ((TimeNanoVector) vector).setSafe(rowIndex, holder);
-                break;
-            }
-            case DECIMAL128:
-                byte[] bytes = ValueUtil.getDecimal128BigEndianBytes(dataTypeExtension, value);
-                ((DecimalVector) vector).setBigEndianSafe(rowIndex, bytes);
-                break;
-            case JSON:
-                byte[] jsonBytes = ValueUtil.getJsonString(value).getBytes(StandardCharsets.UTF_8);
-                ((VarCharVector) vector).setSafe(rowIndex, jsonBytes);
                 break;
             default:
                 throw new IllegalArgumentException("Unsupported data type: " + dataType);
@@ -565,7 +450,7 @@ public class ArrowHelper {
                 Ensures.ensureNonNull(decimalTypeExtension, "decimalTypeExtension is null");
                 return new ArrowType.Decimal(decimalTypeExtension.getPrecision(), decimalTypeExtension.getScale(), 128);
             case JSON:
-                return new ArrowType.Utf8();
+                return new ArrowType.Binary();
             default:
                 throw new IllegalArgumentException("Unsupported data type: " + dataType);
         }

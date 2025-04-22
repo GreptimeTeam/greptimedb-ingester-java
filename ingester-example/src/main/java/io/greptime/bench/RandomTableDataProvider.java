@@ -92,8 +92,20 @@ public class RandomTableDataProvider implements TableDataProvider {
                 String traceId = "trace_" + random.nextLong(1000000);
                 String spanId = "span_" + random.nextLong(1000000);
                 String errno = "errno_" + random.nextInt(1000);
-                String traceFlags = "trace_flags_" + random.nextInt(1000);
-                String traceState = "trace_state_" + random.nextInt(1000);
+                String traceFlags;
+                int flags = random.nextInt(1000);
+                if (flags % 2 == 0) {
+                    traceFlags = "trace_flags_" + flags;
+                } else {
+                    traceFlags = null;
+                }
+                int state = random.nextInt(1000);
+                String traceState;
+                if (state % 3 == 0) {
+                    traceState = "trace_state_" + state;
+                } else {
+                    traceState = null;
+                }
                 String podName = "pod_" + random.nextInt(1000);
                 timerContext.stop();
                 MetricsUtil.histogram("random_table_data_provider.log_message_length")
