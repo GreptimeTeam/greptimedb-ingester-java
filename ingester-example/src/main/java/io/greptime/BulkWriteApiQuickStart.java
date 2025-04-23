@@ -82,19 +82,25 @@ public class BulkWriteApiQuickStart {
 
         Config cfg = Config.newBuilder()
                 .allocatorInitReservation(0)
-                .allocatorMaxAllocation(1024 * 1024 * 1024)
-                .timeoutMsPerMessage(10000)
+                .allocatorMaxAllocation(1024 * 1024 * 1024L)
+                .timeoutMsPerMessage(30000)
                 .maxRequestsInFlight(8)
                 .build();
         Context ctx = Context.newDefault().withCompression(Compression.None);
 
+        // Bulk write api cannot auto create table
+        Table toCreate = Table.from(schema);
+        toCreate.addRow(generateOneRow(100000));
+        toCreate.complete();
+        greptimeDB.write(toCreate).get();
+
         try (BulkStreamWriter bulkStreamWriter = greptimeDB.bulkStreamWriter(schema, cfg, ctx)) {
 
-            // Write 100 times, each time write 100000 rows
+            // Write 100 times, each time write 10000 rows
             for (int i = 0; i < 100; i++) {
                 long start = System.currentTimeMillis();
-                Table.TableBufferRoot table = bulkStreamWriter.tableBufferRoot();
-                for (int j = 0; j < 100000; j++) {
+                Table.TableBufferRoot table = bulkStreamWriter.tableBufferRoot(1024);
+                for (int j = 0; j < 10000; j++) {
                     // with 100000 cardinality
                     Object[] row = generateOneRow(100000);
                     table.addRow(row);
@@ -150,7 +156,7 @@ public class BulkWriteApiQuickStart {
             System.currentTimeMillis(), // ts
             random.nextInt(127), // field_int8
             random.nextInt(32767), // field_int16
-            random.nextInt(), // field_int32
+            null, // field_int32
             random.nextLong(), // field_int64
             random.nextInt(255), // field_uint8
             random.nextInt(65535), // field_uint16

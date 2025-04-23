@@ -70,6 +70,7 @@ public class BulkWriteService implements AutoCloseable {
      * @param schema The Arrow schema defining the data structure
      * @param descriptor The FlightDescriptor identifying the data stream
      * @param timeoutMs The timeout in milliseconds for operations
+     * @param maxRequestsInFlight the max in-flight requests in the stream
      * @param options Additional call options for the Flight client
      */
     public BulkWriteService(
@@ -78,12 +79,13 @@ public class BulkWriteService implements AutoCloseable {
             Schema schema,
             FlightDescriptor descriptor,
             long timeoutMs,
+            int maxRequestsInFlight,
             CallOption... options) {
         this.manager = manager;
         this.allocator = allocator;
         this.root = manager.createSchemaRoot(schema);
         this.metadataListener = new AsyncPutListener();
-        this.listener = manager.startPut(descriptor, this.metadataListener, options);
+        this.listener = manager.startPut(descriptor, this.metadataListener, maxRequestsInFlight, options);
         this.timeoutMs = timeoutMs;
     }
 
@@ -154,11 +156,8 @@ public class BulkWriteService implements AutoCloseable {
 
         // Prepare metadata buffer
         byte[] metadata = new Metadata.RequestMetadata(id).toJsonBytesUtf8();
-        ArrowBuf metadataBuf = null;
         try {
-            // The buffer will be closed in the putNext method, but if an error occurs during execution,
-            // we need to close it ourselves in the catch block to prevent memory leaks.
-            metadataBuf = this.allocator.buffer(metadata.length);
+            ArrowBuf metadataBuf = this.allocator.buffer(metadata.length);
             metadataBuf.writeBytes(metadata);
 
             // Send data to the server
@@ -169,12 +168,6 @@ public class BulkWriteService implements AutoCloseable {
             LOG.debug("Data sent successfully [id={}], in-flight requests: {}", id, inFlightCount);
 
             return new PutStage(future, inFlightCount);
-        } catch (Throwable t) {
-            // Close the metadata buffer on error
-            if (metadataBuf != null) {
-                metadataBuf.close();
-            }
-            throw t;
         } finally {
             // Clear the root to prepare for next batch
             this.root.clear();

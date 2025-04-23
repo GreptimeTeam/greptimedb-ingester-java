@@ -22,6 +22,7 @@ import io.greptime.rpc.Context;
 import io.greptime.v1.Common;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import org.apache.arrow.vector.BigIntVector;
 import org.apache.arrow.vector.BitVector;
@@ -114,115 +115,279 @@ public class ArrowHelper {
         return new Schema(fields);
     }
 
-    public static void addValue(
+    public static void addValues(
             FieldVector vector,
-            int rowIndex,
+            int startRowIndex,
             Common.ColumnDataType dataType,
             Common.ColumnDataTypeExtension dataTypeExtension,
-            Object value) {
-        if (value == null) {
-            vector.setNull(rowIndex);
-            return;
-        }
-
+            Iterator<Object> values) {
         switch (dataType) {
             case INT8:
-                ((TinyIntVector) vector).setSafe(rowIndex, (int) value);
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        ((TinyIntVector) vector).setSafe(startRowIndex++, (int) value);
+                    }
+                }
                 break;
             case INT16:
-                ((SmallIntVector) vector).setSafe(rowIndex, (int) value);
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        ((SmallIntVector) vector).setSafe(startRowIndex++, (int) value);
+                    }
+                }
                 break;
             case INT32:
-                ((IntVector) vector).setSafe(rowIndex, (int) value);
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        ((IntVector) vector).setSafe(startRowIndex++, (int) value);
+                    }
+                }
                 break;
             case INT64:
-                ((BigIntVector) vector).setSafe(rowIndex, (long) value);
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        ((BigIntVector) vector).setSafe(startRowIndex++, (long) value);
+                    }
+                }
                 break;
             case UINT8:
-                ((UInt1Vector) vector).setSafe(rowIndex, (int) value);
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        ((UInt1Vector) vector).setSafe(startRowIndex++, (int) value);
+                    }
+                }
                 break;
             case UINT16:
-                ((UInt2Vector) vector).setSafe(rowIndex, (int) value);
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        ((UInt2Vector) vector).setSafe(startRowIndex++, (int) value);
+                    }
+                }
                 break;
             case UINT32:
-                ((UInt4Vector) vector).setSafe(rowIndex, ((Long) value).intValue());
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        ((UInt4Vector) vector).setSafe(startRowIndex++, ValueUtil.getIntValue(value));
+                    }
+                }
                 break;
             case UINT64:
-                ((UInt8Vector) vector).setSafe(rowIndex, (long) value);
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        ((UInt8Vector) vector).setSafe(startRowIndex++, (long) value);
+                    }
+                }
                 break;
             case FLOAT32:
-                ((Float4Vector) vector).setSafe(rowIndex, (float) value);
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        ((Float4Vector) vector).setSafe(startRowIndex++, (float) value);
+                    }
+                }
                 break;
             case FLOAT64:
-                ((Float8Vector) vector).setSafe(rowIndex, (double) value);
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        ((Float8Vector) vector).setSafe(startRowIndex++, (double) value);
+                    }
+                }
                 break;
             case BOOLEAN:
-                ((BitVector) vector).setSafe(rowIndex, (boolean) value ? 1 : 0);
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        ((BitVector) vector).setSafe(startRowIndex++, (boolean) value ? 1 : 0);
+                    }
+                }
                 break;
             case BINARY:
-                ((VarBinaryVector) vector).setSafe(rowIndex, (byte[]) value);
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        ((VarBinaryVector) vector).setSafe(startRowIndex++, (byte[]) value);
+                    }
+                }
                 break;
             case STRING:
-                ((VarCharVector) vector).setSafe(rowIndex, ((String) value).getBytes(StandardCharsets.UTF_8));
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        ((VarCharVector) vector)
+                                .setSafe(startRowIndex++, ((String) value).getBytes(StandardCharsets.UTF_8));
+                    }
+                }
                 break;
             case DATE:
-                ((DateDayVector) vector).setSafe(rowIndex, ValueUtil.getDateValue(value));
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        ((DateDayVector) vector).setSafe(startRowIndex++, ValueUtil.getDateValue(value));
+                    }
+                }
                 break;
             case TIMESTAMP_SECOND: {
-                TimeStampSecHolder holder = new TimeStampSecHolder();
-                holder.value = ValueUtil.getTimestamp(value, java.util.concurrent.TimeUnit.SECONDS);
-                ((TimeStampSecVector) vector).setSafe(rowIndex, holder);
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        TimeStampSecHolder holder = new TimeStampSecHolder();
+                        holder.value = ValueUtil.getTimestamp(value, java.util.concurrent.TimeUnit.SECONDS);
+                        ((TimeStampSecVector) vector).setSafe(startRowIndex++, holder);
+                    }
+                }
                 break;
             }
             case TIMESTAMP_MILLISECOND: {
-                TimeStampMilliHolder holder = new TimeStampMilliHolder();
-                holder.value = ValueUtil.getTimestamp(value, java.util.concurrent.TimeUnit.MILLISECONDS);
-                ((TimeStampMilliVector) vector).setSafe(rowIndex, holder);
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        TimeStampMilliHolder holder = new TimeStampMilliHolder();
+                        holder.value = ValueUtil.getTimestamp(value, java.util.concurrent.TimeUnit.MILLISECONDS);
+                        ((TimeStampMilliVector) vector).setSafe(startRowIndex++, holder);
+                    }
+                }
                 break;
             }
             case TIMESTAMP_MICROSECOND: {
-                TimeStampMicroHolder holder = new TimeStampMicroHolder();
-                holder.value = ValueUtil.getTimestamp(value, java.util.concurrent.TimeUnit.MICROSECONDS);
-                ((TimeStampMicroVector) vector).setSafe(rowIndex, holder);
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        TimeStampMicroHolder holder = new TimeStampMicroHolder();
+                        holder.value = ValueUtil.getTimestamp(value, java.util.concurrent.TimeUnit.MICROSECONDS);
+                        ((TimeStampMicroVector) vector).setSafe(startRowIndex++, holder);
+                    }
+                }
                 break;
             }
             case TIMESTAMP_NANOSECOND: {
-                TimeStampNanoHolder holder = new TimeStampNanoHolder();
-                holder.value = ValueUtil.getTimestamp(value, java.util.concurrent.TimeUnit.NANOSECONDS);
-                ((TimeStampNanoVector) vector).setSafe(rowIndex, holder);
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        TimeStampNanoHolder holder = new TimeStampNanoHolder();
+                        holder.value = ValueUtil.getTimestamp(value, java.util.concurrent.TimeUnit.NANOSECONDS);
+                        ((TimeStampNanoVector) vector).setSafe(startRowIndex++, holder);
+                    }
+                }
                 break;
             }
             case TIME_SECOND: {
-                TimeSecHolder holder = new TimeSecHolder();
-                holder.value = (int) ValueUtil.getLongValue(value);
-                ((TimeSecVector) vector).setSafe(rowIndex, holder);
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        TimeSecHolder holder = new TimeSecHolder();
+                        holder.value = (int) ValueUtil.getLongValue(value);
+                        ((TimeSecVector) vector).setSafe(startRowIndex++, holder);
+                    }
+                }
                 break;
             }
             case TIME_MILLISECOND: {
-                TimeMilliHolder holder = new TimeMilliHolder();
-                holder.value = (int) ValueUtil.getLongValue(value);
-                ((TimeMilliVector) vector).setSafe(rowIndex, holder);
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        TimeMilliHolder holder = new TimeMilliHolder();
+                        holder.value = (int) ValueUtil.getLongValue(value);
+                        ((TimeMilliVector) vector).setSafe(startRowIndex++, holder);
+                    }
+                }
                 break;
             }
             case TIME_MICROSECOND: {
-                TimeMicroHolder holder = new TimeMicroHolder();
-                holder.value = ValueUtil.getLongValue(value);
-                ((TimeMicroVector) vector).setSafe(rowIndex, holder);
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        TimeMicroHolder holder = new TimeMicroHolder();
+                        holder.value = ValueUtil.getLongValue(value);
+                        ((TimeMicroVector) vector).setSafe(startRowIndex++, holder);
+                    }
+                }
                 break;
             }
             case TIME_NANOSECOND: {
-                TimeNanoHolder holder = new TimeNanoHolder();
-                holder.value = ValueUtil.getLongValue(value);
-                ((TimeNanoVector) vector).setSafe(rowIndex, holder);
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        TimeNanoHolder holder = new TimeNanoHolder();
+                        holder.value = ValueUtil.getLongValue(value);
+                        ((TimeNanoVector) vector).setSafe(startRowIndex++, holder);
+                    }
+                }
                 break;
             }
             case DECIMAL128:
-                byte[] bytes = ValueUtil.getDecimal128BigEndianBytes(dataTypeExtension, value);
-                ((DecimalVector) vector).setBigEndianSafe(rowIndex, bytes);
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        byte[] bytes = ValueUtil.getDecimal128BigEndianBytes(dataTypeExtension, value);
+                        ((DecimalVector) vector).setBigEndianSafe(startRowIndex++, bytes);
+                    }
+                }
                 break;
             case JSON:
-                byte[] jsonBytes = ValueUtil.getJsonString(value).getBytes(StandardCharsets.UTF_8);
-                ((VarCharVector) vector).setSafe(rowIndex, jsonBytes);
+                while (values.hasNext()) {
+                    Object value = values.next();
+                    if (value == null) {
+                        vector.setNull(startRowIndex++);
+                    } else {
+                        byte[] jsonBytes = ValueUtil.getJsonString(value).getBytes(StandardCharsets.UTF_8);
+                        ((VarBinaryVector) vector).setSafe(startRowIndex++, jsonBytes);
+                    }
+                }
                 break;
             default:
                 throw new IllegalArgumentException("Unsupported data type: " + dataType);
@@ -285,7 +450,7 @@ public class ArrowHelper {
                 Ensures.ensureNonNull(decimalTypeExtension, "decimalTypeExtension is null");
                 return new ArrowType.Decimal(decimalTypeExtension.getPrecision(), decimalTypeExtension.getScale(), 128);
             case JSON:
-                return new ArrowType.Utf8();
+                return new ArrowType.Binary();
             default:
                 throw new IllegalArgumentException("Unsupported data type: " + dataType);
         }

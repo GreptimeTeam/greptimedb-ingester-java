@@ -1,1 +1,2 @@
 io.greptime.bench.RandomTableDataProvider
+io.greptime.bench.MultiProducerTableDataProvider

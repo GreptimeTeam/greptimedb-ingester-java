@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.arrow.flight.FlightCallHeaders;
 import org.apache.arrow.flight.HeaderCallOption;
 import org.apache.arrow.vector.types.pojo.Schema;
@@ -135,8 +136,8 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
         HeaderCallOption headerOption = new HeaderCallOption(headers);
         AsyncExecCallOption execOption = new AsyncExecCallOption(this.asyncPool);
 
-        BulkWriteService writer =
-                manager.intoBulkWriteStream(table, arrowSchema, timeoutMsPerMessage, headerOption, execOption);
+        BulkWriteService writer = manager.intoBulkWriteStream(
+                table, arrowSchema, timeoutMsPerMessage, maxRequestsInFlight, headerOption, execOption);
         writer.start();
         if (this.opts.isUseZeroCopyWrite()) {
             writer.tryUseZeroCopyWrite();
@@ -185,6 +186,7 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
         private final BulkWriteLimiter pipelineWriteLimiter;
         private final BulkWriteService writer;
         private final TableSchema tableSchema;
+        private final AtomicReference<Table.TableBufferRoot> current = new AtomicReference<>();
 
         public DefaultBulkStreamWriter(BulkWriteService writer, TableSchema tableSchema, int maxRequestsInFlight) {
             this.writer = writer;
@@ -193,12 +195,21 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
         }
 
         @Override
-        public Table.TableBufferRoot tableBufferRoot() {
-            return Table.tableBufferRoot(this.tableSchema, this.writer.getRoot());
+        public Table.TableBufferRoot tableBufferRoot(int columnBufferSize) {
+            Table.TableBufferRoot table =
+                    Table.tableBufferRoot(this.tableSchema, this.writer.getRoot(), columnBufferSize);
+            this.current.set(table);
+            return table;
         }
 
         @Override
         public CompletableFuture<Integer> writeNext() throws Exception {
+            Table.TableBufferRoot table = this.current.getAndSet(null);
+            if (table != null) {
+                // make sure the table is completed
+                table.complete();
+            }
+
             // Check if the stream is ready
             if (!isStreamReady()) {
                 LOG.debug(
