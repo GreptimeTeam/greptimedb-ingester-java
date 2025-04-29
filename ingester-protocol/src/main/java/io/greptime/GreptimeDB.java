@@ -75,12 +75,21 @@ public class GreptimeDB implements Write, WriteObject, BulkWrite, Health, Lifecy
     private BulkWriteClient bulkWriteClient;
 
     /**
-     * Returns all instances of {@link GreptimeDB}.
+     * Gets all instances of {@link GreptimeDB}.
+     *
+     * @return all instances of {@link GreptimeDB}
      */
     public static List<GreptimeDB> instances() {
         return new ArrayList<>(INSTANCES.values());
     }
 
+    /**
+     * Creates a new {@link GreptimeDB} instance.
+     *
+     * @param opts the options for the GreptimeDB client
+     * @return a new {@link GreptimeDB} instance
+     * @throws RuntimeException if the GreptimeDB client fails to start
+     */
     public static GreptimeDB create(GreptimeOptions opts) {
         GreptimeDB greptimeDB = new GreptimeDB();
         if (!greptimeDB.init(opts)) {

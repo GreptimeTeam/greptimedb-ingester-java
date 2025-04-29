@@ -82,71 +82,97 @@ public final class MetricsUtil {
     }
 
     /**
-     * Return the global registry of metric instances.
+     * Gets the global registry of metric instances.
+     *
+     * @return the global registry of metric instances
      */
     public static MetricRegistry metricRegistry() {
         return METRIC_REGISTRY;
     }
 
     /**
-     * Return the {@link Meter} registered under this name; or create
+     * Gets the {@link Meter} registered under this name; or create
      * and register a new {@link Meter} if none is registered.
+     *
+     * @param name the name of the metric
+     * @return the {@link Meter} registered under this name
      */
     public static Meter meter(Object name) {
         return METRIC_REGISTRY.meter(named(name));
     }
 
     /**
-     * Return the {@link Meter} registered under this name; or create
+     * Gets the {@link Meter} registered under this name; or create
      * and register a new {@link Meter} if none is registered.
+     *
+     * @param names the names of the metric
+     * @return the {@link Meter} registered under this name
      */
     public static Meter meter(Object... names) {
         return METRIC_REGISTRY.meter(named(names));
     }
 
     /**
-     * Return the {@link Timer} registered under this name; or create
+     * Gets the {@link Timer} registered under this name; or create
      * and register a new {@link Timer} if none is registered.
+     *
+     * @param name the name of the metric
+     * @return the {@link Timer} registered under this name
      */
     public static Timer timer(Object name) {
         return METRIC_REGISTRY.timer(named(name));
     }
 
     /**
-     * Return the {@link Timer} registered under this name; or create
+     * Gets the {@link Timer} registered under this name; or create
      * and register a new {@link Timer} if none is registered.
+     *
+     * @param names the names of the metric
+     * @return the {@link Timer} registered under this name
      */
     public static Timer timer(Object... names) {
         return METRIC_REGISTRY.timer(named(names));
     }
 
     /**
-     * Return the {@link Counter} registered under this name; or create
+     * Gets the {@link Counter} registered under this name; or create
      * and register a new {@link Counter} if none is registered.
+     *
+     * @param name the name of the metric
+     * @return the {@link Counter} registered under this name
      */
     public static Counter counter(Object name) {
         return METRIC_REGISTRY.counter(named(name));
     }
 
     /**
-     * Return the {@link Counter} registered under this name; or create
+     * Gets the {@link Counter} registered under this name; or create
      * and register a new {@link Counter} if none is registered.
+     *
+     * @param names the names of the metric
+     * @return the {@link Counter} registered under this name
      */
     public static Counter counter(Object... names) {
         return METRIC_REGISTRY.counter(named(names));
     }
 
     /**
-     * Return the {@link Histogram} registered under this name; or create
+     * Gets the {@link Histogram} registered under this name; or create
      * and register a new {@link Histogram} if none is registered.
+     *
+     * @param name the name of the metric
+     * @return the {@link Histogram} registered under this name
      */
     public static Histogram histogram(Object name) {
         return METRIC_REGISTRY.histogram(named(name));
     }
 
     /**
-     * Return the {@link Histogram} registered under this name; or create
+     * Gets the {@link Histogram} registered under this name; or create
      * and register a new {@link Histogram} if none is registered.
+     *
+     * @param names the names of the metric
+     * @return the {@link Histogram} registered under this name
      */
     public static Histogram histogram(Object... names) {
         return METRIC_REGISTRY.histogram(named(names));

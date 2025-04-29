@@ -28,6 +28,9 @@ public interface StreamWriter<V, R> {
 
     /**
      * @see #write(Object, WriteOp)
+     *
+     * @param val data value
+     * @return this
      */
     default StreamWriter<V, R> write(V val) {
         return write(val, WriteOp.Insert);

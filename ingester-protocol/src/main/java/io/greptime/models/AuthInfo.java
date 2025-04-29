@@ -31,16 +31,29 @@ public class AuthInfo implements Into<Common.AuthHeader> {
 
     /**
      * Create AuthInfo from username/password.
+     *
+     * @param username the username
+     * @param password the password
      */
     public AuthInfo(String username, String password) {
         this.username = username;
         this.password = password;
     }
 
+    /**
+     * Creates an AuthInfo with no authorization.
+     *
+     * @return an AuthInfo with no authorization
+     */
     public static AuthInfo noAuthorization() {
         return null;
     }
 
+    /**
+     * Converts the AuthInfo to a base64 encoded string.
+     *
+     * @return the base64 encoded string
+     */
     public String toBase64() {
         String authInfoStr = String.format("%s:%s", this.username, this.password);
         return Base64.getEncoder().encodeToString(authInfoStr.getBytes(StandardCharsets.UTF_8));

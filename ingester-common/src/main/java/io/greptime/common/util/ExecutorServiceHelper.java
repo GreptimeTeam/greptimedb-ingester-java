@@ -30,6 +30,9 @@ public final class ExecutorServiceHelper {
 
     /**
      * @see #shutdownAndAwaitTermination(ExecutorService, long)
+     *
+     * @param pool the executor service to shutdown
+     * @return true if the executor service is shutdown successfully, false otherwise
      */
     public static boolean shutdownAndAwaitTermination(ExecutorService pool) {
         return shutdownAndAwaitTermination(pool, 1000);
@@ -40,6 +43,10 @@ public final class ExecutorServiceHelper {
      * phases, first by calling {@code shutdown} to reject incoming tasks,
      * and then calling {@code shutdownNow}, if necessary, to cancel any
      * lingering tasks.
+     *
+     * @param pool the executor service to shutdown
+     * @param timeoutMillis the timeout in milliseconds
+     * @return true if the executor service is shutdown successfully, false otherwise
      */
     public static boolean shutdownAndAwaitTermination(ExecutorService pool, long timeoutMillis) {
         if (pool == null) {

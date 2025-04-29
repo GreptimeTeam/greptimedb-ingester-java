@@ -25,14 +25,18 @@ public class WriteOk {
     private int failure;
 
     /**
-     * Returns the number of successful writes.
+     * Gets the number of successful writes.
+     *
+     * @return the number of successful writes
      */
     public int getSuccess() {
         return success;
     }
 
     /**
-     * Returns the number of failed writes.
+     * Gets the number of failed writes.
+     *
+     * @return the number of failed writes
      */
     public int getFailure() {
         return failure;
@@ -51,14 +55,20 @@ public class WriteOk {
     }
 
     /**
-     * Returns an empty {@link WriteOk}.
+     * Creates an empty {@link WriteOk}.
+     *
+     * @return an empty {@link WriteOk}
      */
     public static WriteOk emptyOk() {
         return ok(0, 0);
     }
 
     /**
-     * Creates a new {@link WriteOk} from the given value.
+     * Creates a new {@link WriteOk} from the given values.
+     *
+     * @param success the number of successful writes
+     * @param failure the number of failed writes
+     * @return a new {@link WriteOk}
      */
     public static WriteOk ok(int success, int failure) {
         WriteOk ok = new WriteOk();

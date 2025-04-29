@@ -34,6 +34,8 @@ public @interface Column {
      * It is strongly recommended to use snake case naming convention and avoid
      * using camel case. This is because GreptimeDB treats column names as
      * case-insensitive, which can cause confusion when querying with camel case.
+     *
+     * @return the name of the column in the table
      */
     String name();
 

@@ -46,6 +46,9 @@ public interface Limiter {
 
     /**
      * @see #tryAcquire(int, long, TimeUnit)
+     *
+     * @param permits the number of permits to acquire
+     * @return {@code true} if the permits were acquired, {@code false} otherwise.
      */
     default boolean tryAcquire(int permits) {
         return tryAcquire(permits, 0, TimeUnit.NANOSECONDS);

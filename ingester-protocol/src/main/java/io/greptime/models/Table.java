@@ -66,39 +66,61 @@ import org.apache.arrow.vector.VectorSchemaRoot;
 public interface Table {
 
     /**
-     * The table name to write.
+     * Gets the table name to write.
+     *
+     * @return the table name
      */
     String tableName();
 
-    /**··
-     * The rows count to write.
+    /**
+     * Gets the rows count to write.
+     *
+     * @return the rows count
      */
     int rowCount();
 
     /**
-     * The columns count to write.
+     * Gets the columns count to write.
+     *
+     * @return the columns count
      */
     int columnCount();
 
     /**
-     * The points count to write.
+     * Gets the points count to write.
+     *
+     * @return the points count
      */
     default int pointCount() {
         return rowCount() * columnCount();
     }
 
     /**
-     * The bytes used by the table.
+     * Gets the bytes used by the table.
+     *
+     * @return the bytes used by the table
      */
     long bytesUsed();
 
     /**
-     * Insets one row with all columns.
+     * Inserts one row with all columns.
      *
+     * <p>
      * The order of the values must be the same as the order of the schema.
+     * </p>
+     *
+     * @param values the values to insert
+     * @return this
      */
     Table addRow(Object... values);
 
+    /**
+     * Gets a sub-range of the table.
+     *
+     * @param fromIndex the start index
+     * @param toIndex the end index
+     * @return a sub-range of the table
+     */
     Table subRange(int fromIndex, int toIndex);
 
     /**
@@ -111,16 +133,20 @@ public interface Table {
      * rows are properly flushed to the underlying storage. Failure to call this method
      * may result in data loss, particularly for implementations that use internal buffering.
      * </p>
+     *
+     * @return this
      */
     Table complete();
 
     /**
-     * Returns true if the table has been completed.
+     * Checks if the table has been completed.
+     *
+     * @return true if the table has been completed
      */
     boolean isCompleted();
 
     /**
-     * Convert to {@link Database.RowInsertRequest}.
+     * Converts to {@link Database.RowInsertRequest}.
      *
      * @return {@link Database.RowInsertRequest}
      */
@@ -129,7 +155,7 @@ public interface Table {
     }
 
     /**
-     * Convert to {@link Database.RowDeleteRequest}.
+     * Converts to {@link Database.RowDeleteRequest}.
      *
      * @return {@link Database.RowDeleteRequest}
      */

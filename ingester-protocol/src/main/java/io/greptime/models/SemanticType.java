@@ -28,6 +28,8 @@ public enum SemanticType {
 
     /**
      * Converts to the corresponding proto value.
+     *
+     * @return the corresponding proto value
      */
     public Common.SemanticType toProtoValue() {
         switch (this) {

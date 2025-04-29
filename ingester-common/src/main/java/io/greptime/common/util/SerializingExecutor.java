@@ -66,6 +66,8 @@ public class SerializingExecutor implements Executor {
      * under a lock of your own, but don't want the tasks to be run under
      * your lock (for fear of deadlock).  You can call this method in the
      * lock, and call {@link #drain} outside the lock.
+     *
+     * @param task the task to add
      */
     public final void executeLater(Runnable task) {
         this.queue.add(Ensures.ensureNonNull(task, "null `task`"));

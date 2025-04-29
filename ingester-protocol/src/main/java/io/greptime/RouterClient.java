@@ -126,7 +126,9 @@ public class RouterClient implements Lifecycle<RouterOptions>, Health, Display {
     }
 
     /**
-     * Get the current routing table.
+     * Gets the current routing table.
+     *
+     * @return the current routing table
      */
     public CompletableFuture<Endpoint> route() {
         return this.router.routeFor(null);
@@ -134,6 +136,13 @@ public class RouterClient implements Lifecycle<RouterOptions>, Health, Display {
 
     /**
      * @see #invoke(Endpoint, Object, Context, long)
+     *
+     * @param endpoint the endpoint to invoke
+     * @param request the request to send
+     * @param ctx the context
+     * @return the response future
+     * @param <Req> request type
+     * @param <Resp> response type
      */
     public <Req, Resp> CompletableFuture<Resp> invoke(Endpoint endpoint, Req request, Context ctx) {
         return invoke(endpoint, request, ctx, -1 /* use default rpc timeout */);

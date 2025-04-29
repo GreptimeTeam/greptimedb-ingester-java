@@ -31,6 +31,9 @@ import java.util.concurrent.CompletableFuture;
 public interface Write {
     /**
      * @see #write(Collection, WriteOp, Context)
+     *
+     * @param tables the tables to write
+     * @return a future that completes with the write result
      */
     default CompletableFuture<Result<WriteOk, Err>> write(Table... tables) {
         return write(Arrays.asList(tables));
@@ -38,6 +41,9 @@ public interface Write {
 
     /**
      * @see #write(Collection, WriteOp, Context)
+     *
+     * @param tables the tables to write
+     * @return a future that completes with the write result
      */
     default CompletableFuture<Result<WriteOk, Err>> write(Collection<Table> tables) {
         return write(tables, WriteOp.Insert, Context.newDefault());
@@ -45,6 +51,10 @@ public interface Write {
 
     /**
      * @see #write(Collection, WriteOp, Context)
+     *
+     * @param tables the tables to write
+     * @param writeOp the write operation
+     * @return a future that completes with the write result
      */
     default CompletableFuture<Result<WriteOk, Err>> write(Collection<Table> tables, WriteOp writeOp) {
         return write(tables, writeOp, Context.newDefault());
@@ -62,6 +72,8 @@ public interface Write {
 
     /**
      * @see #streamWriter(int, Context)
+     *
+     * @return a stream writer instance
      */
     default StreamWriter<Table, WriteOk> streamWriter() {
         return streamWriter(-1);
@@ -69,6 +81,9 @@ public interface Write {
 
     /**
      * @see #streamWriter(int, Context)
+     *
+     * @param maxPointsPerSecond the max number of points that can be written per second, exceeding which may cause blockage
+     * @return a stream writer instance
      */
     default StreamWriter<Table, WriteOk> streamWriter(int maxPointsPerSecond) {
         return streamWriter(maxPointsPerSecond, Context.newDefault());
