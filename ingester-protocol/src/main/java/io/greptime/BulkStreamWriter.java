@@ -20,21 +20,21 @@ import io.greptime.models.Table;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * `BulkStreamWriter` is a specialized interface for efficiently writing data to the server in bulk operations.
+ * {@code BulkStreamWriter} is a specialized interface for efficiently writing data to the server in bulk operations.
  *
- * Each `BulkStreamWriter` is associated with a `TableBufferRoot` instance that manages off-heap memory.
- * The workflow involves first obtaining the `TableBufferRoot` instance and populating it with data.
- * This data resides in off-heap memory and is only transmitted to the server when `writeNext()`
- * is called. Upon calling `writeNext()`, all data in the `TableBufferRoot` is sent as a batch,
- * and the `TableBufferRoot` is automatically cleared for the next set of data.
+ * <p>Each {@code BulkStreamWriter} is associated with a {@code TableBufferRoot} instance that manages off-heap memory.
+ * The workflow involves first obtaining the {@code TableBufferRoot} instance and populating it with data.
+ * This data resides in off-heap memory and is only transmitted to the server when {@code writeNext()}
+ * is called. Upon calling {@code writeNext()}, all data in the {@code TableBufferRoot} is sent as a batch,
+ * and the {@code TableBufferRoot} is automatically cleared for the next set of data.
  *
- * As a streaming interface, `BulkStreamWriter` allows you to repeat this cycle (populate data,
- * call `writeNext()`) multiple times for efficient batch processing. When all data has been
- * transmitted, you must call `completed()` to properly close the stream and ensure any server-side
- * errors are properly reported. Additionally, you should call the `close()` method to ensure all
+ * <p>As a streaming interface, {@code BulkStreamWriter} allows you to repeat this cycle (populate data,
+ * call {@code writeNext()}) multiple times for efficient batch processing. When all data has been
+ * transmitted, you must call {@code completed()} to properly close the stream and ensure any server-side
+ * errors are properly reported. Additionally, you should call the {@code close()} method to ensure all
  * related resources are properly released, though this happens automatically when using try-with-resources.
  *
- * Example usage:
+ * <p>Example usage:
  * <pre>{@code
  * try (BulkStreamWriter bulkStreamWriter = greptimeDB.bulkStreamWriter(schema)) { // auto close in try-with-resources
  *     // Write 1000 times, each time write 100000 rows
@@ -58,26 +58,26 @@ import java.util.concurrent.CompletableFuture;
  *     }
  *
  *     bulkStreamWriter.completed();
+ * }
  * }</pre>
  */
 public interface BulkStreamWriter extends AutoCloseable {
     /**
-     * Returns the `TableBufferRoot` instance associated with this writer.
-     * The `TableBufferRoot` provides direct access to the underlying memory
+     * Returns the {@code TableBufferRoot} instance associated with this writer.
+     * The {@code TableBufferRoot} provides direct access to the underlying memory
      * where table data is stored for efficient bulk operations.
      *
      * @param columnBufferSize the buffer size for each column
-     *
-     * @see Table.TableBufferRoot
      *
      * @return a table buffer root
      */
     Table.TableBufferRoot tableBufferRoot(int columnBufferSize);
 
     /**
-     * Writes currenttable data to the stream.
+     * Writes current table data to the stream.
      *
-     * @return a future that completes with the number of rows affected.
+     * @return a future that completes with the number of rows affected
+     * @throws Exception if an error occurs
      */
     CompletableFuture<Integer> writeNext() throws Exception;
 
@@ -86,11 +86,13 @@ public interface BulkStreamWriter extends AutoCloseable {
      * and waits for the server to finish processing the data. This method
      * must be called to ensure all data is properly written and to receive
      * any errors that may have occurred during the operation.
+     *
+     * @throws Exception if an error occurs
      */
     void completed() throws Exception;
 
     /**
-     * If the stream is not ready, calling `writeNext()` will block until the stream
+     * If the stream is not ready, calling {@code writeNext()} will block until the stream
      * becomes ready for writing, potentially using a busy-wait mechanism.
      *
      * @return true if the stream is ready to write data, false otherwise

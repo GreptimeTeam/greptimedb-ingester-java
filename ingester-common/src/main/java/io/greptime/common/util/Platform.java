@@ -35,14 +35,18 @@ public class Platform {
     private static final boolean IS_MAC = isMac0();
 
     /**
-     * Return {@code true} if the JVM is running on Windows
+     * Checks if the JVM is running on Windows.
+     *
+     * @return {@code true} if the JVM is running on Windows
      */
     public static boolean isWindows() {
         return IS_WINDOWS;
     }
 
     /**
-     * Return {@code true} if the JVM is running on Mac OSX
+     * Checks if the JVM is running on Mac OSX.
+     *
+     * @return {@code true} if the JVM is running on Mac OSX
      */
     public static boolean isMac() {
         return IS_MAC;

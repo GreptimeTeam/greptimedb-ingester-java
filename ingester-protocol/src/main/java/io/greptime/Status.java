@@ -138,28 +138,35 @@ public enum Status {
     }
 
     /**
-     * Returns the status code.
+     * Gets the status code.
+     *
+     * @return the status code
      */
     public int getStatusCode() {
         return statusCode;
     }
 
     /**
-     * Returns {@code true} if the status code is {@link #Success}.
+     * Checks if the status code is {@link #Success}.
+     *
+     * @param statusCode the status code
+     * @return {@code true} if the status code is {@link #Success}
      */
     public static boolean isSuccess(int statusCode) {
         return statusCode == Success.getStatusCode();
     }
 
     /**
-     * Returns {@code true} if the status code represents a retry-needed error.
+     * Checks if the status code represents a retry-needed error.
+     *
+     * @return {@code true} if the status code represents a retry-needed error
      */
     public boolean isShouldRetry() {
         return shouldRetry;
     }
 
     /**
-     * Returns the {@link Status} for the specified status code.
+     * Gets the {@link Status} for the specified status code.
      *
      * @param statusCode the status code
      * @return the {@link Status}

@@ -22,27 +22,37 @@ package io.greptime.common.util;
 public interface ObjectPool<T> {
 
     /**
-     * Get an object from the pool.
+     * Gets an object from the pool.
+     *
+     * @return an object from the pool
      */
     T getObject();
 
     /**
-     * Return the object to the pool.  The caller should not use the object beyond this point.
+     * Returns the object to the pool. The caller should not use the object beyond this point.
+     *
+     * @param returned the object to return to the pool
      */
     void returnObject(T returned);
 
     /**
      * Defines a resource, and the way to create and destroy instances of it.
+     *
+     * @param <T> the type of the resource
      */
     interface Resource<T> {
 
         /**
-         * Create a new instance of the resource.
+         * Creates a new instance of the resource.
+         *
+         * @return a new instance of the resource
          */
         T create();
 
         /**
-         * Destroy the given instance.
+         * Destroys the given instance.
+         *
+         * @param instance the instance to destroy
          */
         void close(T instance);
     }

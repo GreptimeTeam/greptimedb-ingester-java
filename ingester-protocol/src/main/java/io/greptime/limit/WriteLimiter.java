@@ -23,7 +23,7 @@ import io.greptime.models.WriteOk;
 import java.util.Collection;
 
 /**
- * Like rust: pub type WriteLimiter = AbstractLimiter<WriteRowsWriteRows, Result<WriteOk, Err>>
+ * Like rust: {@code pub type WriteLimiter = AbstractLimiter<WriteRows, Result<WriteOk, Err>>}
  */
 public abstract class WriteLimiter extends AbstractLimiter<Collection<Table>, Result<WriteOk, Err>> {
 

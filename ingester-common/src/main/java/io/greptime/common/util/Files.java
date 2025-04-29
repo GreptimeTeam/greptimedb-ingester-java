@@ -50,6 +50,7 @@ public class Files {
      * Creates the directory named by this pathname if not exists.
      *
      * @param path pathname
+     * @throws IOException if an I/O error occurs
      */
     public static void mkdirIfNotExists(String path) throws IOException {
         File dir = Paths.get(path).toFile().getAbsoluteFile();

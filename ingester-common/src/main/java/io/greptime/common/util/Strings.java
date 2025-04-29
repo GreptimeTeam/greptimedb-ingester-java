@@ -33,21 +33,30 @@ public final class Strings {
     }
 
     /**
-     * Returns the given string if it is non-null; the empty string otherwise.
+     * Converts a null string to an empty string.
+     *
+     * @param string the string to check
+     * @return the given string if it is non-null; the empty string otherwise
      */
     public static String nullToEmpty(String string) {
         return (string == null) ? "" : string;
     }
 
     /**
-     * Returns the given string if it is nonempty; {@code null} otherwise.
+     * Converts an empty string to a null string.
+     *
+     * @param string the string to check
+     * @return the given string if it is nonempty; {@code null} otherwise
      */
     public static String emptyToNull(String string) {
         return isNullOrEmpty(string) ? null : string;
     }
 
     /**
-     * Returns {@code true} if the given string is null or is the empty string.
+     * Checks if the given string is null or is the empty string.
+     *
+     * @param str the string to check
+     * @return {@code true} if the given string is null or is the empty string
      */
     public static boolean isNullOrEmpty(String str) {
         return str == null || str.isEmpty();
@@ -63,6 +72,9 @@ public final class Strings {
      * Strings.isBlank("bob")     = false
      * Strings.isBlank("  bob  ") = false
      * ```
+     *
+     * @param str the string to check
+     * @return {@code true} if the given string is null, empty or whitespace only
      */
     public static boolean isBlank(String str) {
         int strLen;
@@ -86,6 +98,9 @@ public final class Strings {
      * Strings.isNotBlank("bob")     = true
      * Strings.isNotBlank("  bob  ") = true
      * ```
+     *
+     * @param str the string to check
+     * @return {@code true} if the given string is not null, empty or whitespace only
      */
     public static boolean isNotBlank(String str) {
         return !isBlank(str);
@@ -104,6 +119,10 @@ public final class Strings {
      * Strings.split("a:b:c", '.')    = ["a:b:c"]
      * Strings.split("a b c", ' ')    = ["a", "b", "c"]
      * ```
+     *
+     * @param str the string to split
+     * @param separator the separator
+     * @return an array of strings
      */
     public static String[] split(String str, char separator) {
         return split(str, separator, false);
@@ -129,6 +148,11 @@ public final class Strings {
      * Strings.split("  a b c", ' ', true)  = ["", "", a", "b", "c"]
      * Strings.split(" a b c ", ' ', true)  = ["", a", "b", "c", ""]
      * ```
+     *
+     * @param str the string to split
+     * @param separator the separator
+     * @param preserveAllTokens {@code true} if all tokens should be preserved, including empty tokens created by adjacent separators
+     * @return an array of strings
      */
     public static String[] split(String str, char separator, boolean preserveAllTokens) {
         if (str == null) {

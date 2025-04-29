@@ -31,12 +31,18 @@ import java.util.concurrent.CompletableFuture;
 public interface WriteObject {
     /**
      * @see #writeObjects(Collection, WriteOp, Context)
+     *
+     * @param objects the objects to write
+     * @return a future that completes with the write result
      */
     default CompletableFuture<Result<WriteOk, Err>> writeObjects(List<?>... objects) {
         return writeObjects(Arrays.asList(objects));
     }
     /**
      * @see #writeObjects(Collection, WriteOp, Context)
+     *
+     * @param objects the objects to write
+     * @return a future that completes with the write result
      */
     default CompletableFuture<Result<WriteOk, Err>> writeObjects(Collection<List<?>> objects) {
         return writeObjects(objects, WriteOp.Insert, Context.newDefault());
@@ -44,6 +50,10 @@ public interface WriteObject {
 
     /**
      * @see #writeObjects(Collection, WriteOp, Context)
+     *
+     * @param objects the objects to write
+     * @param writeOp the write operation
+     * @return a future that completes with the write result
      */
     default CompletableFuture<Result<WriteOk, Err>> writeObjects(Collection<List<?>> objects, WriteOp writeOp) {
         return writeObjects(objects, writeOp, Context.newDefault());
@@ -61,6 +71,8 @@ public interface WriteObject {
 
     /**
      * @see #objectsStreamWriter(int, Context)
+     *
+     * @return a stream writer instance
      */
     default StreamWriter<List<?>, WriteOk> objectsStreamWriter() {
         return objectsStreamWriter(-1);
@@ -68,6 +80,9 @@ public interface WriteObject {
 
     /**
      * @see #objectsStreamWriter(int, Context)
+     *
+     * @param maxPointsPerSecond the max number of points that can be written per second, exceeding which may cause blockage
+     * @return a stream writer instance
      */
     default StreamWriter<List<?>, WriteOk> objectsStreamWriter(int maxPointsPerSecond) {
         return objectsStreamWriter(maxPointsPerSecond, Context.newDefault());

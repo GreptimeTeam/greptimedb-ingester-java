@@ -30,28 +30,37 @@ public class Err {
     private Endpoint errTo;
 
     /**
-     * Returns the error code.
+     * Gets the error code.
+     *
+     * @return the error code
      */
     public int getCode() {
         return code;
     }
 
     /**
-     * Returns the error.
+     * Gets the error.
+     *
+     * @return the error
      */
     public Throwable getError() {
         return error;
     }
 
     /**
-     * Returns the server address where the error occurred.
+     * Gets the server address where the error occurred.
+     *
+     * @return the server address where the error occurred
      */
     public Endpoint getErrTo() {
         return errTo;
     }
 
     /**
-     * Returns a {@link Result} containing this error.
+     * Maps this error to a {@link Result}.
+     *
+     * @param <T> the type of the result
+     * @return a {@link Result} containing this error
      */
     public <T> Result<T, Err> mapToResult() {
         return Result.err(this);

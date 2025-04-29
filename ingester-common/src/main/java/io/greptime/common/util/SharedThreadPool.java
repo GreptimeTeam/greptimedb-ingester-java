@@ -19,7 +19,7 @@ package io.greptime.common.util;
 import java.util.concurrent.ExecutorService;
 
 /**
- * Like rust: pub type SharedThreadPool = RcObjectPool<ExecutorService>
+ * Like rust: {@code pub type SharedThreadPool = RcObjectPool<ExecutorService>}
  */
 public class SharedThreadPool extends RcObjectPool<ExecutorService> {
 
