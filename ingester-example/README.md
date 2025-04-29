@@ -1,4 +1,14 @@
-# GreptimeDB Ingester Examples
+# GreptimeDB Java Ingester Examples
+
+This module provides comprehensive examples demonstrating how to use the GreptimeDB Java ingester for efficient data ingestion. The examples showcase a range of APIs and approaches, from simple unary writes for basic use cases to high-performance bulk streaming for demanding production workloads. Each example includes detailed comments and best practices to help you choose the most appropriate ingestion method for your specific requirements.
+
+- [Unary Write](#unary-write)
+  - [Performance Recommendations](#performance-recommendations)
+  - [Examples](#examples)
+- [Streaming Write](#streaming-write)
+  - [Examples](#examples-1)
+- [Bulk Streaming Write](#bulk-streaming-write)
+  - [Examples](#examples-2)
 
 ## Unary Write
 
