@@ -10,7 +10,6 @@ This module provides comprehensive examples demonstrating how to use the Greptim
 - [Bulk Streaming Write](#bulk-streaming-write)
   - [Examples](#examples-2)
 
-
 ## Unary Write
 
 The unary write API provides a straightforward way to write data to GreptimeDB in a single request. It returns a `CompletableFuture<Result<WriteOk, Err>>` that completes when the write operation finishes. This asynchronous design enables high-performance data ingestion while providing clear success/failure information through the Result pattern.
