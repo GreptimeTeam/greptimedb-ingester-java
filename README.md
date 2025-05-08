@@ -4,9 +4,9 @@
 ![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)
 [![Maven Central](https://img.shields.io/maven-central/v/io.greptime/greptimedb-ingester.svg?label=maven%20central)](https://central.sonatype.com/search?q=io.greptime&name=ingester-all)
 
-The GreptimeDB Ingester for Java is a lightweight, high-performance client designed for efficient time-series data ingestion. It leverages the gRPC protocol to provide a non-blocking, purely asynchronous API that delivers exceptional throughput while remaining easy to integrate into your applications.
+The GreptimeDB Ingester for Java is a lightweight, high-performance client designed for efficient time-series data ingestion. It leverages the gRPC protocol to provide a non-blocking, purely asynchronous API that delivers exceptional throughput while maintaining seamless integration with your applications.
 
-This client offers multiple ingestion methods optimized for different performance requirements and use cases, allowing you to choose the approach that best fits your specific needs - from simple unary writes to high-throughput bulk streaming operations.
+This client offers multiple ingestion methods optimized for various performance requirements and use cases. You can select the approach that best suits your specific needs—whether you require simple unary writes for low-latency operations or high-throughput bulk streaming for maximum efficiency when handling large volumes of time-series data.
 
 ## Documentation
 - [API Reference](https://javadoc.io/doc/io.greptime/ingester-protocol/latest/index.html)
@@ -83,6 +83,26 @@ This client offers multiple ingestion methods optimized for different performanc
 - **Network Layer**: Manages low-level protocol communications using Arrow Flight and gRPC
 
 ## How To Use
+
+- [Installation](#installation)
+- [Client Initialization](#client-initialization)
+- [Writing Data](#writing-data)
+  - [Creating and Writing Tables](#creating-and-writing-tables)
+    - [TableSchema](#tableschema)
+    - [Column Types](#column-types)
+    - [Table](#table)
+- [Write Operations](#write-operations)
+- [Streaming Write](#streaming-write)
+- [Bulk Write](#bulk-write)
+  - [Configuration](#configuration)
+- [Resource Management](#resource-management)
+- [Performance Tuning](#performance-tuning)
+  - [Compression Options](#compression-options)
+  - [Write Operation Comparison](#write-operation-comparison)
+  - [Buffer Size Optimization](#buffer-size-optimization)
+
+### Installation
+
 GreptimeDB Java Ingester is hosted in the Maven Central Repository.
 
 To use it with Maven, simply add the following dependency to your project:
@@ -96,7 +116,6 @@ To use it with Maven, simply add the following dependency to your project:
 ```
 
 The latest version can be viewed [here](https://central.sonatype.com/search?q=io.greptime&name=ingester-all).
-
 
 ### Client Initialization
 
@@ -307,3 +326,63 @@ client.shutdownGracefully();
 ```
 
 ### Performance Tuning
+
+#### Compression Options
+
+The GreptimeDB Ingester Java client supports various compression algorithms to reduce network bandwidth and improve throughput.
+
+```java
+// Set the compression algorithm to Zstd
+Context ctx = Context.newDefault().withCompression(Compression.Zstd);
+```
+
+#### Write Operation Comparison
+
+Understanding the performance characteristics of different write methods is crucial for optimizing data ingestion.
+
+| Write Method | API | Throughput | Latency | Memory Efficiency | CPU Utilization |
+|--------------|-----|------------|---------|-------------------|-----------------|
+| Regular Write | `write(tables)` | Better | Good | High | Higher |
+| Stream Write | `streamWriter()` | Moderate | Good | Moderate | Moderate |
+| Bulk Write | `bulkStreamWriter()` | Best | Higher | Best | Moderate |
+
+
+| Write Method | API | Best For | Limitations |
+|-------------|-----|----------|-------------|
+| Regular Write | `write(tables)` | Simple applications, low latency requirements | Lower throughput for large volumes |
+| Stream Write | `streamWriter()` | Continuous data streams, moderate throughput | More complex to use than regular writes |
+| Bulk Write | `bulkStreamWriter()` | Maximum throughput, large batch operations | Higher latency, more resource-intensive |
+
+#### Buffer Size Optimization
+
+When using `BulkStreamWriter`, you can configure the column buffer size:
+
+```java
+// Get the table buffer with a specific column buffer size
+Table.TableBufferRoot table = bulkStreamWriter.tableBufferRoot(columnBufferSize);
+```
+
+This option can significantly improve the speed of data conversion to the underlying format. For optimal performance, we recommend setting the column buffer size to 1024 or larger, depending on your specific workload characteristics and available memory.
+
+### Build Requirements
+
+- Java 8+
+- Maven 3.6+
+
+### Contributing
+
+We welcome contributions to the GreptimeDB Ingester Java client! Here's how you can contribute:
+
+1. Fork the repository on GitHub
+2. Create a feature branch for your changes
+3. Make your changes, ensuring they follow the project's code style
+4. Add appropriate tests for your changes
+5. Submit a pull request to the main repository
+
+When submitting a pull request, please ensure that:
+
+- All tests pass successfully
+- Code formatting is correct (run `mvn spotless:check`, this requires Java 17+)
+- Documentation is updated to reflect your changes if necessary
+
+Thank you for helping improve the GreptimeDB Ingester Java client! Your contributions are greatly appreciated.
