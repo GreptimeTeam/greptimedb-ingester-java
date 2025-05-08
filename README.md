@@ -14,9 +14,10 @@ This client offers multiple ingestion methods optimized for different performanc
 
 ## Features
 - Writing data using
-  - [Unary Write](https://github.com/GreptimeTeam/greptimedb-ingester-java/tree/main/ingester-example#unary-write)
-  - [Streaming Write](https://github.com/GreptimeTeam/greptimedb-ingester-java/tree/main/ingester-example#streaming-write)
-  - [Bulk Streaming Write](https://github.com/GreptimeTeam/greptimedb-ingester-java/tree/main/ingester-example#bulk-streaming-write)
+  - [Regular Write API](https://github.com/GreptimeTeam/greptimedb-ingester-java/tree/main/ingester-example#regular-write-api)
+    - [Batching Write](https://github.com/GreptimeTeam/greptimedb-ingester-java/tree/main/ingester-example#batching-write)
+    - [Streaming Write](https://github.com/GreptimeTeam/greptimedb-ingester-java/tree/main/ingester-example#streaming-write)
+  - [Bulk Write API](https://github.com/GreptimeTeam/greptimedb-ingester-java/tree/main/ingester-example#bulk-write-api)
 - Management API client for managing
   - Health check
   - Authorizations
@@ -97,9 +98,9 @@ To use it with Maven, simply add the following dependency to your project:
 The latest version can be viewed [here](https://central.sonatype.com/search?q=io.greptime&name=ingester-all).
 
 
-### Connect to database
+### Client Initialization
 
-The following code demonstrates how to connect to GreptimeDB with the simplest configuration.
+The entry point to the GreptimeDB Ingester Java client is the `GreptimeDB` class. You create a client instance by calling the static create method with appropriate configuration options.
 
 ```java
 // GreptimeDB has a default database named "public" in the default catalog "greptime",
@@ -121,9 +122,188 @@ GreptimeOptions opts = GreptimeOptions.newBuilder(endpoints, database)
         // A good start ^_^
         .build();
 
+// Initialize the client
 GreptimeDB client = GreptimeDB.create(opts);
 ```
 
-For customizing the connection options, please refer to [API Documentation](https://javadoc.io/doc/io.greptime/ingester-protocol/latest/index.html).
-Please pay attention to the accompanying comments for each option, as they provide detailed explanations of their respective roles.
+### Writing Data
 
+The ingester provides a unified approach for writing data to GreptimeDB through the `Table` abstraction. All data writing operations, including high-level APIs, are built on top of this fundamental structure. To write data, you create a `Table` with your time series data and write it to the database.
+
+#### Creating and Writing Tables
+
+Define a table schema and create a table:
+
+```java
+// Create a table schema
+TableSchema schema = TableSchema.newBuilder("metrics")
+    .addTag("host", DataType.String)
+    .addTag("region", DataType.String)
+    .addField("cpu_util", DataType.Float64)
+    .addField("memory_util", DataType.Float64)
+    .addTimestamp("ts", DataType.TimestampMillisecond)
+    .build();
+
+// Create a table from the schema
+Table table = Table.from(schema);
+
+// Add rows to the table
+// The values must be provided in the same order as defined in the schema
+// In this case: addRow(host, region, cpu_util, memory_util, ts)
+table.addRow("host1", "us-west-1", 0.42, 0.78, System.currentTimeMillis());
+table.addRow("host2", "us-west-2", 0.46, 0.66, System.currentTimeMillis());
+// Add more rows
+// ..
+
+// Complete the table to make it immutable. This finalizes the table for writing.
+// If users forget to call this method, it will automatically be called internally
+// before the table data is written.
+table.complete();
+
+// Write the table to the database
+CompletableFuture<Result<WriteOk, Err>> future = client.write(table);
+```
+
+##### TableSchema
+
+The `TableSchema` defines the structure for writing data to GreptimeDB. It includes information about column names, semantic types, and data types.
+
+##### Column Types
+
+In GreptimeDB, columns are categorized into three semantic types:
+
+- **Tag**: Columns used for filtering and grouping data
+- **Field**: Columns that store the actual measurement values
+- **Timestamp**: A special column that represents the time dimension
+
+The timestamp column typically represents when data was sampled or when logs/events occurred. GreptimeDB identifies this column using a TIME INDEX constraint, which is why it's often referred to as the TIME INDEX column. If your schema contains multiple timestamp-type columns, only one can be designated as the TIME INDEX, while others must be defined as Field columns.
+
+##### Table
+
+The `Table` interface represents data that can be written to GreptimeDB. It provides methods for adding rows and manipulating the data. Essentially, `Table` temporarily stores data in memory, allowing you to accumulate multiple rows for batch processing before sending them to the database, which significantly improves write efficiency compared to writing individual rows.
+
+A table goes through several distinct lifecycle stages:
+
+1. **Creation**: Initialize a table from a schema using `Table.from(schema)`
+2. **Data Addition**: Populate the table with rows using `addRow()` method
+3. **Completion**: Finalize the table with `complete()` when all rows have been added
+4. **Writing**: Send the completed table to the database
+
+Important considerations:
+- Tables are not thread-safe and should be accessed from a single thread
+- Tables cannot be reused after writing - create a new instance for each write operation
+- The associated `TableSchema` is immutable and can be safely reused across multiple operations
+
+### Write Operations
+
+You can also provide a custom context for more control:
+
+```java
+Context ctx = Context.newDefault();
+// Add a hint to make the database create a table with the specified TTL (time-to-live)
+ctx = ctx.withHint("ttl", "3d");
+// Set the compression algorithm to Zstd.
+ctx = ctx.withCompression(Compression.Zstd)
+// Use the ctx when writing data to GreptimeDB
+CompletableFuture<Result<WriteOk, Err>> future = client.write(Arrays.asList(table1, table2), WriteOp.Insert, ctx);
+```
+
+### Streaming Write
+
+The streaming write API establishes a persistent connection to GreptimeDB, enabling continuous data ingestion over time with built-in rate limiting. This approach provides a convenient way to write data from multiple tables through a single stream, prioritizing ease of use and consistent throughput.
+
+```java
+// Create a stream writer
+StreamWriter<Table, WriteOk> writer = client.streamWriter();
+
+// Write multiple tables
+writer.write(table1)
+      .write(table2);
+
+// Complete the stream and get the result
+CompletableFuture<WriteOk> result = writer.completed();
+```
+
+You can also set a rate limit for stream writing:
+
+```java
+// Limit to 1000 points per second
+StreamWriter<Table, WriteOk> writer = client.streamWriter(1000);
+```
+
+### Bulk Write
+
+The Bulk Write API provides a high-performance, memory-efficient mechanism for ingesting large volumes of time-series data into GreptimeDB. It leverages off-heap memory management to achieve optimal throughput when writing batches of data.
+
+This API supports writing to one table per stream and handles large data volumes (up to 200MB per write) with adaptive flow control. Performance advantages include:
+- Off-heap memory management with Arrow buffers
+- Efficient binary serialization and data transfer
+- Optional compression
+- Batched operations
+
+This approach is particularly well-suited for:
+- Large-scale batch processing and data migrations
+- High-throughput log and sensor data ingestion
+- Time-series applications with demanding performance requirements
+- Systems processing high-frequency data collection
+
+Here's a typical pattern for using the Bulk Write API:
+
+```java
+// Create a BulkStreamWriter with the table schema
+try (BulkStreamWriter writer = greptimeDB.bulkStreamWriter(schema)) {
+    // Write multiple batches
+    for (int batch = 0; batch < batchCount; batch++) {
+        // Get a TableBufferRoot for this batch
+        Table.TableBufferRoot table = writer.tableBufferRoot(1000); // column buffer size
+        
+        // Add rows to the batch
+        for (int row = 0; row < rowsPerBatch; row++) {
+            Object[] rowData = generateRow(batch, row);
+            table.addRow(rowData);
+        }
+        
+        // Complete the table to prepare for transmission
+        table.complete();
+        
+        // Send the batch and get a future for completion
+        CompletableFuture<Integer> future = writer.writeNext();
+        
+        // Wait for the batch to be processed (optional)
+        Integer affectedRows = future.get();
+        
+        System.out.println("Batch " + batch + " wrote " + affectedRows + " rows");
+    }
+    
+    // Signal completion of the stream
+    writer.completed();
+}
+```
+
+#### Configuration
+
+The Bulk Write API can be configured with several options to optimize performance:
+
+```java
+BulkWrite.Config cfg = BulkWrite.Config.newBuilder()
+        .allocatorInitReservation(64 * 1024 * 1024L) // Customize memory allocation: 64MB initial reservation
+        .allocatorMaxAllocation(4 * 1024 * 1024 * 1024L) // Customize memory allocation: 4GB max allocation
+        .timeoutMsPerMessage(60 * 1000) // 60 seconds timeout per request
+        .maxRequestsInFlight(8) // Concurrency Control: Configure with 10 maximum in-flight requests
+        .build();
+// Enable Zstd compression
+Context ctx = Context.newDefault().withCompression(Compression.Zstd);
+
+BulkStreamWriter writer = greptimeDB.bulkStreamWriter(schema, cfg, ctx);
+```
+
+### Resource Management
+
+It's important to properly shut down the client when you're finished using it:
+
+```java
+// Gracefully shut down the client
+client.shutdownGracefully();
+```
+
+### Performance Tuning
