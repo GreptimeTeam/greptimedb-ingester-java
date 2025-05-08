@@ -275,25 +275,25 @@ try (BulkStreamWriter writer = greptimeDB.bulkStreamWriter(schema)) {
     for (int batch = 0; batch < batchCount; batch++) {
         // Get a TableBufferRoot for this batch
         Table.TableBufferRoot table = writer.tableBufferRoot(1000); // column buffer size
-        
+
         // Add rows to the batch
         for (int row = 0; row < rowsPerBatch; row++) {
             Object[] rowData = generateRow(batch, row);
             table.addRow(rowData);
         }
-        
+
         // Complete the table to prepare for transmission
         table.complete();
-        
+
         // Send the batch and get a future for completion
         CompletableFuture<Integer> future = writer.writeNext();
-        
+
         // Wait for the batch to be processed (optional)
         Integer affectedRows = future.get();
-        
+
         System.out.println("Batch " + batch + " wrote " + affectedRows + " rows");
     }
-    
+
     // Signal completion of the stream
     writer.completed();
 }
