@@ -45,7 +45,7 @@ public final class Util {
 
     static {
         RW_LOGGING = new AtomicBoolean(SystemPropertyUtil.getBool(Keys.RW_LOGGING, false));
-        REPORT_PERIOD_MIN = SystemPropertyUtil.getInt(Keys.REPORT_PERIOD, 30);
+        REPORT_PERIOD_MIN = SystemPropertyUtil.getInt(Keys.REPORT_PERIOD, 10);
         DISPLAY = ThreadPoolUtil.newScheduledBuilder()
                 .poolName("display_self")
                 .coreThreads(1)
