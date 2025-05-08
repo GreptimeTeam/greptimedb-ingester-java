@@ -2,21 +2,28 @@
 
 This module provides comprehensive examples demonstrating how to use the GreptimeDB Java ingester for efficient data ingestion. The examples showcase a range of APIs and approaches, from simple unary writes for basic use cases to high-performance bulk streaming for demanding production workloads. Each example includes detailed comments and best practices to help you choose the most appropriate ingestion method for your specific requirements.
 
-- [Unary Write](#unary-write)
-  - [Performance Recommendations](#performance-recommendations)
-  - [Examples](#examples)
-- [Streaming Write](#streaming-write)
-  - [Examples](#examples-1)
-- [Bulk Streaming Write](#bulk-streaming-write)
+- [Regular Write API](#regular-write-api)
+  - [Batching Write](#batching-write)
+    - [Performance Recommendations](#performance-recommendations)
+    - [Examples](#examples)
+  - [Streaming Write](#streaming-write)
+    - [Examples](#examples-1)
+- [Bulk Write API](#bulk-write-api)
   - [Examples](#examples-2)
 
-## Unary Write
+## Regular Write API
 
-The unary write API provides a straightforward way to write data to GreptimeDB in a single request. It returns a `CompletableFuture<Result<WriteOk, Err>>` that completes when the write operation finishes. This asynchronous design enables high-performance data ingestion while providing clear success/failure information through the Result pattern.
+The Regular Write API provides comprehensive methods for writing time-series data to GreptimeDB. This API supports both batching and streaming write operations with robust features including automatic error handling, configurable retry mechanisms, and rate limiting. It's designed to handle various ingestion patterns while maintaining optimal performance and reliability for your data pipeline.
 
-This API is suitable for most scenarios and serves as an excellent default choice when you're unsure which API to use.
+### Batching Write
 
-### Performance Recommendations
+Batching write allows you to write data to one or more tables in a single operation, providing an efficient way to ingest time-series data.
+
+The batch writing API offers a clean, straightforward approach to write data to GreptimeDB in a single request. It returns a `CompletableFuture<Result<WriteOk, Err>>` that completes when the write operation finishes. This asynchronous design enables high-performance data ingestion while providing clear success/failure information through the Result pattern.
+
+This API is ideal for most use cases and should be your default choice when you're unsure which ingestion method to use. It balances simplicity, performance, and reliability for typical data ingestion scenarios.
+
+#### Performance Recommendations
 
 For optimal performance, we recommend batching your writes whenever possible:
 
@@ -25,7 +32,7 @@ For optimal performance, we recommend batching your writes whenever possible:
 
 These batching approaches can dramatically improve performance compared to making separate calls for each row or table, especially in high-throughput scenarios.
 
-### Examples
+#### Examples
 
 - [LowLevelApiWriteQuickStart.java](src/main/java/io/greptime/LowLevelApiWriteQuickStart.java)
 
@@ -43,16 +50,16 @@ These batching approaches can dramatically improve performance compared to makin
   * Processing write results asynchronously
   * Deleting data using the `WriteOp.Delete` operation
 
-## Streaming Write
+### Streaming Write
 
-The streaming write API establishes a continuous connection for sending data to GreptimeDB, offering a convenient way to write data over time. This approach allows you to write data from different tables in a single stream, prioritizing ease of use over maximum performance.
+The streaming write API establishes a persistent connection to GreptimeDB, enabling continuous data ingestion over time with built-in rate limiting. This approach provides a convenient way to write data from multiple tables through a single stream, prioritizing ease of use and consistent throughput.
 
 This API is particularly well-suited for:
-- Low-volume continuous data writing scenarios
+- Continuous data collection scenarios with moderate volume
 - Applications that need to write to multiple tables through a single connection
 - Cases where simplicity and convenience are more important than maximum throughput
 
-### Examples
+#### Examples
 
 - [LowLevelApiStreamWriteQuickStart.java](src/main/java/io/greptime/LowLevelApiStreamWriteQuickStart.java)
 
@@ -70,13 +77,24 @@ This API is particularly well-suited for:
   * Finalizing the stream and processing results
   * Deleting data using the `WriteOp.Delete` operation
 
-## Bulk Streaming Write
+## Bulk Write API
 
-The bulk streaming write API is optimized specifically for high-performance, high-throughput scenarios. Unlike regular streaming, this API allows continuous writing to only one table per stream, but can handle very large data volumes (up to 200MB per write). It features sophisticated adaptive flow control mechanisms that automatically adjust to your data throughput requirements.
+The Bulk Write API provides a high-performance, memory-efficient mechanism for ingesting large volumes of time-series data into GreptimeDB. It leverages Apache Arrow's Flight protocol and off-heap memory management to achieve optimal throughput when writing batches of data.
+
+Unlike regular streaming, this API allows continuous writing to only one table per stream, but can handle very large data volumes (up to 200MB per write). It features sophisticated adaptive flow control mechanisms that automatically adjust to your data throughput requirements.
+
+The Bulk Write API achieves superior performance compared to the Regular Write API through:
+- Off-heap memory management using Arrow buffers
+- Efficient binary serialization with Apache Arrow
+- Streaming data transfer with Arrow Flight protocol
+- Optional compression to reduce network traffic
+- Batched operations to amortize network overhead
 
 This API is ideal for scenarios such as:
+- Batch processing and data migrations
 - Massive log data ingestion requiring high throughput
 - Time-series data collection systems that need to process large volumes of data
+- High-frequency sensor data ingestion
 - Applications where performance and throughput are critical requirements
 
 ### Examples
