@@ -118,6 +118,8 @@ public class BulkWriteApiQuickStart {
 
             bulkStreamWriter.completed();
         }
+
+        greptimeDB.shutdownGracefully();
     }
 
     private static Object[] generateOneRow(int cardinality) {

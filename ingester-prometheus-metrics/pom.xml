@@ -23,33 +23,27 @@
         <artifactId>greptimedb-ingester</artifactId>
         <version>0.14.2</version>
     </parent>
+    <artifactId>ingester-prometheus-metrics</artifactId>
 
-    <artifactId>ingester-all</artifactId>
+    <properties>
+        <prometheus.version>0.16.0</prometheus.version>
+    </properties>
 
     <dependencies>
         <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>io.greptime</groupId>
             <artifactId>ingester-common</artifactId>
         </dependency>
+
         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>ingester-grpc</artifactId>
+            <groupId>io.prometheus</groupId>
+            <artifactId>simpleclient_dropwizard</artifactId>
+            <version>${prometheus.version}</version>
         </dependency>
         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>ingester-rpc</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>ingester-protocol</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>ingester-bulk-protocol</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>ingester-prometheus-metrics</artifactId>
+            <groupId>io.prometheus</groupId>
+            <artifactId>simpleclient_httpserver</artifactId>
+            <version>${prometheus.version}</version>
         </dependency>
     </dependencies>
 </project>
