@@ -18,8 +18,10 @@ package io.greptime.bench;
 
 import io.greptime.GreptimeDB;
 import io.greptime.StreamWriter;
+import io.greptime.common.util.MetricsUtil;
 import io.greptime.common.util.ServiceLoader;
 import io.greptime.common.util.SystemPropertyUtil;
+import io.greptime.metrics.MetricsExporter;
 import io.greptime.models.Table;
 import io.greptime.models.TableSchema;
 import io.greptime.models.WriteOk;
@@ -54,6 +56,10 @@ public class StreamingWriteBenchmark {
         LOG.info("Using zstd compression: {}", zstdCompression);
         LOG.info("Batch size: {}", batchSize);
         LOG.info("Max points per second: {}", maxPointsPerSecond);
+
+        // Start a metrics exporter
+        MetricsExporter metricsExporter = new MetricsExporter(8080, MetricsUtil.metricRegistry());
+        metricsExporter.init(null);
 
         GreptimeDB greptimeDB = DBConnector.connectTo(new String[] {endpoint}, dbName);
 
@@ -100,5 +106,6 @@ public class StreamingWriteBenchmark {
 
         greptimeDB.shutdownGracefully();
         tableDataProvider.close();
+        metricsExporter.shutdownGracefully();
     }
 }

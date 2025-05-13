@@ -19,8 +19,10 @@ package io.greptime.bench;
 import io.greptime.BulkStreamWriter;
 import io.greptime.BulkWrite;
 import io.greptime.GreptimeDB;
+import io.greptime.common.util.MetricsUtil;
 import io.greptime.common.util.ServiceLoader;
 import io.greptime.common.util.SystemPropertyUtil;
+import io.greptime.metrics.MetricsExporter;
 import io.greptime.models.Table;
 import io.greptime.models.TableSchema;
 import io.greptime.rpc.Compression;
@@ -51,6 +53,10 @@ public class BulkWriteBenchmark {
         LOG.info("Connect to db: {}, endpoint: {}", dbName, endpoint);
         LOG.info("Using zstd compression: {}", zstdCompression);
         LOG.info("Batch size: {}", batchSize);
+
+        // Start a metrics exporter
+        MetricsExporter metricsExporter = new MetricsExporter(8080, MetricsUtil.metricRegistry());
+        metricsExporter.init(null);
 
         GreptimeDB greptimeDB = DBConnector.connectTo(new String[] {endpoint}, dbName);
 
@@ -111,5 +117,6 @@ public class BulkWriteBenchmark {
         }
 
         greptimeDB.shutdownGracefully();
+        metricsExporter.shutdownGracefully();
     }
 }

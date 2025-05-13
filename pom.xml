@@ -52,6 +52,7 @@
         <module>ingester-example</module>
         <module>ingester-all</module>
         <module>ingester-bulk-protocol</module>
+        <module>ingester-prometheus-metrics</module>
     </modules>
 
     <scm>
@@ -120,6 +121,11 @@
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>ingester-grpc</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>ingester-prometheus-metrics</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
