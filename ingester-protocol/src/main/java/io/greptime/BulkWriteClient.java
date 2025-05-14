@@ -16,6 +16,7 @@
 
 package io.greptime;
 
+import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Timer;
 import io.greptime.common.Display;
 import io.greptime.common.Endpoint;
@@ -63,8 +64,8 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
         this.opts = Ensures.ensureNonNull(opts, "null `BulkWriteClient.opts`");
         this.routerClient = this.opts.getRouterClient();
         Executor pool = this.opts.getAsyncPool();
-        this.asyncPool = pool != null ? pool : new SerializingExecutor("buld_write_client");
-        this.asyncPool = new MetricExecutor(this.asyncPool, "async_bulk_write_pool.time");
+        this.asyncPool = pool != null ? pool : new SerializingExecutor("bulk_write_client");
+        this.asyncPool = new MetricExecutor(this.asyncPool, "async_bulk_write_pool");
         return true;
     }
 
@@ -167,6 +168,8 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
     static final class InnerMetricHelper {
         static final Timer BULK_WRITE_PREPARE_TIME = MetricsUtil.timer("bulk_write_prepare_time");
         static final Timer BULK_WRITE_PUT_TIME = MetricsUtil.timer("bulk_write_put_time");
+        static final Histogram BULK_WRITE_PUT_ROWS = MetricsUtil.histogram("bulk_write_put_rows");
+        static final Histogram BULK_WRITE_PUT_BYTES = MetricsUtil.histogram("bulk_write_put_bytes");
 
         static Timer prepareTime() {
             return BULK_WRITE_PREPARE_TIME;
@@ -174,6 +177,14 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
 
         static Timer putTime() {
             return BULK_WRITE_PUT_TIME;
+        }
+
+        static Histogram putRows() {
+            return BULK_WRITE_PUT_ROWS;
+        }
+
+        static Histogram putBytes() {
+            return BULK_WRITE_PUT_BYTES;
         }
     }
 
@@ -205,10 +216,19 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
         @Override
         public CompletableFuture<Integer> writeNext() throws Exception {
             Table.TableBufferRoot table = this.current.getAndSet(null);
-            if (table != null) {
-                // make sure the table is completed
-                table.complete();
+            if (table == null) {
+                return Util.errorCf(
+                        new IllegalStateException("No table buffer available - call `tableBufferRoot()` first"));
             }
+            // make sure the table is completed
+            table.complete();
+
+            String tableName = table.tableName();
+            int rows = table.rowCount();
+            long bytes = table.bytesUsed();
+
+            InnerMetricHelper.putRows().update(rows);
+            InnerMetricHelper.putBytes().update(bytes);
 
             // Check if the stream is ready
             if (!isStreamReady()) {
@@ -224,12 +244,21 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
                 InnerMetricHelper.prepareTime().update(clock.duration(startPut), TimeUnit.MILLISECONDS);
 
                 long startCall = clock.getTick();
+                int inFlight = stage.numInFlight();
                 CompletableFuture<Integer> future = stage.future();
                 future.whenComplete((r, t) -> {
-                    InnerMetricHelper.putTime().update(clock.duration(startCall), TimeUnit.MILLISECONDS);
+                    long duration = clock.duration(startCall);
+                    InnerMetricHelper.putTime().update(duration, TimeUnit.MILLISECONDS);
+                    if (Util.isBulkWriteLogging()) {
+                        LOG.info(
+                                "Bulk write completed - table={}, rows={}, bytes={}, duration={}ms, in-flight={} requests",
+                                tableName,
+                                rows,
+                                bytes,
+                                duration,
+                                inFlight);
+                    }
                 });
-
-                LOG.info("Write request sent successfully, in-flight requests: {}", stage.numInFlight());
 
                 return future;
             });

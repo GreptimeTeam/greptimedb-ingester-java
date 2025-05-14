@@ -25,21 +25,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A signal handler that can reset RW_LOGGING by {@link Util#resetRwLogging()}.
+ * A signal handler that can reset WRITE_LOGGING by {@link Util#resetWriteLogging()}.
  */
 @SPI(priority = 95)
-public class RwLoggingSignalHandler implements SignalHandler {
+public class WriteLoggingSignalHandler implements SignalHandler {
 
-    private static final Logger LOG = LoggerFactory.getLogger(RwLoggingSignalHandler.class);
+    private static final Logger LOG = LoggerFactory.getLogger(WriteLoggingSignalHandler.class);
 
     @Override
     public void handle(String signalName) {
-        if (FileSignalHelper.ignoreSignal(FileSignal.RwLogging)) {
-            LOG.info("`RW_LOGGING`={}.", Util.isRwLogging());
+        if (FileSignalHelper.ignoreSignal(FileSignal.WriteLogging)) {
+            LOG.info("`WRITE_LOGGING`={}.", Util.isWriteLogging());
             return;
         }
 
-        boolean oldValue = Util.resetRwLogging();
-        LOG.info("Reset `RW_LOGGING` to {} triggered by signal: {}.", !oldValue, signalName);
+        boolean oldValue = Util.resetWriteLogging();
+        LOG.info("Reset `WRITE_LOGGING` to {} triggered by signal: {}.", !oldValue, signalName);
     }
 }

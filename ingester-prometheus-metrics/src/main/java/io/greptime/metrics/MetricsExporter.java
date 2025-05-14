@@ -48,7 +48,7 @@ public class MetricsExporter implements Lifecycle<Void> {
     public boolean init(Void opts) {
         if (this.started.compareAndSet(false, true)) {
             try {
-                this.server = new HTTPServer(new InetSocketAddress(this.port), this.prometheusMetricRegistry);
+                this.server = new HTTPServer(new InetSocketAddress(this.port), this.prometheusMetricRegistry, true);
                 LOG.info("Metrics exporter started at `http://localhost:{}/metrics`", this.port);
                 return true;
             } catch (IOException e) {

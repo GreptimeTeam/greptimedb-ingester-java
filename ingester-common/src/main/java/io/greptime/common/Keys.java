@@ -32,7 +32,8 @@ public final class Keys {
     public static final String GRPC_CONN_RESET_THRESHOLD = "greptimedb.grpc.conn.failures.reset_threshold";
     public static final String GRPC_POOL_CORE_WORKERS = "greptimedb.grpc.pool.core_workers";
     public static final String GRPC_POOL_MAXIMUM_WORKERS = "greptimedb.grpc.pool.maximum_works";
-    public static final String RW_LOGGING = "greptimedb.read.write.rw_logging";
+    public static final String WRITE_LOGGING = "greptimedb.write.logging";
+    public static final String BULK_WRITE_LOGGING = "greptimedb.bulk_write.logging";
     public static final String FLIGHT_ALLOCATION_LIMIT = "greptimedb.flight.allocation.limit";
 
     // Greptime headers

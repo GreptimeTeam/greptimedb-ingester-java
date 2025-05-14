@@ -72,7 +72,7 @@ public class WriteClient implements Write, Health, Lifecycle<WriteOptions>, Disp
         this.routerClient = this.opts.getRouterClient();
         Executor pool = this.opts.getAsyncPool();
         this.asyncPool = pool != null ? pool : new SerializingExecutor("write_client");
-        this.asyncPool = new MetricExecutor(this.asyncPool, "async_write_pool.time");
+        this.asyncPool = new MetricExecutor(this.asyncPool, "async_write_pool");
         this.writeLimiter =
                 new DefaultWriteLimiter(this.opts.getMaxInFlightWritePoints(), this.opts.getLimitedPolicy());
         return true;
@@ -100,7 +100,7 @@ public class WriteClient implements Write, Health, Lifecycle<WriteOptions>, Disp
                         (r, e) -> {
                             InnerMetricHelper.writeQps().mark();
                             if (r != null) {
-                                if (Util.isRwLogging()) {
+                                if (Util.isWriteLogging()) {
                                     LOG.info(
                                             "Write to {} with operation {}, duration={} ms, result={}.",
                                             Keys.DB_NAME,

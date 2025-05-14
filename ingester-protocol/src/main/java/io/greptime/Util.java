@@ -39,12 +39,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Util for GreptimeDB Ingester.
  */
 public final class Util {
-    private static final AtomicBoolean RW_LOGGING;
+    private static final AtomicBoolean WRITE_LOGGING;
+    private static final AtomicBoolean BULK_WRITE_LOGGING;
     private static final int REPORT_PERIOD_MIN;
     private static final ScheduledExecutorService DISPLAY;
 
     static {
-        RW_LOGGING = new AtomicBoolean(SystemPropertyUtil.getBool(Keys.RW_LOGGING, false));
+        WRITE_LOGGING = new AtomicBoolean(SystemPropertyUtil.getBool(Keys.WRITE_LOGGING, false));
+        BULK_WRITE_LOGGING = new AtomicBoolean(SystemPropertyUtil.getBool(Keys.BULK_WRITE_LOGGING, true));
         REPORT_PERIOD_MIN = SystemPropertyUtil.getInt(Keys.REPORT_PERIOD, 10);
         DISPLAY = ThreadPoolUtil.newScheduledBuilder()
                 .poolName("display_self")
@@ -59,23 +61,43 @@ public final class Util {
     }
 
     /**
-     * Whether to output concise read/write logs.
+     * Whether to output concise write logs.
      *
      * @return true or false
      */
-    public static boolean isRwLogging() {
-        return RW_LOGGING.get();
+    public static boolean isWriteLogging() {
+        return WRITE_LOGGING.get();
     }
 
     /**
-     * See {@link #isRwLogging()}
+     * See {@link #isWriteLogging()}
      *
-     * Reset `rwLogging`, set to the opposite of the old value.
+     * Reset `writeLogging`, set to the opposite of the old value.
      *
      * @return old value
      */
-    public static boolean resetRwLogging() {
-        return RW_LOGGING.getAndSet(!RW_LOGGING.get());
+    public static boolean resetWriteLogging() {
+        return WRITE_LOGGING.getAndSet(!WRITE_LOGGING.get());
+    }
+
+    /**
+     * Whether to output concise bulk write logs.
+     *
+     * @return true or false
+     */
+    public static boolean isBulkWriteLogging() {
+        return BULK_WRITE_LOGGING.get();
+    }
+
+    /**
+     * See {@link #isBulkWriteLogging()}
+     *
+     * Reset `bulkWriteLogging`, set to the opposite of the old value.
+     *
+     * @return old value
+     */
+    public static boolean resetBulkWriteLogging() {
+        return BULK_WRITE_LOGGING.getAndSet(!BULK_WRITE_LOGGING.get());
     }
 
     /**

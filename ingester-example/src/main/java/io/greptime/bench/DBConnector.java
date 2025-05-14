@@ -17,7 +17,6 @@
 package io.greptime.bench;
 
 import io.greptime.GreptimeDB;
-import io.greptime.common.util.SerializingExecutor;
 import io.greptime.options.GreptimeOptions;
 
 /**
@@ -27,7 +26,6 @@ public class DBConnector {
 
     public static GreptimeDB connectTo(String[] endpoints, String dbname) {
         GreptimeOptions opts = GreptimeOptions.newBuilder(endpoints, dbname)
-                .asyncPool(new SerializingExecutor("bench_async_pool"))
                 .writeMaxRetries(0)
                 .defaultStreamMaxWritePointsPerSecond(Integer.MAX_VALUE)
                 .useZeroCopyWriteInBulkWrite(true)
