@@ -6,4 +6,5 @@
 | greptimedb.signal.out_dir          | Signal handler can output to the specified directory, default is the process start directory.                                                                      |
 | greptimedb.available_cpus          | Specify the number of available cpus, the default is to use the full number of cpus of the current environment.                                                    |
 | greptimedb.reporter.period_minutes | Metrics reporter timed output period, default 30 minutes.                                                                                                          |
-| greptimedb.read.write.rw_logging   | Whether to print logs for each read/write operation, default off.                                                                                                  |
+| greptimedb.write.logging           | Whether to print logs for each write operation, default off.                                                                                                       |
+| greptimedb.bulk_write.logging      | Whether to print logs for each write operation in bulk write, default on.                                                                                          |
