@@ -26,8 +26,9 @@ import java.util.Optional;
  * purpose of controlling the process to output specified content through this.
  */
 public enum FileSignal {
-    RwLogging("rw_logging.sig", "How to open or close read/write log(The second execution means close)"),
+    WriteLogging("write_logging.sig", "How to open or close write log(The second execution means close)"),
     RpcLimit("rpc_limit.sig", "How to open or close rpc limiter(The second execution means close)"),
+    BulkWriteLogging("bulk_write_logging.sig", "How to open or close bulk write log(The second execution means close)"),
     ;
 
     private final String filename;
