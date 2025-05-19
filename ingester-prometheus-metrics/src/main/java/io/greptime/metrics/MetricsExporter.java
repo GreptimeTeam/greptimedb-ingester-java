@@ -17,6 +17,7 @@
 package io.greptime.metrics;
 
 import com.codahale.metrics.MetricRegistry;
+import io.greptime.common.Endpoint;
 import io.greptime.common.Lifecycle;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.dropwizard.DropwizardExports;
@@ -48,9 +49,10 @@ public class MetricsExporter implements Lifecycle<ExporterOptions> {
         if (this.started.compareAndSet(false, true)) {
             this.opts = opts;
             try {
-                this.server = new HTTPServer(
-                        new InetSocketAddress(opts.getPort()), this.prometheusMetricRegistry, opts.isDeamon());
-                LOG.info("Metrics exporter started at `http://localhost:{}/metrics`", opts.getPort());
+                Endpoint bindAddr = opts.getBindAddr();
+                InetSocketAddress socketAddress = new InetSocketAddress(bindAddr.getAddr(), bindAddr.getPort());
+                this.server = new HTTPServer(socketAddress, this.prometheusMetricRegistry, opts.isDeamon());
+                LOG.info("Metrics exporter started at `http://{}:{}/metrics`", bindAddr.getAddr(), bindAddr.getPort());
                 return true;
             } catch (IOException e) {
                 this.started.set(false);

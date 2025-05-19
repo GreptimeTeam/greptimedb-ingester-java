@@ -17,27 +17,28 @@
 package io.greptime.metrics;
 
 import io.greptime.common.Copiable;
+import io.greptime.common.Endpoint;
 
 /**
  * Exporter options.
  */
 public class ExporterOptions implements Copiable<ExporterOptions> {
-    private int port;
+    private Endpoint bind_addr;
     private boolean deamon;
 
     public static ExporterOptions newDefault() {
         ExporterOptions opts = new ExporterOptions();
-        opts.port = 8090;
+        opts.bind_addr = new Endpoint("0.0.0.0", 8090);
         opts.deamon = true;
         return opts;
     }
 
-    public int getPort() {
-        return port;
+    public Endpoint getBindAddr() {
+        return bind_addr;
     }
 
-    public void setPort(int port) {
-        this.port = port;
+    public void setBindAddr(Endpoint bind_addr) {
+        this.bind_addr = bind_addr;
     }
 
     public boolean isDeamon() {
@@ -51,13 +52,13 @@ public class ExporterOptions implements Copiable<ExporterOptions> {
     @Override
     public ExporterOptions copy() {
         ExporterOptions opts = new ExporterOptions();
-        opts.port = this.port;
+        opts.bind_addr = this.bind_addr;
         opts.deamon = this.deamon;
         return opts;
     }
 
     @Override
     public String toString() {
-        return "ExporterOptions{" + "port=" + port + ", deamon=" + deamon + '}';
+        return "ExporterOptions{" + "bind_addr=" + bind_addr + ", deamon=" + deamon + '}';
     }
 }
