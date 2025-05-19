@@ -21,6 +21,7 @@ import io.greptime.StreamWriter;
 import io.greptime.common.util.MetricsUtil;
 import io.greptime.common.util.ServiceLoader;
 import io.greptime.common.util.SystemPropertyUtil;
+import io.greptime.metrics.ExporterOptions;
 import io.greptime.metrics.MetricsExporter;
 import io.greptime.models.Table;
 import io.greptime.models.TableSchema;
@@ -58,8 +59,8 @@ public class StreamingWriteBenchmark {
         LOG.info("Max points per second: {}", maxPointsPerSecond);
 
         // Start a metrics exporter
-        MetricsExporter metricsExporter = new MetricsExporter(8080, MetricsUtil.metricRegistry());
-        metricsExporter.init(null);
+        MetricsExporter metricsExporter = new MetricsExporter(MetricsUtil.metricRegistry());
+        metricsExporter.init(ExporterOptions.newDefault());
 
         GreptimeDB greptimeDB = DBConnector.connectTo(new String[] {endpoint}, dbName);
 

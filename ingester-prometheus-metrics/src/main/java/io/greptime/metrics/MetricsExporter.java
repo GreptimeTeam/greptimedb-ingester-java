@@ -17,6 +17,7 @@
 package io.greptime.metrics;
 
 import com.codahale.metrics.MetricRegistry;
+import io.greptime.common.Endpoint;
 import io.greptime.common.Lifecycle;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.dropwizard.DropwizardExports;
@@ -27,29 +28,31 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MetricsExporter implements Lifecycle<Void> {
+public class MetricsExporter implements Lifecycle<ExporterOptions> {
 
     private static final Logger LOG = LoggerFactory.getLogger(MetricsExporter.class);
 
     private final CollectorRegistry prometheusMetricRegistry;
 
-    private final int port;
     private HTTPServer server;
+    private ExporterOptions opts;
 
     private final AtomicBoolean started = new AtomicBoolean(false);
 
-    public MetricsExporter(int port, MetricRegistry dropwizardMetricRegistry) {
-        this.port = port;
+    public MetricsExporter(MetricRegistry dropwizardMetricRegistry) {
         this.prometheusMetricRegistry = new CollectorRegistry();
         this.prometheusMetricRegistry.register(new DropwizardExports(dropwizardMetricRegistry));
     }
 
     @Override
-    public boolean init(Void opts) {
+    public boolean init(ExporterOptions opts) {
         if (this.started.compareAndSet(false, true)) {
+            this.opts = opts;
             try {
-                this.server = new HTTPServer(new InetSocketAddress(this.port), this.prometheusMetricRegistry, true);
-                LOG.info("Metrics exporter started at `http://localhost:{}/metrics`", this.port);
+                Endpoint bindAddr = opts.getBindAddr();
+                InetSocketAddress socketAddress = new InetSocketAddress(bindAddr.getAddr(), bindAddr.getPort());
+                this.server = new HTTPServer(socketAddress, this.prometheusMetricRegistry, opts.isDeamon());
+                LOG.info("Metrics exporter started at `http://{}:{}/metrics`", bindAddr.getAddr(), bindAddr.getPort());
                 return true;
             } catch (IOException e) {
                 this.started.set(false);
@@ -68,5 +71,10 @@ public class MetricsExporter implements Lifecycle<Void> {
                 LOG.info("Metrics exporter stopped");
             }
         }
+    }
+
+    @Override
+    public String toString() {
+        return "MetricsExporter{" + "opts=" + opts + '}';
     }
 }
