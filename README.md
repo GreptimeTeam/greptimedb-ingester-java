@@ -10,14 +10,14 @@ This client offers multiple ingestion methods optimized for various performance 
 
 ## Documentation
 - [API Reference](https://javadoc.io/doc/io.greptime/ingester-protocol/latest/index.html)
-- [Examples](https://github.com/GreptimeTeam/greptimedb-ingester-java/tree/main/ingester-example)
+- [Examples](./ingester-example)
 
 ## Features
 - Writing data using
-  - [Regular Write API](https://github.com/GreptimeTeam/greptimedb-ingester-java/tree/main/ingester-example#regular-write-api)
-    - [Batching Write](https://github.com/GreptimeTeam/greptimedb-ingester-java/tree/main/ingester-example#batching-write)
-    - [Streaming Write](https://github.com/GreptimeTeam/greptimedb-ingester-java/tree/main/ingester-example#streaming-write)
-  - [Bulk Write API](https://github.com/GreptimeTeam/greptimedb-ingester-java/tree/main/ingester-example#bulk-write-api)
+  - [Regular Write API](./ingester-example#regular-write-api)
+    - [Batching Write](./ingester-example#batching-write)
+    - [Streaming Write](./ingester-example#streaming-write)
+  - [Bulk Write API](./ingester-example#bulk-write-api)
 - Management API client for managing
   - Health check
   - Authorizations
@@ -100,6 +100,9 @@ This client offers multiple ingestion methods optimized for various performance 
   - [Compression Options](#compression-options)
   - [Write Operation Comparison](#write-operation-comparison)
   - [Buffer Size Optimization](#buffer-size-optimization)
+- [Export metrics](#export-metrics)
+- [Build Requirements](#build-requirements)
+- [Contributing](#contributing)
 
 ### Installation
 
@@ -363,6 +366,12 @@ Table.TableBufferRoot table = bulkStreamWriter.tableBufferRoot(columnBufferSize)
 ```
 
 This option can significantly improve the speed of data conversion to the underlying format. For optimal performance, we recommend setting the column buffer size to 1024 or larger, depending on your specific workload characteristics and available memory.
+
+### Export Metrics
+
+The ingester exposes comprehensive metrics that enable you to monitor its performance, health, and operational status.
+
+For detailed information about available metrics and their usage, refer to the [Ingester Prometheus Metrics](./ingester-prometheus-metrics/) documentation.
 
 ### Build Requirements
 
