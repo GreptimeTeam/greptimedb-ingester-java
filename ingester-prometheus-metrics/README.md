@@ -34,7 +34,7 @@ global:
   scrape_interval: 15s
 
 scrape_configs:
-  - job_name: 'greptimedb ingester'
+  - job_name: 'greptimedb-ingester'
     static_configs:
       # Assuming that the ingester is running locally.
       # The default HTTP port of 8090.
