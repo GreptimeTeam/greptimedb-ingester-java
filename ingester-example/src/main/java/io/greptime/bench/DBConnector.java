@@ -18,18 +18,36 @@ package io.greptime.bench;
 
 import io.greptime.GreptimeDB;
 import io.greptime.options.GreptimeOptions;
+import io.greptime.quickstart.query.QueryJDBCQuickStart;
+import java.io.IOException;
+import java.util.Properties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * DBConnector is a helper class to connect to a GreptimeDB instance.
  */
 public class DBConnector {
 
-    public static GreptimeDB connectTo(String[] endpoints, String dbname) {
-        GreptimeOptions opts = GreptimeOptions.newBuilder(endpoints, dbname)
+    private static final Logger LOG = LoggerFactory.getLogger(DBConnector.class);
+
+    public static GreptimeDB connect() {
+        Properties prop = new Properties();
+        try {
+            prop.load(QueryJDBCQuickStart.class.getResourceAsStream("/db-connection.properties"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        String database = (String) prop.get("db.database");
+        String endpointsStr = prop.getProperty("db.endpoints");
+        String[] endpoints = endpointsStr.split(",");
+        GreptimeOptions opts = GreptimeOptions.newBuilder(endpoints, database)
                 .writeMaxRetries(0)
                 .defaultStreamMaxWritePointsPerSecond(Integer.MAX_VALUE)
                 .useZeroCopyWriteInBulkWrite(true)
                 .build();
+        LOG.info("Connect to db: {}, endpoint: {}", database, endpointsStr);
+
         return GreptimeDB.create(opts);
     }
 }

@@ -225,7 +225,7 @@ Context ctx = Context.newDefault();
 // Add a hint to make the database create a table with the specified TTL (time-to-live)
 ctx = ctx.withHint("ttl", "3d");
 // Set the compression algorithm to Zstd.
-ctx = ctx.withCompression(Compression.Zstd)
+ctx = ctx.withCompression(Compression.Zstd);
 // Use the ctx when writing data to GreptimeDB
 CompletableFuture<Result<WriteOk, Err>> future = client.write(Arrays.asList(table1, table2), WriteOp.Insert, ctx);
 ```
