@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
-package io.greptime;
+package io.greptime.quickstart.query;
 
+import io.greptime.GreptimeDB;
+import io.greptime.quickstart.TestConnector;
+import io.greptime.metric.Cpu;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -33,9 +36,9 @@ import org.slf4j.LoggerFactory;
 /**
  *
  */
-public class QueryJDBC {
+public class QueryJDBCQuickStart {
 
-    private static final Logger LOG = LoggerFactory.getLogger(QueryJDBC.class);
+    private static final Logger LOG = LoggerFactory.getLogger(QueryJDBCQuickStart.class);
 
     public static void main(String[] args) throws Exception {
         GreptimeDB greptimeDB = TestConnector.connectToDefaultDB();
@@ -82,7 +85,7 @@ public class QueryJDBC {
 
     public static Connection getConnection() throws IOException, ClassNotFoundException, SQLException {
         Properties prop = new Properties();
-        prop.load(QueryJDBC.class.getResourceAsStream("/db-connection.properties"));
+        prop.load(QueryJDBCQuickStart.class.getResourceAsStream("/db-connection.properties"));
 
         String dbName = (String) prop.get("db.database-driver");
 

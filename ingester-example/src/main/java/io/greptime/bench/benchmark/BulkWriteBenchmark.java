@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
-package io.greptime.bench;
+package io.greptime.bench.benchmark;
 
+import io.greptime.BulkStreamWriter;
+import io.greptime.BulkWrite;
 import io.greptime.GreptimeDB;
-import io.greptime.StreamWriter;
+import io.greptime.bench.DBConnector;
+import io.greptime.bench.TableDataProvider;
 import io.greptime.common.util.MetricsUtil;
 import io.greptime.common.util.ServiceLoader;
 import io.greptime.common.util.SystemPropertyUtil;
@@ -25,7 +28,6 @@ import io.greptime.metrics.ExporterOptions;
 import io.greptime.metrics.MetricsExporter;
 import io.greptime.models.Table;
 import io.greptime.models.TableSchema;
-import io.greptime.models.WriteOk;
 import io.greptime.rpc.Compression;
 import io.greptime.rpc.Context;
 import java.util.Iterator;
@@ -34,79 +36,87 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * StreamingWriteBenchmark is a benchmark for the streaming write API of GreptimeDB.
+ * BulkWriteBenchmark is a benchmark for the bulk write API of GreptimeDB.
  *
  * Env:
  * - db_endpoint: the endpoint of the GreptimeDB server
  * - db_name: the name of the database
  * - batch_size_per_request: the batch size per request
  * - zstd_compression: whether to use zstd compression
- * - max_points_per_second: the max number of points that can be written per second, exceeding which may cause blockage
  */
-public class StreamingWriteBenchmark {
+public class BulkWriteBenchmark {
 
-    private static final Logger LOG = LoggerFactory.getLogger(StreamingWriteBenchmark.class);
+    private static final Logger LOG = LoggerFactory.getLogger(BulkWriteBenchmark.class);
 
     public static void main(String[] args) throws Exception {
-        String endpoint = SystemPropertyUtil.get("db_endpoint", "127.0.0.1:4001");
-        String dbName = SystemPropertyUtil.get("db_name", "public");
         boolean zstdCompression = SystemPropertyUtil.getBool("zstd_compression", true);
         int batchSize = SystemPropertyUtil.getInt("batch_size_per_request", 64 * 1024);
-        int maxPointsPerSecond = SystemPropertyUtil.getInt("max_points_per_second", Integer.MAX_VALUE);
-        LOG.info("Connect to db: {}, endpoint: {}", dbName, endpoint);
         LOG.info("Using zstd compression: {}", zstdCompression);
         LOG.info("Batch size: {}", batchSize);
-        LOG.info("Max points per second: {}", maxPointsPerSecond);
 
         // Start a metrics exporter
         MetricsExporter metricsExporter = new MetricsExporter(MetricsUtil.metricRegistry());
         metricsExporter.init(ExporterOptions.newDefault());
 
-        GreptimeDB greptimeDB = DBConnector.connectTo(new String[] {endpoint}, dbName);
+        GreptimeDB greptimeDB = DBConnector.connect();
 
+        BulkWrite.Config cfg = BulkWrite.Config.newBuilder()
+                .allocatorInitReservation(0)
+                .allocatorMaxAllocation(4 * 1024 * 1024 * 1024L)
+                .timeoutMsPerMessage(60000)
+                .maxRequestsInFlight(4)
+                .build();
         Compression compression = zstdCompression ? Compression.Zstd : Compression.None;
         Context ctx = Context.newDefault().withCompression(compression);
-
-        StreamWriter<Table, WriteOk> writer = greptimeDB.streamWriter(maxPointsPerSecond, ctx);
 
         TableDataProvider tableDataProvider =
                 ServiceLoader.load(TableDataProvider.class).first();
         LOG.info("Table data provider: {}", tableDataProvider.getClass().getName());
         tableDataProvider.init();
         TableSchema tableSchema = tableDataProvider.tableSchema();
-        Iterator<Object[]> rows = tableDataProvider.rows();
 
         LOG.info("Start writing data");
-        long start = System.nanoTime();
-        for (; ; ) {
-            Table table = Table.from(tableSchema);
-            for (int i = 0; i < batchSize; i++) {
+        try (BulkStreamWriter writer = greptimeDB.bulkStreamWriter(tableSchema, cfg, ctx)) {
+            Iterator<Object[]> rows = tableDataProvider.rows();
+
+            long start = System.nanoTime();
+            for (; ; ) {
+                Table.TableBufferRoot table = writer.tableBufferRoot(1024);
+                for (int i = 0; i < batchSize; i++) {
+                    if (!rows.hasNext()) {
+                        break;
+                    }
+                    table.addRow(rows.next());
+                }
+                LOG.info("Table bytes used: {}", table.bytesUsed());
+                // Complete the table; adding rows is no longer permitted.
+                table.complete();
+
+                // Write the table data to the server
+                CompletableFuture<Integer> future = writer.writeNext();
+                long fStart = System.nanoTime();
+                future.whenComplete((r, t) -> {
+                    long costMs = (System.nanoTime() - fStart) / 1000000;
+                    if (t != null) {
+                        LOG.error("Error writing data, time cost: {}ms", costMs, t);
+                    } else {
+                        LOG.info("Wrote rows: {}, time cost: {}ms", r, costMs);
+                    }
+                });
+
                 if (!rows.hasNext()) {
                     break;
                 }
-                table.addRow(rows.next());
             }
-            LOG.info("Table bytes used: {}", table.bytesUsed());
-            // Complete the table; adding rows is no longer permitted.
-            table.complete();
-            // Write the table data to the server
-            writer.write(table);
 
-            if (!rows.hasNext()) {
-                break;
-            }
+            writer.completed();
+
+            LOG.info("Completed writing data, time cost: {}s", (System.nanoTime() - start) / 1000000000);
+        } finally {
+            tableDataProvider.close();
         }
 
-        // Completes the stream, and the stream will be closed.
-        CompletableFuture<WriteOk> future = writer.completed();
-
-        // Now we can get the write result.
-        WriteOk result = future.get();
-
-        LOG.info("Completed writing data: {}, time cost: {}s", result, (System.nanoTime() - start) / 1000000000);
-
         greptimeDB.shutdownGracefully();
-        tableDataProvider.close();
         metricsExporter.shutdownGracefully();
     }
 }

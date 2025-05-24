@@ -14,13 +14,17 @@
  * limitations under the License.
  */
 
-package io.greptime;
+package io.greptime.quickstart;
 
+import io.greptime.GreptimeDB;
 import io.greptime.common.util.SerializingExecutor;
 import io.greptime.limit.LimitedPolicy;
 import io.greptime.models.AuthInfo;
 import io.greptime.options.GreptimeOptions;
+import io.greptime.quickstart.query.QueryJDBCQuickStart;
 import io.greptime.rpc.RpcOptions;
+import java.io.IOException;
+import java.util.Properties;
 
 /**
  *
@@ -30,11 +34,19 @@ public class TestConnector {
     public static GreptimeDB connectToDefaultDB() {
         // GreptimeDB has a default database named "public" in the default catalog "greptime",
         // we can use it as the test database
-        String database = "public";
+        Properties prop = new Properties();
+
+        try {
+            prop.load(QueryJDBCQuickStart.class.getResourceAsStream("/db-connection.properties"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        String database = (String) prop.get("db.database");
         // By default, GreptimeDB listens on port 4001 using the gRPC protocol.
         // We can provide multiple endpoints that point to the same GreptimeDB cluster.
         // The client will make calls to these endpoints based on a load balancing strategy.
-        String[] endpoints = {"127.0.0.1:4001"};
+        String endpointsStr = prop.getProperty("db.endpoints");
+        String[] endpoints = endpointsStr.split(",");
         GreptimeOptions opts = GreptimeOptions.newBuilder(endpoints, database) // Optional, the default value is fine.
                 // Asynchronous thread pool, which is used to handle various asynchronous
                 // tasks in the SDK (You are using a purely asynchronous SDK). If you do not

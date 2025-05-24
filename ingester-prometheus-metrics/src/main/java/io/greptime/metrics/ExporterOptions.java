@@ -24,12 +24,12 @@ import io.greptime.common.Endpoint;
  */
 public class ExporterOptions implements Copiable<ExporterOptions> {
     private Endpoint bindAddr;
-    private boolean deamon;
+    private boolean daemon;
 
     public static ExporterOptions newDefault() {
         ExporterOptions opts = new ExporterOptions();
         opts.bindAddr = new Endpoint("0.0.0.0", 8090);
-        opts.deamon = true;
+        opts.daemon = true;
         return opts;
     }
 
@@ -41,24 +41,24 @@ public class ExporterOptions implements Copiable<ExporterOptions> {
         this.bindAddr = bindAddr;
     }
 
-    public boolean isDeamon() {
-        return deamon;
+    public boolean isDaemon() {
+        return daemon;
     }
 
-    public void setDeamon(boolean deamon) {
-        this.deamon = deamon;
+    public void setDaemon(boolean daemon) {
+        this.daemon = daemon;
     }
 
     @Override
     public ExporterOptions copy() {
         ExporterOptions opts = new ExporterOptions();
         opts.bindAddr = this.bindAddr;
-        opts.deamon = this.deamon;
+        opts.daemon = this.daemon;
         return opts;
     }
 
     @Override
     public String toString() {
-        return "ExporterOptions{" + "bindAddr=" + bindAddr + ", deamon=" + deamon + '}';
+        return "ExporterOptions{" + "bindAddr=" + bindAddr + ", daemon=" + daemon + '}';
     }
 }
