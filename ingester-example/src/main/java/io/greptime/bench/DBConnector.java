@@ -44,6 +44,7 @@ public class DBConnector {
         GreptimeOptions opts = GreptimeOptions.newBuilder(endpoints, database)
                 .writeMaxRetries(0)
                 .defaultStreamMaxWritePointsPerSecond(Integer.MAX_VALUE)
+                .maxInFlightWritePoints(Integer.MAX_VALUE)
                 .useZeroCopyWriteInBulkWrite(true)
                 .build();
         LOG.info("Connect to db: {}, endpoint: {}", database, endpointsStr);
