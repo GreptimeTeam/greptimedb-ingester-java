@@ -34,7 +34,7 @@ These batching approaches can dramatically improve performance compared to makin
 
 #### Examples
 
-- [LowLevelApiWriteQuickStart.java](src/main/java/io/greptime/LowLevelApiWriteQuickStart.java)
+- [LowLevelApiWriteQuickStart.java](src/main/java/io/greptime/quickstart/write/LowLevelApiWriteQuickStart.java)
 
   This example demonstrates how to use the low-level API to write data to GreptimeDB. It covers:
   * Defining table schemas with tags, timestamps, and fields
@@ -42,7 +42,7 @@ These batching approaches can dramatically improve performance compared to makin
   * Processing write results using the Result pattern
   * Deleting data using the `WriteOp.Delete` operation
 
-- [HighLevelApiWriteQuickStart.java](src/main/java/io/greptime/HighLevelApiWriteQuickStart.java)
+- [HighLevelApiWriteQuickStart.java](src/main/java/io/greptime/quickstart/write/HighLevelApiWriteQuickStart.java)
 
   This example demonstrates how to use the high-level API to write data to GreptimeDB. It covers:
   * Writing data using POJO objects with annotations
@@ -61,7 +61,7 @@ This API is particularly well-suited for:
 
 #### Examples
 
-- [LowLevelApiStreamWriteQuickStart.java](src/main/java/io/greptime/LowLevelApiStreamWriteQuickStart.java)
+- [LowLevelApiStreamWriteQuickStart.java](src/main/java/io/greptime/quickstart/write/LowLevelApiStreamWriteQuickStart.java)
 
   This example demonstrates how to use the low-level API to write data to GreptimeDB using stream. It covers:
   * Defining table schemas with tags, timestamps, and fields
@@ -69,7 +69,7 @@ This API is particularly well-suited for:
   * Finalizing the stream and retrieving write results
   * Deleting data using the `WriteOp.Delete` operation
 
-- [HighLevelApiStreamWriteQuickStart.java](src/main/java/io/greptime/HighLevelApiStreamWriteQuickStart.java)
+- [HighLevelApiStreamWriteQuickStart.java](src/main/java/io/greptime/quickstart/write/HighLevelApiStreamWriteQuickStart.java)
 
   This example demonstrates how to use the high-level API to write data to GreptimeDB using stream. It covers:
   * Writing POJO objects directly to the stream
@@ -99,7 +99,7 @@ This API is ideal for scenarios such as:
 
 ### Examples
 
-- [BulkWriteApiQuickStart.java](src/main/java/io/greptime/BulkWriteApiQuickStart.java)
+- [BulkWriteApiQuickStart.java](src/main/java/io/greptime/quickstart/write/BulkWriteApiQuickStart.java)
 
   This example demonstrates how to use the bulk write API to write large volumes of data to a single table with maximum efficiency. It covers:
   * Configuring the bulk writer for optimal performance

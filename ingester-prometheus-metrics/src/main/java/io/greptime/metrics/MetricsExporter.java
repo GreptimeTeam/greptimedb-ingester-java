@@ -51,7 +51,7 @@ public class MetricsExporter implements Lifecycle<ExporterOptions> {
             try {
                 Endpoint bindAddr = opts.getBindAddr();
                 InetSocketAddress socketAddress = new InetSocketAddress(bindAddr.getAddr(), bindAddr.getPort());
-                this.server = new HTTPServer(socketAddress, this.prometheusMetricRegistry, opts.isDeamon());
+                this.server = new HTTPServer(socketAddress, this.prometheusMetricRegistry, opts.isDaemon());
                 LOG.info("Metrics exporter started at `http://{}/metrics`", bindAddr.toString());
                 return true;
             } catch (IOException e) {

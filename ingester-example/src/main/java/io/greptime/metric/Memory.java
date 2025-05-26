@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package io.greptime;
+package io.greptime.metric;
 
 import io.greptime.models.Column;
 import io.greptime.models.DataType;
 import io.greptime.models.Metric;
 
 /**
- *
+ * Memory metric class that represents memory usage statistics.
  */
 @Metric(name = "mem_metric")
 public class Memory {

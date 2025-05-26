@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package io.greptime.bench;
+package io.greptime.bench.benchmark;
 
 import io.greptime.BulkStreamWriter;
 import io.greptime.BulkWrite;
 import io.greptime.GreptimeDB;
+import io.greptime.bench.DBConnector;
+import io.greptime.bench.TableDataProvider;
 import io.greptime.common.util.MetricsUtil;
 import io.greptime.common.util.ServiceLoader;
 import io.greptime.common.util.SystemPropertyUtil;
@@ -37,8 +39,6 @@ import org.slf4j.LoggerFactory;
  * BulkWriteBenchmark is a benchmark for the bulk write API of GreptimeDB.
  *
  * Env:
- * - db_endpoint: the endpoint of the GreptimeDB server
- * - db_name: the name of the database
  * - batch_size_per_request: the batch size per request
  * - zstd_compression: whether to use zstd compression
  */
@@ -47,11 +47,8 @@ public class BulkWriteBenchmark {
     private static final Logger LOG = LoggerFactory.getLogger(BulkWriteBenchmark.class);
 
     public static void main(String[] args) throws Exception {
-        String endpoint = SystemPropertyUtil.get("db_endpoint", "127.0.0.1:4001");
-        String dbName = SystemPropertyUtil.get("db_name", "public");
         boolean zstdCompression = SystemPropertyUtil.getBool("zstd_compression", true);
         int batchSize = SystemPropertyUtil.getInt("batch_size_per_request", 64 * 1024);
-        LOG.info("Connect to db: {}, endpoint: {}", dbName, endpoint);
         LOG.info("Using zstd compression: {}", zstdCompression);
         LOG.info("Batch size: {}", batchSize);
 
@@ -59,7 +56,7 @@ public class BulkWriteBenchmark {
         MetricsExporter metricsExporter = new MetricsExporter(MetricsUtil.metricRegistry());
         metricsExporter.init(ExporterOptions.newDefault());
 
-        GreptimeDB greptimeDB = DBConnector.connectTo(new String[] {endpoint}, dbName);
+        GreptimeDB greptimeDB = DBConnector.connect();
 
         BulkWrite.Config cfg = BulkWrite.Config.newBuilder()
                 .allocatorInitReservation(0)
