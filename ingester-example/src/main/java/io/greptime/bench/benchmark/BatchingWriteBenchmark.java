@@ -53,11 +53,9 @@ public class BatchingWriteBenchmark {
     public static void main(String[] args) throws Exception {
         boolean zstdCompression = SystemPropertyUtil.getBool("zstd_compression", true);
         int batchSize = SystemPropertyUtil.getInt("batch_size_per_request", 64 * 1024);
-        int maxPointsPerSecond = SystemPropertyUtil.getInt("max_points_per_second", Integer.MAX_VALUE);
 
         LOG.info("Using zstd compression: {}", zstdCompression);
         LOG.info("Batch size: {}", batchSize);
-        LOG.info("Max points per second: {}", maxPointsPerSecond);
 
         // Start a metrics exporter
         MetricsExporter metricsExporter = new MetricsExporter(MetricsUtil.metricRegistry());
