@@ -39,8 +39,6 @@ import org.slf4j.LoggerFactory;
  * BulkWriteBenchmark is a benchmark for the bulk write API of GreptimeDB.
  *
  * Env:
- * - db_endpoint: the endpoint of the GreptimeDB server
- * - db_name: the name of the database
  * - batch_size_per_request: the batch size per request
  * - zstd_compression: whether to use zstd compression
  */

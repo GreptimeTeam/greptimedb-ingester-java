@@ -39,8 +39,6 @@ import org.slf4j.LoggerFactory;
  * StreamingWriteBenchmark is a benchmark for the streaming write API of GreptimeDB.
  *
  * Env:
- * - db_endpoint: the endpoint of the GreptimeDB server
- * - db_name: the name of the database
  * - batch_size_per_request: the batch size per request
  * - zstd_compression: whether to use zstd compression
  * - max_points_per_second: the max number of points that can be written per second, exceeding which may cause blockage
