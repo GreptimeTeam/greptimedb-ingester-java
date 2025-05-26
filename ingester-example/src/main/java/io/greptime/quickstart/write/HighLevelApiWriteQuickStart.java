@@ -16,10 +16,10 @@
 
 package io.greptime.quickstart.write;
 
-import io.greptime.metric.Cpu;
 import io.greptime.GreptimeDB;
-import io.greptime.metric.Memory;
 import io.greptime.WriteOp;
+import io.greptime.metric.Cpu;
+import io.greptime.metric.Memory;
 import io.greptime.models.Err;
 import io.greptime.models.Result;
 import io.greptime.models.WriteOk;

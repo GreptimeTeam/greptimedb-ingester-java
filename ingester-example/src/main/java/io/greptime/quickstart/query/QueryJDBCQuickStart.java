@@ -17,8 +17,8 @@
 package io.greptime.quickstart.query;
 
 import io.greptime.GreptimeDB;
-import io.greptime.quickstart.TestConnector;
 import io.greptime.metric.Cpu;
+import io.greptime.quickstart.TestConnector;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;

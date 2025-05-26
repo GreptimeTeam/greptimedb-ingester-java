@@ -16,11 +16,11 @@
 
 package io.greptime.quickstart.write;
 
-import io.greptime.metric.Cpu;
 import io.greptime.GreptimeDB;
-import io.greptime.metric.Memory;
 import io.greptime.StreamWriter;
 import io.greptime.WriteOp;
+import io.greptime.metric.Cpu;
+import io.greptime.metric.Memory;
 import io.greptime.models.WriteOk;
 import io.greptime.quickstart.TestConnector;
 import java.util.ArrayList;
