@@ -28,9 +28,9 @@ public class RpcOptions implements Copiable<RpcOptions> {
 
     /**
      * RPC request default timeout in milliseconds
-     * Default: 10000(10s)
+     * Default: 60000(60s)
      */
-    private int defaultRpcTimeout = 10000;
+    private int defaultRpcTimeout = 60000;
 
     /**
      * Sets the maximum message size allowed to be received on a channel.
