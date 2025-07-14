@@ -75,7 +75,7 @@ public class StreamingWriteBenchmark {
 
         LOG.info("Start writing data");
         long start = System.nanoTime();
-        for (; ; ) {
+        do {
             Table table = Table.from(tableSchema);
             for (int i = 0; i < batchSize; i++) {
                 if (!rows.hasNext()) {
@@ -89,15 +89,12 @@ public class StreamingWriteBenchmark {
             // Write the table data to the server
             writer.write(table);
 
-            if (!rows.hasNext()) {
-                break;
-            }
-        }
+        } while (rows.hasNext());
 
         // Completes the stream, and the stream will be closed.
         CompletableFuture<WriteOk> future = writer.completed();
 
-        // Now we can get the write result.
+        // Now we can get the writing result.
         WriteOk result = future.get();
 
         LOG.info("Completed writing data: {}, time cost: {}s", result, (System.nanoTime() - start) / 1000000000);
