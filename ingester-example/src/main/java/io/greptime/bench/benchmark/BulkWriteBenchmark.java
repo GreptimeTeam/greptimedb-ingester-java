@@ -132,16 +132,21 @@ public class BulkWriteBenchmark {
      * @param tableSchema the schema of the table to ensure
      * @param ctx the context for the operation
      */
-    private static void ensureTableExists(GreptimeDB greptimeDB, TableSchema tableSchema, TableDataProvider tableDataProvider, Context ctx) {
+    private static void ensureTableExists(
+            GreptimeDB greptimeDB, TableSchema tableSchema, TableDataProvider tableDataProvider, Context ctx) {
         Table initTable = Table.from(tableSchema);
         Iterator<Object[]> rows = tableDataProvider.rows();
         // Add an initial row to the table to get the table schema.
         initTable.addRow(rows.hasNext() ? rows.next() : new Object[0]);
         try {
             // Write an initial row to ensure the table exists.
-            greptimeDB.write(Collections.singletonList(initTable), WriteOp.Insert, ctx).get();
+            greptimeDB
+                    .write(Collections.singletonList(initTable), WriteOp.Insert, ctx)
+                    .get();
             // Delete the initial row to leave the table empty.
-            greptimeDB.write(Collections.singletonList(initTable), WriteOp.Delete, ctx).get();
+            greptimeDB
+                    .write(Collections.singletonList(initTable), WriteOp.Delete, ctx)
+                    .get();
             LOG.info("Table ensured for benchmark: {}", tableSchema.getTableName());
         } catch (Exception e) {
             LOG.error("Table creation may have been skipped if it already exists: {}", e.getMessage());
