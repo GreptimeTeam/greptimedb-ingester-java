@@ -83,7 +83,7 @@ The Bulk Write API provides a high-performance, memory-efficient mechanism for i
 
 > **Important**:
 > 1. **Manual Table Creation Required**: Bulk API does **not** create tables automatically. You must create the table beforehand using either:
-     >    - Insert API (which supports auto table creation), or
+>    - Insert API (which supports auto table creation), or
 >    - SQL DDL statements (CREATE TABLE)
 > 2. **Schema Matching**: The table template in bulk API must exactly match the existing table schema.
 > 3. **Column Types**: For bulk operations, currently use `addField()` instead of `addTag()`. Tag columns are part of the primary key in GreptimeDB, but bulk operations don't yet support tables with tag columns. This limitation will be addressed in future versions.
