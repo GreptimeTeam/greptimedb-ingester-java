@@ -21,7 +21,7 @@
 
     <groupId>io.greptime</groupId>
     <artifactId>greptimedb-ingester</artifactId>
-    <version>0.14.6</version>
+    <version>0.15.0</version>
     <packaging>pom</packaging>
 
     <name>${project.groupId}:${project.artifactId}</name>
