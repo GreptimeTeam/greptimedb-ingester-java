@@ -32,7 +32,7 @@ import io.greptime.models.TableSchema;
 import io.greptime.models.WriteOk;
 import io.greptime.rpc.Compression;
 import io.greptime.rpc.Context;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
@@ -74,7 +74,7 @@ public class BatchingWriteBenchmark {
 
         LOG.info("Start writing data");
         long start = System.nanoTime();
-        for (; ; ) {
+        do {
             Table table = Table.from(tableSchema);
             for (int i = 0; i < batchSize; i++) {
                 if (!rows.hasNext()) {
@@ -88,16 +88,13 @@ public class BatchingWriteBenchmark {
             long fStart = System.nanoTime();
             // Write the table data to the server
             CompletableFuture<Result<WriteOk, Err>> future =
-                    greptimeDB.write(Arrays.asList(table), WriteOp.Insert, ctx);
-            // Wait for the write to complete
-            int numRows = future.get().mapOr(0, writeOk -> writeOk.getSuccess());
+                    greptimeDB.write(Collections.singletonList(table), WriteOp.Insert, ctx);
+            // Wait for the writing to complete
+            int numRows = future.get().mapOr(0, WriteOk::getSuccess);
             long costMs = (System.nanoTime() - fStart) / 1000000;
             LOG.info("Write rows: {}, time cost: {}ms", numRows, costMs);
 
-            if (!rows.hasNext()) {
-                break;
-            }
-        }
+        } while (rows.hasNext());
 
         LOG.info("Completed writing data, time cost: {}s", (System.nanoTime() - start) / 1000000000);
 
