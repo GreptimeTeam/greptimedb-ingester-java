@@ -136,8 +136,11 @@ public class BulkWriteBenchmark {
             GreptimeDB greptimeDB, TableSchema tableSchema, TableDataProvider tableDataProvider, Context ctx) {
         Table initTable = Table.from(tableSchema);
         Iterator<Object[]> rows = tableDataProvider.rows();
+        if (!rows.hasNext()) {
+            throw new IllegalStateException("No rows available in table data provider");
+        }
         // Add an initial row to the table to get the table schema.
-        initTable.addRow(rows.hasNext() ? rows.next() : new Object[0]);
+        initTable.addRow(rows.next());
         try {
             // Write an initial row to ensure the table exists.
             greptimeDB
