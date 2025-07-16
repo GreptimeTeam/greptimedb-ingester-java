@@ -25,6 +25,7 @@
     </parent>
 
     <artifactId>ingester-grpc</artifactId>
+    <name>${project.groupId}:${project.artifactId}</name>
 
     <properties>
         <io.grpc.version>1.56.1</io.grpc.version>
