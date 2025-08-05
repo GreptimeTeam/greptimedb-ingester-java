@@ -18,6 +18,7 @@ package io.greptime.bench.benchmark;
 
 import io.greptime.GreptimeDB;
 import io.greptime.WriteOp;
+import io.greptime.bench.BenchmarkResultPrinter;
 import io.greptime.bench.DBConnector;
 import io.greptime.bench.TableDataProvider;
 import io.greptime.common.util.MetricsUtil;
@@ -57,9 +58,8 @@ public class BatchingWriteBenchmark {
         int batchSize = SystemPropertyUtil.getInt("batch_size_per_request", 64 * 1024);
         int concurrency = SystemPropertyUtil.getInt("concurrency", 4);
 
-        LOG.info("Using zstd compression: {}", zstdCompression);
-        LOG.info("Batch size: {}", batchSize);
-        LOG.info("Concurrency: {}", concurrency);
+        BenchmarkResultPrinter.printBenchmarkHeader(LOG, "Batching");
+        BenchmarkResultPrinter.printConfiguration(LOG, "Batching", zstdCompression, batchSize, concurrency);
 
         Compression compression = zstdCompression ? Compression.Zstd : Compression.None;
         Context ctx = Context.newDefault().withCompression(compression);
@@ -73,20 +73,18 @@ public class BatchingWriteBenchmark {
         Semaphore semaphore = new Semaphore(concurrency);
         TableDataProvider tableDataProvider =
                 ServiceLoader.load(TableDataProvider.class).first();
-        LOG.info("Table data provider: {}", tableDataProvider.getClass().getName());
         tableDataProvider.init();
         TableSchema tableSchema = tableDataProvider.tableSchema();
         AtomicLong totalRowsWritten = new AtomicLong(0);
+        AtomicLong batchCounter = new AtomicLong(0);
+
+        BenchmarkResultPrinter.printBenchmarkStart(
+                LOG, "Batching", tableDataProvider, tableSchema, batchSize, concurrency);
 
         try {
             Iterator<Object[]> rows = tableDataProvider.rows();
 
-            LOG.info(
-                    "Start writing data, table: {}, row count: {}",
-                    tableSchema.getTableName(),
-                    tableDataProvider.rowCount());
-
-            long start = System.nanoTime();
+            long benchmarkStart = System.nanoTime();
             do {
                 Table table = Table.from(tableSchema);
                 for (int j = 0; j < batchSize; j++) {
@@ -104,11 +102,9 @@ public class BatchingWriteBenchmark {
                 // Write the table data to the server
                 CompletableFuture<Result<WriteOk, Err>> future =
                         greptimeDB.write(Collections.singletonList(table), WriteOp.Insert, ctx);
-                long fStart = System.nanoTime();
                 future.whenComplete((result, error) -> {
                     semaphore.release();
 
-                    long costMs = (System.nanoTime() - fStart) / 1000000;
                     if (error != null) {
                         LOG.error("Error writing data", error);
                         return;
@@ -116,24 +112,30 @@ public class BatchingWriteBenchmark {
 
                     int numRows = result.mapOr(0, writeOk -> writeOk.getSuccess());
                     long totalRows = totalRowsWritten.addAndGet(numRows);
-                    long totalElapsedSec = (System.nanoTime() - start) / 1000000000;
-                    long writeRatePerSecond = totalElapsedSec > 0 ? totalRows / totalElapsedSec : 0;
-                    LOG.info(
-                            "Wrote rows: {}, time cost: {}ms, total rows: {}, total elapsed: {}s, write rate: {} rows/sec",
-                            numRows,
-                            costMs,
-                            totalRows,
-                            totalElapsedSec,
-                            writeRatePerSecond);
+                    long batch = batchCounter.incrementAndGet();
+                    long totalElapsedMs = (System.nanoTime() - benchmarkStart) / 1000000;
+                    long writeRatePerSecond = totalElapsedMs > 0 ? (totalRows * 1000) / totalElapsedMs : 0;
+                    BenchmarkResultPrinter.printBatchProgress(LOG, batch, totalRows, writeRatePerSecond);
                 });
             } while (rows.hasNext());
 
             // Wait for all the requests to complete
             semaphore.acquire(concurrency);
 
-            LOG.info("Completed writing data, time cost: {}s", (System.nanoTime() - start) / 1000000000);
+            BenchmarkResultPrinter.printCompletionMessages(LOG, "Batching");
+
+            long totalDurationMs = (System.nanoTime() - benchmarkStart) / 1000000;
+            long finalRowCount = totalRowsWritten.get();
+            long finalThroughput = totalDurationMs > 0 ? (finalRowCount * 1000) / totalDurationMs : 0;
+
+            BenchmarkResultPrinter.printFinalResults(LOG, finalRowCount, totalDurationMs, finalThroughput);
+            BenchmarkResultPrinter.printProviderResults(
+                    LOG, tableDataProvider, finalRowCount, totalDurationMs, finalThroughput);
+            BenchmarkResultPrinter.printBenchmarkSummary(
+                    LOG, tableDataProvider, finalRowCount, totalDurationMs, finalThroughput);
 
         } finally {
+            tableDataProvider.close();
             greptimeDB.shutdownGracefully();
             metricsExporter.shutdownGracefully();
         }

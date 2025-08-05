@@ -20,6 +20,7 @@ import io.greptime.BulkStreamWriter;
 import io.greptime.BulkWrite;
 import io.greptime.GreptimeDB;
 import io.greptime.WriteOp;
+import io.greptime.bench.BenchmarkResultPrinter;
 import io.greptime.bench.DBConnector;
 import io.greptime.bench.TableDataProvider;
 import io.greptime.common.util.MetricsUtil;
@@ -60,9 +61,8 @@ public class BulkWriteBenchmark {
         int batchSize = SystemPropertyUtil.getInt("batch_size_per_request", 64 * 1024);
         int maxRequestsInFlight = SystemPropertyUtil.getInt("max_requests_in_flight", 4);
 
-        LOG.info("Using zstd compression: {}", zstdCompression);
-        LOG.info("Batch size: {}", batchSize);
-        LOG.info("Max requests in flight: {}", maxRequestsInFlight);
+        BenchmarkResultPrinter.printBenchmarkHeader(LOG, "Bulk");
+        BenchmarkResultPrinter.printConfiguration(LOG, "Bulk", zstdCompression, batchSize, maxRequestsInFlight);
 
         Compression compression = zstdCompression ? Compression.Zstd : Compression.None;
         Context ctx = Context.newDefault().withCompression(compression);
@@ -81,19 +81,21 @@ public class BulkWriteBenchmark {
 
         TableDataProvider tableDataProvider =
                 ServiceLoader.load(TableDataProvider.class).first();
-        LOG.info("Table data provider: {}", tableDataProvider.getClass().getName());
         tableDataProvider.init();
         TableSchema tableSchema = tableDataProvider.tableSchema();
         AtomicLong totalRowsWritten = new AtomicLong(0);
+        AtomicLong batchCounter = new AtomicLong(0);
+
+        BenchmarkResultPrinter.printBenchmarkStart(
+                LOG, "Bulk", tableDataProvider, tableSchema, batchSize, maxRequestsInFlight);
 
         // Before writing data, ensure the table exists, bulk write API does not create tables.
         ensureTableExists(greptimeDB, tableSchema, tableDataProvider, ctx);
 
-        LOG.info("Start writing data");
+        long benchmarkStart = System.nanoTime();
         try (BulkStreamWriter writer = greptimeDB.bulkStreamWriter(tableSchema, cfg, ctx)) {
             Iterator<Object[]> rows = tableDataProvider.rows();
 
-            long start = System.nanoTime();
             do {
                 Table.TableBufferRoot table = writer.tableBufferRoot(1024);
                 for (int i = 0; i < batchSize; i++) {
@@ -102,7 +104,6 @@ public class BulkWriteBenchmark {
                     }
                     table.addRow(rows.next());
                 }
-                LOG.info("Table bytes used: {}", table.bytesUsed());
                 // Complete the table; adding rows is no longer permitted.
                 table.complete();
 
@@ -117,21 +118,26 @@ public class BulkWriteBenchmark {
                     }
 
                     long totalRows = totalRowsWritten.addAndGet(r);
-                    long totalElapsedSec = (System.nanoTime() - start) / 1000000000;
-                    long writeRatePerSecond = totalElapsedSec > 0 ? totalRows / totalElapsedSec : 0;
-                    LOG.info(
-                            "Wrote rows: {}, time cost: {}ms, total rows: {}, total elapsed: {}s, write rate: {} rows/sec",
-                            r,
-                            costMs,
-                            totalRows,
-                            totalElapsedSec,
-                            writeRatePerSecond);
+                    long batch = batchCounter.incrementAndGet();
+                    long totalElapsedMs = (System.nanoTime() - benchmarkStart) / 1000000;
+                    long writeRatePerSecond = totalElapsedMs > 0 ? (totalRows * 1000) / totalElapsedMs : 0;
+                    BenchmarkResultPrinter.printBatchProgress(LOG, batch, totalRows, writeRatePerSecond);
                 });
             } while (rows.hasNext());
 
             writer.completed();
 
-            LOG.info("Completed writing data, time cost: {}s", (System.nanoTime() - start) / 1000000000);
+            BenchmarkResultPrinter.printCompletionMessages(LOG, "Bulk");
+
+            long totalDurationMs = (System.nanoTime() - benchmarkStart) / 1000000;
+            long finalRowCount = totalRowsWritten.get();
+            long finalThroughput = totalDurationMs > 0 ? (finalRowCount * 1000) / totalDurationMs : 0;
+
+            BenchmarkResultPrinter.printFinalResults(LOG, finalRowCount, totalDurationMs, finalThroughput);
+            BenchmarkResultPrinter.printProviderResults(
+                    LOG, tableDataProvider, finalRowCount, totalDurationMs, finalThroughput);
+            BenchmarkResultPrinter.printBenchmarkSummary(
+                    LOG, tableDataProvider, finalRowCount, totalDurationMs, finalThroughput);
         } finally {
             tableDataProvider.close();
         }

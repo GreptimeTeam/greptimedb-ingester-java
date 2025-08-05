@@ -46,7 +46,7 @@ public final class Util {
 
     static {
         WRITE_LOGGING = new AtomicBoolean(SystemPropertyUtil.getBool(Keys.WRITE_LOGGING, false));
-        BULK_WRITE_LOGGING = new AtomicBoolean(SystemPropertyUtil.getBool(Keys.BULK_WRITE_LOGGING, true));
+        BULK_WRITE_LOGGING = new AtomicBoolean(SystemPropertyUtil.getBool(Keys.BULK_WRITE_LOGGING, false));
         REPORT_PERIOD_MIN = SystemPropertyUtil.getInt(Keys.REPORT_PERIOD, 10);
         DISPLAY = ThreadPoolUtil.newScheduledBuilder()
                 .poolName("display_self")

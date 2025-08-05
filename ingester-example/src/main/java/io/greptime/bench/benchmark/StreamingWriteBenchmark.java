@@ -18,6 +18,7 @@ package io.greptime.bench.benchmark;
 
 import io.greptime.GreptimeDB;
 import io.greptime.StreamWriter;
+import io.greptime.bench.BenchmarkResultPrinter;
 import io.greptime.bench.DBConnector;
 import io.greptime.bench.TableDataProvider;
 import io.greptime.common.util.MetricsUtil;
@@ -48,12 +49,12 @@ public class StreamingWriteBenchmark {
     private static final Logger LOG = LoggerFactory.getLogger(StreamingWriteBenchmark.class);
 
     public static void main(String[] args) throws Exception {
-        boolean zstdCompression = SystemPropertyUtil.getBool("zstd_compression", true);
+        boolean zstdCompression = SystemPropertyUtil.getBool("zstd_compression", false);
         int batchSize = SystemPropertyUtil.getInt("batch_size_per_request", 64 * 1024);
         int maxPointsPerSecond = SystemPropertyUtil.getInt("max_points_per_second", Integer.MAX_VALUE);
-        LOG.info("Using zstd compression: {}", zstdCompression);
-        LOG.info("Batch size: {}", batchSize);
-        LOG.info("Max points per second: {}", maxPointsPerSecond);
+
+        BenchmarkResultPrinter.printBenchmarkHeader(LOG, "Streaming");
+        BenchmarkResultPrinter.printConfiguration(LOG, "Streaming", zstdCompression, batchSize, 0, maxPointsPerSecond);
 
         // Start a metrics exporter
         MetricsExporter metricsExporter = new MetricsExporter(MetricsUtil.metricRegistry());
@@ -68,13 +69,16 @@ public class StreamingWriteBenchmark {
 
         TableDataProvider tableDataProvider =
                 ServiceLoader.load(TableDataProvider.class).first();
-        LOG.info("Table data provider: {}", tableDataProvider.getClass().getName());
         tableDataProvider.init();
         TableSchema tableSchema = tableDataProvider.tableSchema();
         Iterator<Object[]> rows = tableDataProvider.rows();
 
-        LOG.info("Start writing data");
-        long start = System.nanoTime();
+        BenchmarkResultPrinter.printBenchmarkStart(
+                LOG, "Streaming", tableDataProvider, tableSchema, batchSize, 0, maxPointsPerSecond);
+
+        long benchmarkStart = System.nanoTime();
+        long totalRowsWritten = 0;
+        int batchCounter = 0;
         do {
             Table table = Table.from(tableSchema);
             for (int i = 0; i < batchSize; i++) {
@@ -83,7 +87,14 @@ public class StreamingWriteBenchmark {
                 }
                 table.addRow(rows.next());
             }
-            LOG.info("Table bytes used: {}", table.bytesUsed());
+            int rowsInBatch = table.rowCount();
+            totalRowsWritten += rowsInBatch;
+            batchCounter++;
+
+            long totalElapsedMs = (System.nanoTime() - benchmarkStart) / 1000000;
+            long writeRatePerSecond = totalElapsedMs > 0 ? (totalRowsWritten * 1000) / totalElapsedMs : 0;
+            BenchmarkResultPrinter.printBatchProgress(LOG, batchCounter, totalRowsWritten, writeRatePerSecond);
+
             // Complete the table; adding rows is no longer permitted.
             table.complete();
             // Write the table data to the server
@@ -95,9 +106,18 @@ public class StreamingWriteBenchmark {
         CompletableFuture<WriteOk> future = writer.completed();
 
         // Now we can get the writing result.
-        WriteOk result = future.get();
+        future.get();
 
-        LOG.info("Completed writing data: {}, time cost: {}s", result, (System.nanoTime() - start) / 1000000000);
+        BenchmarkResultPrinter.printCompletionMessages(LOG, "Streaming");
+
+        long totalDurationMs = (System.nanoTime() - benchmarkStart) / 1000000;
+        long finalThroughput = totalDurationMs > 0 ? (totalRowsWritten * 1000) / totalDurationMs : 0;
+
+        BenchmarkResultPrinter.printFinalResults(LOG, totalRowsWritten, totalDurationMs, finalThroughput);
+        BenchmarkResultPrinter.printProviderResults(
+                LOG, tableDataProvider, totalRowsWritten, totalDurationMs, finalThroughput);
+        BenchmarkResultPrinter.printBenchmarkSummary(
+                LOG, tableDataProvider, totalRowsWritten, totalDurationMs, finalThroughput);
 
         greptimeDB.shutdownGracefully();
         tableDataProvider.close();
