@@ -37,14 +37,12 @@ import java.util.concurrent.atomic.AtomicLong;
 public class MultiProducerTableDataProvider extends RandomTableDataProvider {
 
     private final int producerCount;
-    private final long rowCount;
     private final ExecutorService executorService;
     private final BlockingQueue<Object[]> buffer = new ArrayBlockingQueue<>(100000);
 
     {
         this.producerCount = SystemPropertyUtil.getInt("multi_producer_table_data_provider.producer_count", 10);
         // Total number of rows to generate, configurable via system property
-        this.rowCount = SystemPropertyUtil.getLong("table_data_provider.row_count", 10_000_000L);
         this.executorService = ThreadPoolUtil.newBuilder()
                 .poolName("multi-producer-table-data-provider")
                 .enableMetric(true)
@@ -62,7 +60,7 @@ public class MultiProducerTableDataProvider extends RandomTableDataProvider {
         AtomicLong rowIndex = new AtomicLong(0);
         for (int i = 0; i < producerCount; i++) {
             this.executorService.execute(() -> {
-                while (rowIndex.getAndIncrement() < rowCount) {
+                while (rowIndex.getAndIncrement() < rowCount()) {
                     Object[] row = nextRow();
                     try {
                         buffer.put(row);
@@ -82,7 +80,7 @@ public class MultiProducerTableDataProvider extends RandomTableDataProvider {
 
             @Override
             public boolean hasNext() {
-                return index < rowCount;
+                return index < rowCount();
             }
 
             @Override

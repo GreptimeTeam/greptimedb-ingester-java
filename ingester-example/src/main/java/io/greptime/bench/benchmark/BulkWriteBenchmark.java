@@ -56,7 +56,7 @@ public class BulkWriteBenchmark {
     private static final Logger LOG = LoggerFactory.getLogger(BulkWriteBenchmark.class);
 
     public static void main(String[] args) throws Exception {
-        boolean zstdCompression = SystemPropertyUtil.getBool("zstd_compression", true);
+        boolean zstdCompression = SystemPropertyUtil.getBool("zstd_compression", false);
         int batchSize = SystemPropertyUtil.getInt("batch_size_per_request", 64 * 1024);
         int maxRequestsInFlight = SystemPropertyUtil.getInt("max_requests_in_flight", 4);
 
