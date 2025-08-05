@@ -34,6 +34,7 @@ import io.greptime.rpc.Context;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,8 +42,9 @@ import org.slf4j.LoggerFactory;
  * BulkWriteBenchmark is a benchmark for the bulk write API of GreptimeDB.
  *
  * Env:
- * - batch_size_per_request: the batch size per request
  * - zstd_compression: whether to use zstd compression
+ * - batch_size_per_request: the batch size per request
+ * - max_requests_in_flight: the max number of requests in flight
  * <p>
  * <b>IMPORTANT:</b> Unlike the standard write method,
  * this bulk writing stream API requires the target table to exist beforehand. It will
@@ -56,29 +58,33 @@ public class BulkWriteBenchmark {
     public static void main(String[] args) throws Exception {
         boolean zstdCompression = SystemPropertyUtil.getBool("zstd_compression", true);
         int batchSize = SystemPropertyUtil.getInt("batch_size_per_request", 64 * 1024);
+        int maxRequestsInFlight = SystemPropertyUtil.getInt("max_requests_in_flight", 4);
+
         LOG.info("Using zstd compression: {}", zstdCompression);
         LOG.info("Batch size: {}", batchSize);
+        LOG.info("Max requests in flight: {}", maxRequestsInFlight);
+
+        Compression compression = zstdCompression ? Compression.Zstd : Compression.None;
+        Context ctx = Context.newDefault().withCompression(compression);
 
         // Start a metrics exporter
         MetricsExporter metricsExporter = new MetricsExporter(MetricsUtil.metricRegistry());
         metricsExporter.init(ExporterOptions.newDefault());
 
         GreptimeDB greptimeDB = DBConnector.connect();
-
         BulkWrite.Config cfg = BulkWrite.Config.newBuilder()
                 .allocatorInitReservation(0)
                 .allocatorMaxAllocation(4 * 1024 * 1024 * 1024L)
                 .timeoutMsPerMessage(60000)
-                .maxRequestsInFlight(4)
+                .maxRequestsInFlight(maxRequestsInFlight)
                 .build();
-        Compression compression = zstdCompression ? Compression.Zstd : Compression.None;
-        Context ctx = Context.newDefault().withCompression(compression);
 
         TableDataProvider tableDataProvider =
                 ServiceLoader.load(TableDataProvider.class).first();
         LOG.info("Table data provider: {}", tableDataProvider.getClass().getName());
         tableDataProvider.init();
         TableSchema tableSchema = tableDataProvider.tableSchema();
+        AtomicLong totalRowsWritten = new AtomicLong(0);
 
         // Before writing data, ensure the table exists, bulk write API does not create tables.
         ensureTableExists(greptimeDB, tableSchema, tableDataProvider, ctx);
@@ -107,11 +113,20 @@ public class BulkWriteBenchmark {
                     long costMs = (System.nanoTime() - fStart) / 1000000;
                     if (t != null) {
                         LOG.error("Error writing data, time cost: {}ms", costMs, t);
-                    } else {
-                        LOG.info("Wrote rows: {}, time cost: {}ms", r, costMs);
+                        return;
                     }
-                });
 
+                    long totalRows = totalRowsWritten.addAndGet(r);
+                    long totalElapsedSec = (System.nanoTime() - start) / 1000000000;
+                    long writeRatePerSecond = totalElapsedSec > 0 ? totalRows / totalElapsedSec : 0;
+                    LOG.info(
+                            "Wrote rows: {}, time cost: {}ms, total rows: {}, total elapsed: {}s, write rate: {} rows/sec",
+                            r,
+                            costMs,
+                            totalRows,
+                            totalElapsedSec,
+                            writeRatePerSecond);
+                });
             } while (rows.hasNext());
 
             writer.completed();
