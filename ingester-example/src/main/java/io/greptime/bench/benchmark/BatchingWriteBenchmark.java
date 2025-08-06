@@ -128,9 +128,6 @@ public class BatchingWriteBenchmark {
             long finalRowCount = totalRowsWritten.get();
             long finalThroughput = totalDurationMs > 0 ? (finalRowCount * 1000) / totalDurationMs : 0;
 
-            BenchmarkResultPrinter.printFinalResults(LOG, finalRowCount, totalDurationMs, finalThroughput);
-            BenchmarkResultPrinter.printProviderResults(
-                    LOG, tableDataProvider, finalRowCount, totalDurationMs, finalThroughput);
             BenchmarkResultPrinter.printBenchmarkSummary(
                     LOG, tableDataProvider, finalRowCount, totalDurationMs, finalThroughput);
 

@@ -113,9 +113,6 @@ public class StreamingWriteBenchmark {
         long totalDurationMs = (System.nanoTime() - benchmarkStart) / 1000000;
         long finalThroughput = totalDurationMs > 0 ? (totalRowsWritten * 1000) / totalDurationMs : 0;
 
-        BenchmarkResultPrinter.printFinalResults(LOG, totalRowsWritten, totalDurationMs, finalThroughput);
-        BenchmarkResultPrinter.printProviderResults(
-                LOG, tableDataProvider, totalRowsWritten, totalDurationMs, finalThroughput);
         BenchmarkResultPrinter.printBenchmarkSummary(
                 LOG, tableDataProvider, totalRowsWritten, totalDurationMs, finalThroughput);
 

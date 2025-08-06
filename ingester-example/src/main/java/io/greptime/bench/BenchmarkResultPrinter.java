@@ -134,30 +134,10 @@ public class BenchmarkResultPrinter {
         log.info("{} API benchmark completed successfully!", apiType);
     }
 
-    public static void printFinalResults(Logger log, long totalRows, long durationMs, long throughput) {
-        log.info("Final Result:");
-        log.info("• Total rows: {}", totalRows);
-        log.info("• Total batches: {}", (totalRows / 100000));
-        log.info("• Duration: {}s", durationMs / 1000.0);
-        log.info("• Throughput: {} rows/sec", throughput);
-        log.info("");
-    }
-
-    public static void printProviderResults(
-            Logger log, TableDataProvider provider, long totalRows, long durationMs, long throughput) {
-        log.info("=== {} Benchmark Results ===", provider.getClass().getSimpleName());
-        log.info("Table: {}", provider.tableSchema().getTableName());
-        log.info("SUCCESS");
-        log.info("Total rows: {}", totalRows);
-        log.info("Duration: {}ms", durationMs);
-        log.info("Throughput: {} rows/sec", throughput);
-        log.info("");
-    }
-
     public static void printBenchmarkSummary(
             Logger log, TableDataProvider provider, long totalRows, long durationMs, long throughput) {
         log.info("=== Benchmark Result ===");
-        log.info("Fastest provider: {} ({} rows/sec)", provider.getClass().getSimpleName(), throughput);
+        log.info("Table: {}", provider.tableSchema().getTableName());
         log.info("");
         log.info("Provider                          Rows Duration(ms)      Throughput     Status");
         log.info("--------------------------------------------------------------------------");
