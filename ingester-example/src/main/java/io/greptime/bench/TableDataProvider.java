@@ -38,4 +38,9 @@ public interface TableDataProvider extends AutoCloseable {
      * Returns the iterator of the rows.
      */
     Iterator<Object[]> rows();
+
+    /**
+     * Returns the total number of rows.
+     */
+    long rowCount();
 }

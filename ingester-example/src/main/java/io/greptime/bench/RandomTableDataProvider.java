@@ -51,7 +51,7 @@ public class RandomTableDataProvider implements TableDataProvider {
                 .addField("pod_name", DataType.String)
                 .build();
         // Total number of rows to generate, configurable via system property
-        rowCount = SystemPropertyUtil.getLong("table_data_provider.row_count", 10_000_000L);
+        rowCount = SystemPropertyUtil.getLong("table_data_provider.row_count", 5_000_000L);
     }
 
     @Override
@@ -133,4 +133,9 @@ public class RandomTableDataProvider implements TableDataProvider {
 
     @Override
     public void close() throws Exception {}
+
+    @Override
+    public long rowCount() {
+        return rowCount;
+    }
 }
