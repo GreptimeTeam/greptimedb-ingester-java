@@ -47,7 +47,8 @@ public class TestConnector {
         // The client will make calls to these endpoints based on a load balancing strategy.
         String endpointsStr = prop.getProperty("db.endpoints");
         String[] endpoints = endpointsStr.split(",");
-        GreptimeOptions opts = GreptimeOptions.newBuilder(endpoints, database) // Optional, the default value is fine.
+        GreptimeOptions opts = GreptimeOptions.newBuilder(endpoints, database)
+                // Optional, the default value is fine.
                 // Asynchronous thread pool, which is used to handle various asynchronous
                 // tasks in the SDK (You are using a purely asynchronous SDK). If you do not
                 // set it, there will be a default implementation, which you can reconfigure
