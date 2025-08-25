@@ -178,22 +178,37 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         // The request router
         private Router<Void, Endpoint> router;
 
+        /**
+         * Create a new builder with the given endpoints and database.
+         *
+         * @param endpoints the endpoints to connect to
+         * @param database The target database name. Default is "public". When a database name is provided,
+         *                 the DB will attempt to parse catalog and schema from it. The format is
+         *                 {@code [<catalog>-]<schema>}, where:
+         *                 <ul>
+         *                   <li>If {@code [<catalog>-]} is not provided, the entire database name is used as schema</li>
+         *                   <li>If {@code [<catalog>-]} is provided, the name is split on "-" into catalog and schema</li>
+         *                 </ul>
+         */
         public Builder(List<Endpoint> endpoints, String database) {
             this.endpoints.addAll(endpoints);
             this.database = database;
         }
 
         /**
-         * Asynchronous thread pool, which is used to handle various asynchronous
-         * tasks in the SDK (You are using a purely asynchronous SDK). If you do not
-         * set it, there will be a default implementation, which you can reconfigure
-         * if the default implementation is not satisfied.
-         * <p>
-         * Note: We do not close it to free resources(if it needs to be closed), as we
-         * view it as shared.
+         * Sets the asynchronous thread pool used to handle various asynchronous tasks in the SDK.
+         * This SDK is purely asynchronous. If not set, a default implementation will be used.
+         * It's generally recommended to use the default configuration.
          *
-         * @param asyncPool async thread pool
+         * <p>Default: {@link io.greptime.common.util.SerializingExecutor} - This executor does not start any additional threads,
+         * it only uses the current thread to batch process small tasks.
+         *
+         * <p>Note: The SDK treats the thread pool as a shared resource and will not actively close it
+         * to release resources (even if it needs to be closed).
+         *
+         * @param asyncPool the asynchronous thread pool to use
          * @return this builder
+         * @see io.greptime.common.util.SerializingExecutor
          */
         public Builder asyncPool(Executor asyncPool) {
             this.asyncPool = asyncPool;
@@ -201,9 +216,22 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         }
 
         /**
-         * Sets the RPC options, in general, the default configuration is fine.
+         * Sets the RPC options. In general, the default configuration is fine.
          *
-         * @param rpcOptions the rpc options
+         * <p>This configuration only applies to Regular API, not to Bulk API.
+         *
+         * <p>Key parameters include:
+         * <ul>
+         *   <li>useRpcSharedPool: Whether to use global RPC shared pool (default: false)</li>
+         *   <li>defaultRpcTimeout: RPC request timeout (default: 60000ms)</li>
+         *   <li>maxInboundMessageSize: Maximum inbound message size (default: 256MB)</li>
+         *   <li>flowControlWindow: Flow control window size (default: 256MB)</li>
+         *   <li>idleTimeoutSeconds: Idle timeout duration (default: 5 minutes)</li>
+         *   <li>keepAliveTimeSeconds: Keep-alive ping interval (default: disabled)</li>
+         *   <li>limitKind: gRPC layer concurrency limit algorithm (default: None)</li>
+         * </ul>
+         *
+         * @param rpcOptions the RPC options
          * @return this builder
          */
         public Builder rpcOptions(RpcOptions rpcOptions) {
@@ -215,7 +243,15 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
          * Set `TlsOptions` to use secure connection between client and server. Set to `null` to use
          * plaintext connection instead.
          *
-         * @param tlsOptions for configure secure connection, set to null to use plaintext
+         * <p>Key parameters include:
+         * <ul>
+         *   <li>clientCertChain: Client certificate chain file</li>
+         *   <li>privateKey: Private key file</li>
+         *   <li>privateKeyPassword: Private key password</li>
+         *   <li>rootCerts: Root certificate file</li>
+         * </ul>
+         *
+         * @param tlsOptions TLS options for secure connection configuration, set to null to use plaintext
          * @return this builder
          */
         public Builder tlsOptions(TlsOptions tlsOptions) {
@@ -224,9 +260,14 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         }
 
         /**
-         * In some case of failure, a retry of write can be attempted.
+         * Maximum number of retries for write failures. Whether to retry depends on the error type
+         * {@link io.greptime.Status#isShouldRetry()}.
          *
-         * @param maxRetries max retries times
+         * <p>This configuration only applies to Regular API, not to Bulk API.
+         *
+         * <p>Default: 1
+         *
+         * @param maxRetries the maximum number of retry attempts
          * @return this builder
          */
         public Builder writeMaxRetries(int maxRetries) {
@@ -237,7 +278,11 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         /**
          * Write flow limit: maximum number of data points in-flight.
          *
-         * @param maxInFlightWritePoints max in-flight points
+         * <p>This configuration only applies to Regular API, not to Bulk API.
+         *
+         * <p>Default: 655360 (10 * 65536)
+         *
+         * @param maxInFlightWritePoints the maximum number of in-flight write points
          * @return this builder
          */
         public Builder maxInFlightWritePoints(int maxInFlightWritePoints) {
@@ -247,15 +292,21 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
 
         /**
          * Write flow limit: the policy to use when the write flow limit is exceeded.
-         * The options:
-         *  - `LimitedPolicy.DiscardPolicy`: discard the data if the limiter is full.
-         *  - `LimitedPolicy.AbortPolicy`: abort if the limiter is full.
-         *  - `LimitedPolicy.BlockingPolicy`: blocks if the limiter is full.
-         *  - `LimitedPolicy.AbortOnBlockingTimeoutPolicy`: blocks the specified time if
-         *  the limiter is full, abort if timeout.
-         * The default is `LimitedPolicy.AbortOnBlockingTimeoutPolicy`
          *
-         * @param writeLimitedPolicy write limited policy
+         * <p>This configuration only applies to Regular API, not to Bulk API.
+         *
+         * <p>Available policies:
+         * <ul>
+         *   <li>{@code DiscardPolicy}: Discard data if limiter is full</li>
+         *   <li>{@code AbortPolicy}: Abort if limiter is full, throw exception</li>
+         *   <li>{@code BlockingPolicy}: Block the write thread if limiter is full</li>
+         *   <li>{@code BlockingTimeoutPolicy}: Block for specified time then proceed if limiter is full</li>
+         *   <li>{@code AbortOnBlockingTimeoutPolicy}: Block for specified time, abort and throw exception if timeout</li>
+         * </ul>
+         *
+         * <p>Default: {@code AbortOnBlockingTimeoutPolicy} (3 seconds)
+         *
+         * @param writeLimitedPolicy the write flow control policy
          * @return this builder
          */
         public Builder writeLimitedPolicy(LimitedPolicy writeLimitedPolicy) {
@@ -264,11 +315,14 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         }
 
         /**
-         * The default rate limit value(points per second) for `StreamWriter`. It only takes
+         * The default rate limit value (points per second) for `StreamWriter`. It only takes
          * effect when we do not specify the `maxPointsPerSecond` when creating a `StreamWriter`.
-         * The default is 10 * 65536
          *
-         * @param defaultStreamMaxWritePointsPerSecond default max write points per second
+         * <p>This configuration only applies to Regular API, not to Bulk API.
+         *
+         * <p>Default: 655360 (10 * 65536)
+         *
+         * @param defaultStreamMaxWritePointsPerSecond the default maximum write points per second for StreamWriter
          * @return this builder
          */
         public Builder defaultStreamMaxWritePointsPerSecond(int defaultStreamMaxWritePointsPerSecond) {
@@ -277,9 +331,13 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         }
 
         /**
-         * Use zero copy write in bulk write.
+         * Whether to use zero-copy optimization in bulk write operations.
          *
-         * @param useZeroCopyWriteInBulkWrite use zero copy write in bulk write
+         * <p>This configuration is effective for Bulk API.
+         *
+         * <p>Default: true
+         *
+         * @param useZeroCopyWriteInBulkWrite whether to use zero-copy write optimization in bulk operations
          * @return this builder
          */
         public Builder useZeroCopyWriteInBulkWrite(boolean useZeroCopyWriteInBulkWrite) {
@@ -288,10 +346,12 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         }
 
         /**
-         * Refresh frequency of route tables. The background refreshes all route tables
-         * periodically. By default, By default, the route tables will not be refreshed.
+         * Background refresh period for route tables (seconds). The background refreshes all route tables
+         * periodically. Route tables will not be refreshed if value is <= 0.
          *
-         * @param routeTableRefreshPeriodSeconds refresh period for route tables cache
+         * <p>Default: 600 (10 minutes)
+         *
+         * @param routeTableRefreshPeriodSeconds the refresh period for route tables cache in seconds
          * @return this builder
          */
         public Builder routeTableRefreshPeriodSeconds(long routeTableRefreshPeriodSeconds) {
@@ -300,11 +360,13 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         }
 
         /**
-         * Timeout for health check. The default is 1000ms.
+         * Timeout for health check operations (milliseconds).
          * If the health check is not completed within the specified time, the health
          * check will fail.
          *
-         * @param checkHealthTimeoutMs timeout for health check
+         * <p>Default: 1000 (1 second)
+         *
+         * @param checkHealthTimeoutMs the timeout for health check operations in milliseconds
          * @return this builder
          */
         public Builder checkHealthTimeoutMs(long checkHealthTimeoutMs) {
@@ -313,10 +375,11 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         }
 
         /**
-         * Sets authentication information. If the DB is not required to authenticate,
-         * we can ignore this.
+         * Sets database authentication information. Can be ignored if database doesn't require authentication.
          *
-         * @param authInfo the authentication information
+         * <p>Default: null
+         *
+         * @param authInfo the database authentication information
          * @return this builder
          */
         public Builder authInfo(AuthInfo authInfo) {
@@ -325,10 +388,12 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         }
 
         /**
-         * Sets the request router. The internal default implementation works well.
-         * You don't need to set it unless you have special requirements.
+         * Sets custom request router. The internal default implementation works well.
+         * No need to set unless you have special requirements.
          *
-         * @param router the request router
+         * <p>Default: Internal default implementation
+         *
+         * @param router the custom request router implementation
          * @return this builder
          */
         public Builder router(Router<Void, Endpoint> router) {
