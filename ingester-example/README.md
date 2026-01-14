@@ -86,7 +86,6 @@ The Bulk Write API provides a high-performance, memory-efficient mechanism for i
 >    - Insert API (which supports auto table creation), or
 >    - SQL DDL statements (CREATE TABLE)
 > 2. **Schema Matching**: The table template in bulk API must exactly match the existing table schema.
-> 3. **Column Types**: For bulk operations, currently use `addField()` instead of `addTag()`. Tag columns are part of the primary key in GreptimeDB, but bulk operations don't yet support tables with tag columns. This limitation will be addressed in future versions.
 
 **Important Note**:
 - This API is designed around streaming connections, which means each stream establishes a connection to only one database node. Unlike the regular write API, it lacks automatic load balancing for individual requests. However, if your use case involves multiple clients establishing multiple streams to the database, this limitation is not a concern.
