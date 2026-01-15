@@ -111,16 +111,6 @@ public final class ITHelper {
     }
 
     /**
-     * Queries a single row by host and verifies it exists.
-     * Returns the ResultSet for further verification.
-     */
-    public static ResultSet queryByHost(Connection conn, String tableName, String host) throws SQLException {
-        String sql = String.format("SELECT * FROM %s WHERE host = '%s'", tableName, host);
-        Statement stmt = conn.createStatement();
-        return stmt.executeQuery(sql);
-    }
-
-    /**
      * Verifies that a specific row exists with expected values.
      */
     public static void verifyRow(
