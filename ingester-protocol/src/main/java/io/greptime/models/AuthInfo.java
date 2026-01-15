@@ -54,9 +54,11 @@ public class AuthInfo implements Into<Common.AuthHeader> {
      *
      * @return the base64 encoded string
      */
-    public String toBase64() {
-        String authInfoStr = String.format("%s:%s", this.username, this.password);
-        return Base64.getEncoder().encodeToString(authInfoStr.getBytes(StandardCharsets.UTF_8));
+    public String base64HeaderValue() {
+        String encoded = Base64.getEncoder()
+                .encodeToString(
+                        String.format("%s:%s", this.username, this.password).getBytes(StandardCharsets.UTF_8));
+        return String.format("Basic %s", encoded);
     }
 
     @Override
