@@ -132,7 +132,7 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
         ctx.entrySet().forEach(e -> headers.insert(e.getKey(), String.valueOf(e.getValue())));
         headers.insert(Keys.Headers.GREPTIMEDB_DBNAME, database);
         if (authInfo != null) {
-            headers.insert(Keys.Headers.GREPTIMEDB_AUTH, authInfo.toBase64());
+            headers.insert(Keys.Headers.GREPTIMEDB_AUTH, authInfo.base64HeaderValue());
         }
         HeaderCallOption headerOption = new HeaderCallOption(headers);
         AsyncExecCallOption execOption = new AsyncExecCallOption(this.asyncPool);
