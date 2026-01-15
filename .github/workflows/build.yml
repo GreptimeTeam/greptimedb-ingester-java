@@ -77,3 +77,47 @@ jobs:
           && (mvn --projects ingester-protocol test
             || mvn --projects ingester-protocol test
             || mvn --projects ingester-protocol test)
+
+  integration_tests:
+    needs: [test_ingester_common, test_ingester_grpc, test_ingester_protocol]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start GreptimeDB
+        run: |
+          docker run -d \
+            -p 4000:4000 \
+            -p 4001:4001 \
+            -p 4002:4002 \
+            -p 4003:4003 \
+            --name greptimedb \
+            greptime/greptimedb:v1.0.0-beta.4 standalone start \
+            --http-addr 0.0.0.0:4000 \
+            --rpc-bind-addr 0.0.0.0:4001 \
+            --mysql-addr 0.0.0.0:4002 \
+            --postgres-addr 0.0.0.0:4003
+      - name: Wait for GreptimeDB
+        run: |
+          for i in {1..30}; do
+            if curl -sf http://localhost:4000/health; then
+              echo "GreptimeDB is ready"
+              exit 0
+            fi
+            echo "Waiting for GreptimeDB... ($i/30)"
+            sleep 2
+          done
+          echo "GreptimeDB failed to start"
+          docker logs greptimedb
+          exit 1
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '8'
+          distribution: 'zulu'
+      - name: Build
+        run: mvn clean install -DskipTests -B -V
+      - name: Integration Tests
+        run: mvn verify -pl ingester-integration-tests
+        env:
+          GREPTIMEDB_ENDPOINTS: localhost:4001
+          GREPTIMEDB_DATABASE: public
+          GREPTIMEDB_JDBC_URL: jdbc:mysql://localhost:4002/public

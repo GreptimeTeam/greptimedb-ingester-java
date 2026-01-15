@@ -53,6 +53,7 @@
         <module>ingester-all</module>
         <module>ingester-bulk-protocol</module>
         <module>ingester-prometheus-metrics</module>
+        <module>ingester-integration-tests</module>
     </modules>
 
     <scm>
