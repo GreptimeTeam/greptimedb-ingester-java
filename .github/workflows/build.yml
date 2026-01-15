@@ -81,6 +81,7 @@ jobs:
   integration_tests:
     needs: [test_ingester_common, test_ingester_grpc, test_ingester_protocol]
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - name: Start GreptimeDB
@@ -116,8 +117,11 @@ jobs:
       - name: Build
         run: mvn clean install -DskipTests -B -V
       - name: Integration Tests
-        run: mvn verify -pl ingester-integration-tests
+        run: mvn verify -pl ingester-integration-tests -B
         env:
           GREPTIMEDB_ENDPOINTS: localhost:4001
           GREPTIMEDB_DATABASE: public
           GREPTIMEDB_JDBC_URL: jdbc:mysql://localhost:4002/public
+      - name: Debug logs
+        if: failure()
+        run: docker logs greptimedb
