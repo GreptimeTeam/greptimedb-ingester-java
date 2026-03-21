@@ -38,7 +38,7 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>ingester-grpc</artifactId>
+            <artifactId>ingester-rpc</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.arrow</groupId>
@@ -66,6 +66,10 @@
                     <artifactId>grpc-api</artifactId>
                 </exclusion>
                 <exclusion>
+                    <groupId>io.grpc</groupId>
+                    <artifactId>grpc-netty</artifactId>
+                </exclusion>
+                <exclusion>
                     <groupId>com.google.protobuf</groupId>
                     <artifactId>protobuf-java</artifactId>
                 </exclusion>
@@ -73,12 +77,17 @@
         </dependency>
         <dependency>
             <groupId>io.grpc</groupId>
-            <artifactId>grpc-api</artifactId>
+            <artifactId>grpc-netty</artifactId>
             <version>${io.grpc.version}</version>
         </dependency>
         <dependency>
             <groupId>io.grpc</groupId>
-            <artifactId>grpc-netty</artifactId>
+            <artifactId>grpc-protobuf</artifactId>
+            <version>${io.grpc.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-stub</artifactId>
             <version>${io.grpc.version}</version>
         </dependency>
         <dependency>
