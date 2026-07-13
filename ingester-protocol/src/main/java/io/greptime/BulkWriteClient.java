@@ -38,8 +38,10 @@ import io.greptime.rpc.Context;
 import io.greptime.rpc.TlsOptions;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.arrow.flight.FlightCallHeaders;
 import org.apache.arrow.flight.HeaderCallOption;
@@ -236,11 +238,13 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
                         "Stream busy with pending requests. Check `isStreamReady()` before calling `writeNext()` to avoid busy-waiting.");
             }
 
-            return this.pipelineWriteLimiter.acquireAndDo(null, () -> {
+            AtomicReference<BulkWriteService.PutStage> putStage = new AtomicReference<>();
+            CompletableFuture<Integer> result = this.pipelineWriteLimiter.acquireAndDo(null, () -> {
                 Clock clock = Clock.defaultClock();
 
                 long startPut = clock.getTick();
                 BulkWriteService.PutStage stage = this.writer.putNext();
+                putStage.set(stage);
                 InnerMetricHelper.prepareTime().update(clock.duration(startPut), TimeUnit.MILLISECONDS);
 
                 long startCall = clock.getTick();
@@ -262,6 +266,7 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
 
                 return future;
             });
+            return new TimeoutLoggingFuture(result, putStage.get());
         }
 
         @Override
@@ -279,6 +284,32 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
         @Override
         public void close() throws Exception {
             this.writer.close();
+        }
+    }
+
+    static class TimeoutLoggingFuture extends CompletableFuture<Integer> {
+        private final BulkWriteService.PutStage putStage;
+
+        TimeoutLoggingFuture(CompletableFuture<Integer> delegate, BulkWriteService.PutStage putStage) {
+            this.putStage = putStage;
+            delegate.whenComplete((r, t) -> {
+                if (t == null) {
+                    complete(r);
+                } else {
+                    completeExceptionally(t);
+                }
+            });
+        }
+
+        @Override
+        public Integer get(long timeout, TimeUnit unit)
+                throws InterruptedException, ExecutionException, TimeoutException {
+            try {
+                return super.get(timeout, unit);
+            } catch (TimeoutException e) {
+                this.putStage.logTimeout(e, timeout, unit);
+                throw e;
+            }
         }
     }
 

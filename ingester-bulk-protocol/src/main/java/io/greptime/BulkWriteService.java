@@ -23,6 +23,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.arrow.flight.BulkFlightClient.ClientStreamListener;
 import org.apache.arrow.flight.BulkFlightClient.PutListener;
@@ -60,6 +62,7 @@ public class BulkWriteService implements AutoCloseable {
     private final VectorSchemaRoot root;
     private final ClientStreamListener listener;
     private final AsyncPutListener metadataListener;
+    private final String tableName;
     private final long timeoutMs;
 
     /**
@@ -81,11 +84,27 @@ public class BulkWriteService implements AutoCloseable {
             long timeoutMs,
             int maxRequestsInFlight,
             CallOption... options) {
+        this(manager, allocator, schema, descriptor, "unknown", timeoutMs, maxRequestsInFlight, options);
+    }
+
+    /**
+     * Constructs a new BulkWriteService with the table name used for request diagnostics.
+     */
+    public BulkWriteService(
+            BulkWriteManager manager,
+            BufferAllocator allocator,
+            Schema schema,
+            FlightDescriptor descriptor,
+            String tableName,
+            long timeoutMs,
+            int maxRequestsInFlight,
+            CallOption... options) {
         this.manager = manager;
         this.allocator = allocator;
         this.root = manager.createSchemaRoot(schema);
         this.metadataListener = new AsyncPutListener();
         this.listener = manager.startPut(descriptor, this.metadataListener, maxRequestsInFlight, options);
+        this.tableName = tableName;
         this.timeoutMs = timeoutMs;
     }
 
@@ -146,12 +165,13 @@ public class BulkWriteService implements AutoCloseable {
      */
     public PutStage putNext() {
         long id = nextId();
-        long totalRowCount = this.root.getRowCount();
+        int totalRowCount = this.root.getRowCount();
 
         LOG.debug("Starting putNext operation [id={}], total row count: {}", id, totalRowCount);
 
         // Create future with timeout and attach to listener
-        IdentifiableCompletableFuture future = new IdentifiableCompletableFuture(id, this.timeoutMs);
+        IdentifiableCompletableFuture future =
+                new IdentifiableCompletableFuture(id, this.timeoutMs, this.tableName, totalRowCount, LOG);
         this.metadataListener.attach(id, future);
 
         // Prepare metadata buffer
@@ -244,6 +264,19 @@ public class BulkWriteService implements AutoCloseable {
         public int numInFlight() {
             return this.numInFlight;
         }
+
+        /**
+         * Logs diagnostic context when a caller times out waiting for this request.
+         *
+         * @param timeout the timeout raised to the caller
+         * @param value the caller's timeout value
+         * @param unit the caller's timeout unit
+         */
+        public void logTimeout(Throwable timeout, long value, TimeUnit unit) {
+            if (this.future instanceof IdentifiableCompletableFuture) {
+                ((IdentifiableCompletableFuture) this.future).logTimeout(timeout, unit.toMillis(value));
+            }
+        }
     }
 
     /**
@@ -252,6 +285,11 @@ public class BulkWriteService implements AutoCloseable {
      */
     static class IdentifiableCompletableFuture extends TimeoutCompletableFuture<Integer> {
         private final long id;
+        private final long timeoutMs;
+        private final String tableName;
+        private final int rows;
+        private final Logger logger;
+        private final AtomicBoolean timeoutLogged = new AtomicBoolean();
 
         /**
          * Creates a new IdentifiableCompletableFuture.
@@ -260,8 +298,16 @@ public class BulkWriteService implements AutoCloseable {
          * @param timeoutMs The timeout in milliseconds
          */
         public IdentifiableCompletableFuture(long id, long timeoutMs) {
+            this(id, timeoutMs, "unknown", 0, LOG);
+        }
+
+        IdentifiableCompletableFuture(long id, long timeoutMs, String tableName, int rows, Logger logger) {
             super(timeoutMs, TimeUnit.MILLISECONDS);
             this.id = id;
+            this.timeoutMs = timeoutMs;
+            this.tableName = tableName;
+            this.rows = rows;
+            this.logger = logger;
         }
 
         /**
@@ -271,6 +317,29 @@ public class BulkWriteService implements AutoCloseable {
          */
         public long getId() {
             return this.id;
+        }
+
+        @Override
+        public Integer get(long timeout, TimeUnit unit)
+                throws InterruptedException, ExecutionException, TimeoutException {
+            try {
+                return super.get(timeout, unit);
+            } catch (TimeoutException e) {
+                logTimeout(e, unit.toMillis(timeout));
+                throw e;
+            }
+        }
+
+        void logTimeout(Throwable timeout, long timeoutMs) {
+            if (this.timeoutLogged.compareAndSet(false, true)) {
+                this.logger.warn(
+                        "Bulk write timed out - table={}, request-id={}, rows={}, timeout={}ms",
+                        this.tableName,
+                        this.id,
+                        this.rows,
+                        timeoutMs,
+                        timeout);
+            }
         }
     }
 
@@ -313,8 +382,10 @@ public class BulkWriteService implements AutoCloseable {
                 this.futuresInFlight.remove(id);
 
                 if (t != null) {
-                    LOG.error("Put operation failed [id={}]: {}", id, t.getMessage(), t);
-                    if (!(t instanceof TimeoutCompletableFuture.FutureDeadlineExceededException)) {
+                    if (t instanceof TimeoutCompletableFuture.FutureDeadlineExceededException) {
+                        future.logTimeout(t, future.timeoutMs);
+                    } else {
+                        LOG.error("Put operation failed [id={}]: {}", id, t.getMessage(), t);
                         // If a put next operation fails, we complete the future with the exception
                         // and the stream will be terminated immediately to prevent further operations
                         onError(t);
