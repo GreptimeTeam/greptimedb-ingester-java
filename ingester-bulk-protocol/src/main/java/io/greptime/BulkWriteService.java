@@ -18,7 +18,10 @@ package io.greptime;
 
 import com.google.protobuf.ByteString;
 import io.greptime.common.TimeoutCompletableFuture;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
@@ -172,26 +175,64 @@ public class BulkWriteService implements AutoCloseable {
         // Create future with timeout and attach to listener
         IdentifiableCompletableFuture future =
                 new IdentifiableCompletableFuture(id, this.timeoutMs, this.tableName, totalRowCount, LOG);
-        this.metadataListener.attach(id, future);
-
-        // Prepare metadata buffer
-        byte[] metadata = new Metadata.RequestMetadata(id).toJsonBytesUtf8();
+        ArrowBuf metadataBuf = null;
+        Throwable putFailure = null;
         try {
-            ArrowBuf metadataBuf = this.allocator.buffer(metadata.length);
+            if (!this.metadataListener.attach(id, future)) {
+                return new PutStage(future, this.metadataListener.numInFlight());
+            }
+
+            // Prepare metadata buffer
+            byte[] metadata = new Metadata.RequestMetadata(id).toJsonBytesUtf8();
+            metadataBuf = this.allocator.buffer(metadata.length);
             metadataBuf.writeBytes(metadata);
 
             // Send data to the server
             LOG.debug("Sending data to server [id={}]", id);
             this.listener.putNext(metadataBuf);
+            metadataBuf = null; // Ownership transfers to the Flight writer.
 
             int inFlightCount = this.metadataListener.numInFlight();
             LOG.debug("Data sent successfully [id={}], in-flight requests: {}", id, inFlightCount);
 
             return new PutStage(future, inFlightCount);
+        } catch (RuntimeException | Error e) {
+            Throwable failure = e;
+            if (!future.completeExceptionally(e)) {
+                try {
+                    future.join();
+                } catch (CompletionException completedFailure) {
+                    if (completedFailure.getCause() != null) {
+                        failure = completedFailure.getCause();
+                    }
+                }
+            }
+            putFailure = failure;
+            if (metadataBuf != null && metadataBuf.refCnt() > 0) {
+                try {
+                    metadataBuf.close();
+                } catch (RuntimeException closeError) {
+                    failure.addSuppressed(closeError);
+                }
+            }
+            if (failure instanceof RuntimeException) {
+                throw (RuntimeException) failure;
+            }
+            if (failure instanceof Error) {
+                throw (Error) failure;
+            }
+            throw new CompletionException(failure);
         } finally {
             // Clear the root to prepare for next batch
-            this.root.clear();
-            LOG.debug("Cleared root for next batch [id={}], previous row count: {}", id, totalRowCount);
+            try {
+                this.root.clear();
+                LOG.debug("Cleared root for next batch [id={}], previous row count: {}", id, totalRowCount);
+            } catch (RuntimeException | Error clearError) {
+                if (putFailure == null) {
+                    throw clearError;
+                }
+                putFailure.addSuppressed(clearError);
+            }
         }
     }
 
@@ -350,6 +391,9 @@ public class BulkWriteService implements AutoCloseable {
     static class AsyncPutListener implements PutListener {
         private final ConcurrentMap<Long, IdentifiableCompletableFuture> futuresInFlight;
         private final CompletableFuture<Void> completed;
+        private final Object terminalLock;
+        private boolean terminal;
+        private Throwable terminalFailure;
 
         /**
          * Creates a new AsyncPutListener.
@@ -357,16 +401,7 @@ public class BulkWriteService implements AutoCloseable {
         AsyncPutListener() {
             this.futuresInFlight = new ConcurrentHashMap<>();
             this.completed = new CompletableFuture<>();
-            this.completed.whenComplete((r, t) -> {
-                if (t != null) {
-                    // Also complete all the futures with the same exception
-                    for (IdentifiableCompletableFuture future : this.futuresInFlight.values()) {
-                        future.completeExceptionally(t);
-                    }
-                }
-                // When completed, clear the futuresInFlight
-                this.futuresInFlight.clear();
-            });
+            this.terminalLock = new Object();
         }
 
         /**
@@ -374,12 +409,12 @@ public class BulkWriteService implements AutoCloseable {
          *
          * @param id The unique identifier for the request
          * @param future The future to track
+         * @return true if the future was attached, false if the stream was already terminal
          */
-        public void attach(long id, IdentifiableCompletableFuture future) {
-            this.futuresInFlight.put(id, future);
+        public boolean attach(long id, IdentifiableCompletableFuture future) {
             future.whenComplete((r, t) -> {
                 // Remove the future from the map when it's completed
-                this.futuresInFlight.remove(id);
+                this.futuresInFlight.remove(id, future);
 
                 if (t != null) {
                     if (t instanceof TimeoutCompletableFuture.FutureDeadlineExceededException) {
@@ -394,11 +429,28 @@ public class BulkWriteService implements AutoCloseable {
                     LOG.debug("Put operation succeeded [id={}], affected rows: {}", id, r);
                 }
             });
+
+            Throwable failure;
+            synchronized (this.terminalLock) {
+                if (this.terminal) {
+                    failure = this.terminalFailure;
+                } else {
+                    this.futuresInFlight.put(id, future);
+                    failure = null;
+                }
+            }
+
+            if (failure != null) {
+                future.completeExceptionally(failure);
+                return false;
+            }
+
             future.scheduleTimeout();
 
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Attached future [id={}], current in-flight count: {}", id, this.futuresInFlight.size());
             }
+            return true;
         }
 
         /**
@@ -435,14 +487,52 @@ public class BulkWriteService implements AutoCloseable {
 
         @Override
         public void onError(Throwable t) {
-            LOG.error("Stream error occurred: {}", t.getMessage(), t);
-            this.completed.completeExceptionally(StatusUtils.fromThrowable(t));
+            Throwable failure = StatusUtils.fromThrowable(t);
+            if (terminate(failure, false)) {
+                LOG.error("Stream error occurred: {}", t.getMessage(), t);
+            }
         }
 
         @Override
         public final void onCompleted() {
-            LOG.info("Server signaled stream completion");
-            this.completed.complete(null);
+            if (terminate(null, true)) {
+                LOG.info("Server signaled stream completion");
+            }
+        }
+
+        private boolean terminate(Throwable failure, boolean normalCompletion) {
+            List<IdentifiableCompletableFuture> pending;
+            Throwable completionFailure;
+            synchronized (this.terminalLock) {
+                if (this.terminal) {
+                    return false;
+                }
+
+                pending = new ArrayList<>(this.futuresInFlight.values());
+                this.futuresInFlight.clear();
+                if (normalCompletion && pending.isEmpty()) {
+                    completionFailure = null;
+                    this.terminalFailure = new IllegalStateException("The bulk write stream is already completed");
+                } else if (failure != null) {
+                    completionFailure = failure;
+                    this.terminalFailure = failure;
+                } else {
+                    completionFailure = new IllegalStateException(
+                            "The bulk write stream completed before all put responses were received");
+                    this.terminalFailure = completionFailure;
+                }
+                this.terminal = true;
+            }
+
+            if (completionFailure != null) {
+                this.completed.completeExceptionally(completionFailure);
+                for (IdentifiableCompletableFuture future : pending) {
+                    future.completeExceptionally(completionFailure);
+                }
+            } else {
+                this.completed.complete(null);
+            }
+            return true;
         }
 
         @Override

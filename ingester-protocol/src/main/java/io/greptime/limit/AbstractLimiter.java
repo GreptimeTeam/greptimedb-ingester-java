@@ -68,7 +68,12 @@ public abstract class AbstractLimiter<In, Out> {
 
         try {
             if (this.policy.acquire(this.limiter, permits)) {
-                return action.get().whenComplete((r, e) -> release(permits));
+                try {
+                    return action.get().whenComplete((r, e) -> release(permits));
+                } catch (RuntimeException | Error e) {
+                    release(permits);
+                    throw e;
+                }
             }
             return Util.completedCf(rejected(in, acquirePermits, maxPermits));
         } finally {
