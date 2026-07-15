@@ -142,8 +142,7 @@ public class BulkWriteManager implements AutoCloseable {
     public BulkWriteService intoBulkWriteStream(
             String table, Schema schema, long timeoutMs, int maxRequestsInFlight, CallOption... options) {
         FlightDescriptor descriptor = FlightDescriptor.path(table);
-        return new BulkWriteService(
-                this, this.allocator, schema, descriptor, table, timeoutMs, maxRequestsInFlight, options);
+        return new BulkWriteService(this, this.allocator, schema, descriptor, timeoutMs, maxRequestsInFlight, options);
     }
 
     VectorSchemaRoot createSchemaRoot(Schema schema) {

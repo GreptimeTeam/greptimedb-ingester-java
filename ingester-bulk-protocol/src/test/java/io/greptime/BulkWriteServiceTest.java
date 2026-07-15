@@ -46,6 +46,14 @@ import org.slf4j.Logger;
 public class BulkWriteServiceTest {
 
     @Test
+    public void testDiagnosticNameDerivedFromDescriptor() {
+        Assert.assertEquals(
+                "catalog/schema/metrics",
+                BulkWriteService.diagnosticName(FlightDescriptor.path("catalog", "schema", "metrics")));
+        Assert.assertEquals("unknown", BulkWriteService.diagnosticName(FlightDescriptor.command(new byte[] {1})));
+    }
+
+    @Test
     public void testAttachAfterStreamErrorFailsImmediately() throws Exception {
         BulkWriteService.AsyncPutListener listener = Mockito.spy(new BulkWriteService.AsyncPutListener());
         listener.onError(CallStatus.UNAVAILABLE.toRuntimeException());

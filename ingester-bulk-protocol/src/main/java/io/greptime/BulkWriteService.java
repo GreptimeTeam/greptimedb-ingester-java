@@ -87,28 +87,20 @@ public class BulkWriteService implements AutoCloseable {
             long timeoutMs,
             int maxRequestsInFlight,
             CallOption... options) {
-        this(manager, allocator, schema, descriptor, "unknown", timeoutMs, maxRequestsInFlight, options);
-    }
-
-    /**
-     * Constructs a new BulkWriteService with the table name used for request diagnostics.
-     */
-    public BulkWriteService(
-            BulkWriteManager manager,
-            BufferAllocator allocator,
-            Schema schema,
-            FlightDescriptor descriptor,
-            String tableName,
-            long timeoutMs,
-            int maxRequestsInFlight,
-            CallOption... options) {
         this.manager = manager;
         this.allocator = allocator;
         this.root = manager.createSchemaRoot(schema);
         this.metadataListener = new AsyncPutListener();
         this.listener = manager.startPut(descriptor, this.metadataListener, maxRequestsInFlight, options);
-        this.tableName = tableName;
+        this.tableName = diagnosticName(descriptor);
         this.timeoutMs = timeoutMs;
+    }
+
+    static String diagnosticName(FlightDescriptor descriptor) {
+        if (descriptor.isCommand() || descriptor.getPath().isEmpty()) {
+            return "unknown";
+        }
+        return String.join("/", descriptor.getPath());
     }
 
     /**
