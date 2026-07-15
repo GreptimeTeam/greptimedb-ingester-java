@@ -412,6 +412,21 @@ public class BulkWriteService implements AutoCloseable {
          * @return true if the future was attached, false if the stream was already terminal
          */
         public boolean attach(long id, IdentifiableCompletableFuture future) {
+            Throwable failure;
+            synchronized (this.terminalLock) {
+                if (this.terminal) {
+                    failure = this.terminalFailure;
+                } else {
+                    this.futuresInFlight.put(id, future);
+                    failure = null;
+                }
+            }
+
+            if (failure != null) {
+                future.completeExceptionally(failure);
+                return false;
+            }
+
             future.whenComplete((r, t) -> {
                 // Remove the future from the map when it's completed
                 this.futuresInFlight.remove(id, future);
@@ -429,21 +444,6 @@ public class BulkWriteService implements AutoCloseable {
                     LOG.debug("Put operation succeeded [id={}], affected rows: {}", id, r);
                 }
             });
-
-            Throwable failure;
-            synchronized (this.terminalLock) {
-                if (this.terminal) {
-                    failure = this.terminalFailure;
-                } else {
-                    this.futuresInFlight.put(id, future);
-                    failure = null;
-                }
-            }
-
-            if (failure != null) {
-                future.completeExceptionally(failure);
-                return false;
-            }
 
             future.scheduleTimeout();
 

@@ -47,7 +47,7 @@ public class BulkWriteServiceTest {
 
     @Test
     public void testAttachAfterStreamErrorFailsImmediately() throws Exception {
-        BulkWriteService.AsyncPutListener listener = new BulkWriteService.AsyncPutListener();
+        BulkWriteService.AsyncPutListener listener = Mockito.spy(new BulkWriteService.AsyncPutListener());
         listener.onError(CallStatus.UNAVAILABLE.toRuntimeException());
 
         BulkWriteService.IdentifiableCompletableFuture future = newFuture(1L);
@@ -59,6 +59,7 @@ public class BulkWriteServiceTest {
                 FlightStatusCode.UNAVAILABLE,
                 ((FlightRuntimeException) failure).status().code());
         Assert.assertEquals(0, listener.numInFlight());
+        Mockito.verify(listener, Mockito.times(1)).onError(Mockito.any());
     }
 
     @Test
