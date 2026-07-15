@@ -63,6 +63,21 @@ jobs:
             || mvn --projects ingester-grpc test
             || mvn --projects ingester-grpc test)
 
+  test_ingester_bulk_protocol:
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '8'
+          distribution: 'zulu'
+      - name: Maven Test
+        run: mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+          && (mvn --projects ingester-bulk-protocol test
+            || mvn --projects ingester-bulk-protocol test
+            || mvn --projects ingester-bulk-protocol test)
+
   test_ingester_protocol:
     needs: check
     runs-on: ubuntu-latest
@@ -79,7 +94,7 @@ jobs:
             || mvn --projects ingester-protocol test)
 
   integration_tests:
-    needs: [test_ingester_common, test_ingester_grpc, test_ingester_protocol]
+    needs: [test_ingester_common, test_ingester_grpc, test_ingester_bulk_protocol, test_ingester_protocol]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
