@@ -43,6 +43,15 @@ jobs:
             exit 1
           fi
 
+      - name: Verify release version
+        if: github.event_name == 'release'
+        run: |
+          version="$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)"
+          if [[ "$version" == *-SNAPSHOT ]]; then
+            echo "Release publishing requires a non-SNAPSHOT version, got: $version"
+            exit 1
+          fi
+
       - name: Build with Maven
         run: mvn clean deploy --batch-mode -DskipTests -P release -B -U -e
         env:
