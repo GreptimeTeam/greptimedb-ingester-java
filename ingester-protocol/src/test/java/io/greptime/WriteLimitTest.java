@@ -25,9 +25,10 @@ import io.greptime.models.Table;
 import io.greptime.models.WriteOk;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -62,6 +63,24 @@ public class WriteLimitTest {
     }
 
     @Test
+    public void supplierFailureReleasesWritePermit() throws Exception {
+        WriteLimiter limiter = new WriteClient.DefaultWriteLimiter(1, new LimitedPolicy.AbortPolicy());
+        Collection<Table> rows = TestUtil.testTable("test1", 1);
+        RuntimeException failure = new RuntimeException("write failed");
+
+        try {
+            limiter.acquireAndDo(rows, () -> {
+                throw failure;
+            });
+            Assert.fail("Expected write action to fail");
+        } catch (RuntimeException e) {
+            Assert.assertSame(failure, e);
+        }
+
+        Assert.assertTrue(limiter.acquireAndDo(rows, this::emptyOk).get().isOk());
+    }
+
+    @Test
     public void blockingWriteLimitTest() throws InterruptedException {
         WriteLimiter limiter = new WriteClient.DefaultWriteLimiter(1, new LimitedPolicy.BlockingPolicy());
         Collection<Table> rows = TestUtil.testTable("test1", 1);
@@ -69,24 +88,25 @@ public class WriteLimitTest {
         // consume the permits
         limiter.acquireAndDo(rows, CompletableFuture::new);
 
-        final AtomicBoolean alwaysFalse = new AtomicBoolean();
+        CountDownLatch acquiring = new CountDownLatch(1);
+        AtomicReference<Throwable> failure = new AtomicReference<>();
         final Thread t = new Thread(() -> {
+            acquiring.countDown();
             try {
                 limiter.acquireAndDo(rows, this::emptyOk);
-                alwaysFalse.set(true);
             } catch (Throwable err) {
-                // noinspection ConstantConditions
-                Assert.assertTrue(err instanceof InterruptedException);
+                failure.set(err);
             }
         });
         t.start();
 
-        Assert.assertFalse(alwaysFalse.get());
-        Thread.sleep(1000);
-        Assert.assertFalse(alwaysFalse.get());
+        acquiring.await();
         t.interrupt();
-        Assert.assertFalse(alwaysFalse.get());
-        Assert.assertTrue(t.isInterrupted());
+        t.join(TimeUnit.SECONDS.toMillis(1));
+
+        Assert.assertFalse("Limiter thread did not stop after interruption", t.isAlive());
+        Assert.assertTrue(failure.get() instanceof LimitedException);
+        Assert.assertTrue(failure.get().getCause() instanceof InterruptedException);
     }
 
     @Test

@@ -21,7 +21,7 @@
 
     <groupId>io.greptime</groupId>
     <artifactId>greptimedb-ingester</artifactId>
-    <version>0.15.0</version>
+    <version>0.15.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>${project.groupId}:${project.artifactId}</name>
@@ -284,10 +284,11 @@
                     <plugin>
                         <groupId>org.sonatype.central</groupId>
                         <artifactId>central-publishing-maven-plugin</artifactId>
-                        <version>0.4.0</version>
+                        <version>0.11.0</version>
                         <extensions>true</extensions>
                         <configuration>
                             <publishingServerId>central</publishingServerId>
+                            <centralSnapshotsUrl>https://central.sonatype.com/repository/maven-snapshots/</centralSnapshotsUrl>
                             <tokenAuth>true</tokenAuth>
                         </configuration>
                     </plugin>

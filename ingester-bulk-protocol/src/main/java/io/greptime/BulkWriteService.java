@@ -18,11 +18,16 @@ package io.greptime;
 
 import com.google.protobuf.ByteString;
 import io.greptime.common.TimeoutCompletableFuture;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.arrow.flight.BulkFlightClient.ClientStreamListener;
 import org.apache.arrow.flight.BulkFlightClient.PutListener;
@@ -60,6 +65,7 @@ public class BulkWriteService implements AutoCloseable {
     private final VectorSchemaRoot root;
     private final ClientStreamListener listener;
     private final AsyncPutListener metadataListener;
+    private final String tableName;
     private final long timeoutMs;
 
     /**
@@ -86,7 +92,15 @@ public class BulkWriteService implements AutoCloseable {
         this.root = manager.createSchemaRoot(schema);
         this.metadataListener = new AsyncPutListener();
         this.listener = manager.startPut(descriptor, this.metadataListener, maxRequestsInFlight, options);
+        this.tableName = diagnosticName(descriptor);
         this.timeoutMs = timeoutMs;
+    }
+
+    static String diagnosticName(FlightDescriptor descriptor) {
+        if (descriptor.isCommand() || descriptor.getPath().isEmpty()) {
+            return "unknown";
+        }
+        return String.join("/", descriptor.getPath());
     }
 
     /**
@@ -146,32 +160,73 @@ public class BulkWriteService implements AutoCloseable {
      */
     public PutStage putNext() {
         long id = nextId();
-        long totalRowCount = this.root.getRowCount();
+        int totalRowCount = this.root.getRowCount();
 
         LOG.debug("Starting putNext operation [id={}], total row count: {}", id, totalRowCount);
 
         // Create future with timeout and attach to listener
-        IdentifiableCompletableFuture future = new IdentifiableCompletableFuture(id, this.timeoutMs);
-        this.metadataListener.attach(id, future);
-
-        // Prepare metadata buffer
-        byte[] metadata = new Metadata.RequestMetadata(id).toJsonBytesUtf8();
+        IdentifiableCompletableFuture future =
+                new IdentifiableCompletableFuture(id, this.timeoutMs, this.tableName, totalRowCount, LOG);
+        ArrowBuf metadataBuf = null;
+        Throwable putFailure = null;
         try {
-            ArrowBuf metadataBuf = this.allocator.buffer(metadata.length);
+            if (!this.metadataListener.attach(id, future)) {
+                return new PutStage(future, this.metadataListener.numInFlight());
+            }
+
+            // Prepare metadata buffer
+            byte[] metadata = new Metadata.RequestMetadata(id).toJsonBytesUtf8();
+            metadataBuf = this.allocator.buffer(metadata.length);
             metadataBuf.writeBytes(metadata);
 
             // Send data to the server
             LOG.debug("Sending data to server [id={}]", id);
             this.listener.putNext(metadataBuf);
+            metadataBuf = null; // Ownership transfers to the Flight writer.
 
             int inFlightCount = this.metadataListener.numInFlight();
             LOG.debug("Data sent successfully [id={}], in-flight requests: {}", id, inFlightCount);
 
             return new PutStage(future, inFlightCount);
+        } catch (RuntimeException | Error e) {
+            Throwable failure = e;
+            if (!future.completeExceptionally(e)) {
+                try {
+                    future.join();
+                } catch (CompletionException completedFailure) {
+                    if (completedFailure.getCause() != null) {
+                        failure = completedFailure.getCause();
+                    }
+                }
+            }
+            putFailure = failure;
+            // Flight closes metadata after accepting ownership; a positive refcount here means the
+            // failure occurred before that handoff completed and this method still owns the buffer.
+            if (metadataBuf != null && metadataBuf.refCnt() > 0) {
+                try {
+                    metadataBuf.close();
+                } catch (RuntimeException closeError) {
+                    failure.addSuppressed(closeError);
+                }
+            }
+            if (failure instanceof RuntimeException) {
+                throw (RuntimeException) failure;
+            }
+            if (failure instanceof Error) {
+                throw (Error) failure;
+            }
+            throw new CompletionException(failure);
         } finally {
             // Clear the root to prepare for next batch
-            this.root.clear();
-            LOG.debug("Cleared root for next batch [id={}], previous row count: {}", id, totalRowCount);
+            try {
+                this.root.clear();
+                LOG.debug("Cleared root for next batch [id={}], previous row count: {}", id, totalRowCount);
+            } catch (RuntimeException | Error clearError) {
+                if (putFailure == null) {
+                    throw clearError;
+                }
+                putFailure.addSuppressed(clearError);
+            }
         }
     }
 
@@ -244,6 +299,19 @@ public class BulkWriteService implements AutoCloseable {
         public int numInFlight() {
             return this.numInFlight;
         }
+
+        /**
+         * Logs diagnostic context when a caller times out waiting for this request.
+         *
+         * @param timeout the timeout raised to the caller
+         * @param value the caller's timeout value
+         * @param unit the caller's timeout unit
+         */
+        public void logTimeout(Throwable timeout, long value, TimeUnit unit) {
+            if (this.future instanceof IdentifiableCompletableFuture) {
+                ((IdentifiableCompletableFuture) this.future).logTimeout(timeout, unit.toMillis(value));
+            }
+        }
     }
 
     /**
@@ -252,6 +320,11 @@ public class BulkWriteService implements AutoCloseable {
      */
     static class IdentifiableCompletableFuture extends TimeoutCompletableFuture<Integer> {
         private final long id;
+        private final long timeoutMs;
+        private final String tableName;
+        private final int rows;
+        private final Logger logger;
+        private final AtomicBoolean timeoutLogged = new AtomicBoolean();
 
         /**
          * Creates a new IdentifiableCompletableFuture.
@@ -260,8 +333,16 @@ public class BulkWriteService implements AutoCloseable {
          * @param timeoutMs The timeout in milliseconds
          */
         public IdentifiableCompletableFuture(long id, long timeoutMs) {
+            this(id, timeoutMs, "unknown", 0, LOG);
+        }
+
+        IdentifiableCompletableFuture(long id, long timeoutMs, String tableName, int rows, Logger logger) {
             super(timeoutMs, TimeUnit.MILLISECONDS);
             this.id = id;
+            this.timeoutMs = timeoutMs;
+            this.tableName = tableName;
+            this.rows = rows;
+            this.logger = logger;
         }
 
         /**
@@ -272,6 +353,29 @@ public class BulkWriteService implements AutoCloseable {
         public long getId() {
             return this.id;
         }
+
+        @Override
+        public Integer get(long timeout, TimeUnit unit)
+                throws InterruptedException, ExecutionException, TimeoutException {
+            try {
+                return super.get(timeout, unit);
+            } catch (TimeoutException e) {
+                logTimeout(e, unit.toMillis(timeout));
+                throw e;
+            }
+        }
+
+        void logTimeout(Throwable timeout, long timeoutMs) {
+            if (this.timeoutLogged.compareAndSet(false, true)) {
+                this.logger.warn(
+                        "Bulk write timed out - table={}, request-id={}, rows={}, timeout={}ms",
+                        this.tableName,
+                        this.id,
+                        this.rows,
+                        timeoutMs,
+                        timeout);
+            }
+        }
     }
 
     /**
@@ -281,6 +385,9 @@ public class BulkWriteService implements AutoCloseable {
     static class AsyncPutListener implements PutListener {
         private final ConcurrentMap<Long, IdentifiableCompletableFuture> futuresInFlight;
         private final CompletableFuture<Void> completed;
+        private final Object terminalLock;
+        private boolean terminal;
+        private Throwable terminalFailure;
 
         /**
          * Creates a new AsyncPutListener.
@@ -288,16 +395,7 @@ public class BulkWriteService implements AutoCloseable {
         AsyncPutListener() {
             this.futuresInFlight = new ConcurrentHashMap<>();
             this.completed = new CompletableFuture<>();
-            this.completed.whenComplete((r, t) -> {
-                if (t != null) {
-                    // Also complete all the futures with the same exception
-                    for (IdentifiableCompletableFuture future : this.futuresInFlight.values()) {
-                        future.completeExceptionally(t);
-                    }
-                }
-                // When completed, clear the futuresInFlight
-                this.futuresInFlight.clear();
-            });
+            this.terminalLock = new Object();
         }
 
         /**
@@ -305,16 +403,33 @@ public class BulkWriteService implements AutoCloseable {
          *
          * @param id The unique identifier for the request
          * @param future The future to track
+         * @return true if the future was attached, false if the stream was already terminal
          */
-        public void attach(long id, IdentifiableCompletableFuture future) {
-            this.futuresInFlight.put(id, future);
+        public boolean attach(long id, IdentifiableCompletableFuture future) {
+            Throwable failure;
+            synchronized (this.terminalLock) {
+                if (this.terminal) {
+                    failure = this.terminalFailure;
+                } else {
+                    this.futuresInFlight.put(id, future);
+                    failure = null;
+                }
+            }
+
+            if (failure != null) {
+                future.completeExceptionally(failure);
+                return false;
+            }
+
             future.whenComplete((r, t) -> {
                 // Remove the future from the map when it's completed
-                this.futuresInFlight.remove(id);
+                this.futuresInFlight.remove(id, future);
 
                 if (t != null) {
-                    LOG.error("Put operation failed [id={}]: {}", id, t.getMessage(), t);
-                    if (!(t instanceof TimeoutCompletableFuture.FutureDeadlineExceededException)) {
+                    if (t instanceof TimeoutCompletableFuture.FutureDeadlineExceededException) {
+                        future.logTimeout(t, future.timeoutMs);
+                    } else {
+                        LOG.error("Put operation failed [id={}]: {}", id, t.getMessage(), t);
                         // If a put next operation fails, we complete the future with the exception
                         // and the stream will be terminated immediately to prevent further operations
                         onError(t);
@@ -323,11 +438,13 @@ public class BulkWriteService implements AutoCloseable {
                     LOG.debug("Put operation succeeded [id={}], affected rows: {}", id, r);
                 }
             });
+
             future.scheduleTimeout();
 
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Attached future [id={}], current in-flight count: {}", id, this.futuresInFlight.size());
             }
+            return true;
         }
 
         /**
@@ -364,14 +481,52 @@ public class BulkWriteService implements AutoCloseable {
 
         @Override
         public void onError(Throwable t) {
-            LOG.error("Stream error occurred: {}", t.getMessage(), t);
-            this.completed.completeExceptionally(StatusUtils.fromThrowable(t));
+            Throwable failure = StatusUtils.fromThrowable(t);
+            if (terminate(failure, false)) {
+                LOG.error("Stream error occurred: {}", t.getMessage(), t);
+            }
         }
 
         @Override
         public final void onCompleted() {
-            LOG.info("Server signaled stream completion");
-            this.completed.complete(null);
+            if (terminate(null, true)) {
+                LOG.info("Server signaled stream completion");
+            }
+        }
+
+        private boolean terminate(Throwable failure, boolean normalCompletion) {
+            List<IdentifiableCompletableFuture> pending;
+            Throwable completionFailure;
+            synchronized (this.terminalLock) {
+                if (this.terminal) {
+                    return false;
+                }
+
+                pending = new ArrayList<>(this.futuresInFlight.values());
+                this.futuresInFlight.clear();
+                if (normalCompletion && pending.isEmpty()) {
+                    completionFailure = null;
+                    this.terminalFailure = new IllegalStateException("The bulk write stream is already completed");
+                } else if (failure != null) {
+                    completionFailure = failure;
+                    this.terminalFailure = failure;
+                } else {
+                    completionFailure = new IllegalStateException(
+                            "The bulk write stream completed before all put responses were received");
+                    this.terminalFailure = completionFailure;
+                }
+                this.terminal = true;
+            }
+
+            if (completionFailure != null) {
+                this.completed.completeExceptionally(completionFailure);
+                for (IdentifiableCompletableFuture future : pending) {
+                    future.completeExceptionally(completionFailure);
+                }
+            } else {
+                this.completed.complete(null);
+            }
+            return true;
         }
 
         @Override
