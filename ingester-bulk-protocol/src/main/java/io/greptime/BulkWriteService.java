@@ -208,6 +208,8 @@ public class BulkWriteService implements AutoCloseable {
                 }
             }
             putFailure = failure;
+            // Flight closes metadata after accepting ownership; a positive refcount here means the
+            // failure occurred before that handoff completed and this method still owns the buffer.
             if (metadataBuf != null && metadataBuf.refCnt() > 0) {
                 try {
                     metadataBuf.close();
