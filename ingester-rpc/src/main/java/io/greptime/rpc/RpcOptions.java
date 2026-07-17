@@ -259,7 +259,9 @@ public class RpcOptions implements Copiable<RpcOptions> {
         opts.blockOnLimit = this.blockOnLimit;
         opts.logOnLimitChange = this.logOnLimitChange;
         opts.enableMetricInterceptor = this.enableMetricInterceptor;
-        opts.tlsOptions = this.tlsOptions;
+        if (this.tlsOptions != null) {
+            opts.tlsOptions = this.tlsOptions.copy();
+        }
         return opts;
     }
 

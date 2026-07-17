@@ -170,26 +170,32 @@ public class BulkFlightClientTest {
 
     @Test
     public void testCloseClosesChildAllocatorWhenChannelShutdownIsInterrupted() throws Exception {
-        BufferAllocator parentAllocator = Mockito.mock(BufferAllocator.class);
-        BufferAllocator childAllocator = Mockito.mock(BufferAllocator.class);
-        Mockito.when(parentAllocator.newChildAllocator("bulk-flight-client", 0, Long.MAX_VALUE))
-                .thenReturn(childAllocator);
-        ManagedChannel channel = Mockito.mock(ManagedChannel.class);
-        Mockito.when(channel.shutdown()).thenReturn(channel);
-        InterruptedException interruption = new InterruptedException("channel shutdown interrupted");
-        Mockito.when(channel.awaitTermination(5, TimeUnit.SECONDS)).thenThrow(interruption);
-        BulkFlightClient client =
-                new BulkFlightClient(parentAllocator, channel, Collections.emptyList(), ArrowCompressionType.None);
-
-        InterruptedException failure = null;
+        Thread.interrupted();
         try {
-            client.close();
-            Assert.fail("Expected interrupted channel shutdown");
-        } catch (InterruptedException e) {
-            failure = e;
-        }
+            BufferAllocator parentAllocator = Mockito.mock(BufferAllocator.class);
+            BufferAllocator childAllocator = Mockito.mock(BufferAllocator.class);
+            Mockito.when(parentAllocator.newChildAllocator("bulk-flight-client", 0, Long.MAX_VALUE))
+                    .thenReturn(childAllocator);
+            ManagedChannel channel = Mockito.mock(ManagedChannel.class);
+            Mockito.when(channel.shutdown()).thenReturn(channel);
+            InterruptedException interruption = new InterruptedException("channel shutdown interrupted");
+            Mockito.when(channel.awaitTermination(5, TimeUnit.SECONDS)).thenThrow(interruption);
+            BulkFlightClient client =
+                    new BulkFlightClient(parentAllocator, channel, Collections.emptyList(), ArrowCompressionType.None);
 
-        Assert.assertSame(interruption, failure);
-        Mockito.verify(childAllocator).close();
+            InterruptedException failure = null;
+            try {
+                client.close();
+                Assert.fail("Expected interrupted channel shutdown");
+            } catch (InterruptedException e) {
+                failure = e;
+            }
+
+            Assert.assertSame(interruption, failure);
+            Mockito.verify(childAllocator).close();
+            Assert.assertTrue(Thread.currentThread().isInterrupted());
+        } finally {
+            Thread.interrupted();
+        }
     }
 }

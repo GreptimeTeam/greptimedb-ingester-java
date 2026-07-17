@@ -16,6 +16,7 @@
 
 package io.greptime.rpc;
 
+import java.io.File;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -27,5 +28,24 @@ public class RpcOptionsTest {
         Assert.assertEquals(60, options.getKeepAliveTimeSeconds());
         Assert.assertEquals(3, options.getKeepAliveTimeoutSeconds());
         Assert.assertFalse(options.isKeepAliveWithoutCalls());
+    }
+
+    @Test
+    public void copyShouldHaveIndependentTlsOptions() {
+        TlsOptions tlsOptions = new TlsOptions();
+        tlsOptions.setRootCerts(new File("original.pem"));
+        RpcOptions original = RpcOptions.newDefault();
+        original.setTlsOptions(tlsOptions);
+
+        RpcOptions copied = original.copy();
+
+        Assert.assertNotSame(tlsOptions, copied.getTlsOptions());
+        Assert.assertEquals(
+                new File("original.pem"), copied.getTlsOptions().getRootCerts().get());
+
+        copied.getTlsOptions().setRootCerts(new File("copied.pem"));
+        Assert.assertEquals(
+                new File("original.pem"),
+                original.getTlsOptions().getRootCerts().get());
     }
 }

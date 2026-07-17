@@ -132,7 +132,7 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
         Schema arrowSchema = ArrowHelper.createSchema(schema);
         ArrowCompressionType compressionType = ArrowHelper.getArrowCompressionType(ctx);
 
-        BulkWriteManager manager = BulkWriteManager.createWithRpcOptions(
+        BulkWriteManager manager = createBulkWriteManager(
                 endpoint, allocatorInitReservation, allocatorMaxAllocation, compressionType, rpcOptions);
 
         // Creates the bulk write service
@@ -155,6 +155,16 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
             writer.tryUseZeroCopyWrite();
         }
         return new DefaultBulkStreamWriter(writer, schema, maxRequestsInFlight);
+    }
+
+    BulkWriteManager createBulkWriteManager(
+            Endpoint endpoint,
+            long allocatorInitReservation,
+            long allocatorMaxAllocation,
+            ArrowCompressionType compressionType,
+            RpcOptions rpcOptions) {
+        return BulkWriteManager.createWithRpcOptions(
+                endpoint, allocatorInitReservation, allocatorMaxAllocation, compressionType, rpcOptions);
     }
 
     @Override

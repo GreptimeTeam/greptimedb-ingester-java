@@ -110,6 +110,9 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         if (this.writeOptions != null) {
             opts.writeOptions = this.writeOptions.copy();
         }
+        if (this.bulkWriteOptions != null) {
+            opts.bulkWriteOptions = this.bulkWriteOptions.copy();
+        }
         return opts;
     }
 
@@ -161,6 +164,7 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         private RpcOptions rpcOptions = RpcOptions.newDefault();
         // GreptimeDB secure connection options
         private TlsOptions tlsOptions;
+        private boolean tlsOptionsConfigured;
         private int writeMaxRetries = DEFAULT_WRITE_MAX_RETRIES;
         // Write flow limit: maximum number of data points in-flight.
         private int maxInFlightWritePoints = DEFAULT_MAX_IN_FLIGHT_WRITE_POINTS;
@@ -261,6 +265,7 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
          */
         public Builder tlsOptions(TlsOptions tlsOptions) {
             this.tlsOptions = tlsOptions;
+            this.tlsOptionsConfigured = true;
             return this;
         }
 
@@ -412,17 +417,18 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
          * @return nice things
          */
         public GreptimeOptions build() {
-            // Set tls options to rpc options if tls options is not null
-            if (this.tlsOptions != null && this.rpcOptions != null) {
-                this.rpcOptions.setTlsOptions(this.tlsOptions);
+            RpcOptions effectiveRpcOptions = this.rpcOptions;
+            if (this.tlsOptionsConfigured && this.rpcOptions != null) {
+                effectiveRpcOptions = this.rpcOptions.copy();
+                effectiveRpcOptions.setTlsOptions(this.tlsOptions);
             }
             GreptimeOptions opts = new GreptimeOptions();
             opts.setEndpoints(this.endpoints);
-            opts.setRpcOptions(this.rpcOptions);
+            opts.setRpcOptions(effectiveRpcOptions);
             opts.setDatabase(this.database);
             opts.setRouterOptions(routerOptions());
             opts.setWriteOptions(writeOptions());
-            opts.setBulkWriteOptions(bulkWriteOptions());
+            opts.setBulkWriteOptions(bulkWriteOptions(effectiveRpcOptions));
             return GreptimeOptions.checkSelf(opts);
         }
 
@@ -447,13 +453,13 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
             return writeOpts;
         }
 
-        private BulkWriteOptions bulkWriteOptions() {
+        private BulkWriteOptions bulkWriteOptions(RpcOptions effectiveRpcOptions) {
             BulkWriteOptions bulkWriteOpts = new BulkWriteOptions();
             bulkWriteOpts.setDatabase(this.database);
             bulkWriteOpts.setAuthInfo(this.authInfo);
             bulkWriteOpts.setAsyncPool(this.asyncPool);
             bulkWriteOpts.setUseZeroCopyWrite(this.useZeroCopyWriteInBulkWrite);
-            bulkWriteOpts.setRpcOptions(this.rpcOptions == null ? null : this.rpcOptions.copy());
+            bulkWriteOpts.setRpcOptions(effectiveRpcOptions == null ? null : effectiveRpcOptions.copy());
             bulkWriteOpts.setTlsOptions(this.tlsOptions);
             return bulkWriteOpts;
         }

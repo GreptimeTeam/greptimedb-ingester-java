@@ -103,7 +103,9 @@ public class BulkWriteOptions implements Copiable<BulkWriteOptions> {
         if (this.rpcOptions != null) {
             opts.rpcOptions = this.rpcOptions.copy();
         }
-        opts.tlsOptions = this.tlsOptions;
+        if (this.tlsOptions != null) {
+            opts.tlsOptions = this.tlsOptions.copy();
+        }
         return opts;
     }
 

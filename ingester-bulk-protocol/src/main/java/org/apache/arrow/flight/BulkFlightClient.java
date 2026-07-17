@@ -444,7 +444,10 @@ public class BulkFlightClient implements AutoCloseable {
         Throwable failure = null;
         try {
             channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
-        } catch (InterruptedException | RuntimeException | Error closeFailure) {
+        } catch (InterruptedException closeFailure) {
+            failure = closeFailure;
+            Thread.currentThread().interrupt();
+        } catch (RuntimeException | Error closeFailure) {
             failure = closeFailure;
         }
 
