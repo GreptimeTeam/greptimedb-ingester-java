@@ -21,6 +21,7 @@ import io.greptime.common.Endpoint;
 import io.greptime.common.Keys;
 import io.greptime.common.util.Ensures;
 import io.greptime.common.util.MetricsUtil;
+import io.greptime.rpc.RpcOptions;
 import io.greptime.rpc.TlsOptions;
 import io.netty.util.internal.SystemPropertyUtil;
 import org.apache.arrow.flight.BulkFlightClient;
@@ -105,28 +106,89 @@ public class BulkWriteManager implements AutoCloseable {
             long allocatorMaxAllocation,
             ArrowCompressionType compressionType,
             TlsOptions tlsOptions) {
+        RpcOptions rpcOptions = RpcOptions.newDefault();
+        rpcOptions.setTlsOptions(tlsOptions);
+        return createWithRpcOptions(
+                endpoint, allocatorInitReservation, allocatorMaxAllocation, compressionType, rpcOptions);
+    }
+
+    /**
+     * Creates a bulk write manager using the supplied RPC channel options.
+     * Only the channel-related options {@code maxInboundMessageSize}, {@code flowControlWindow},
+     * {@code idleTimeoutSeconds}, {@code keepAliveTimeSeconds}, {@code keepAliveTimeoutSeconds},
+     * {@code keepAliveWithoutCalls}, and TLS apply to Bulk API. {@code defaultRpcTimeout},
+     * {@code useRpcSharedPool}, limiter options, and {@code enableMetricInterceptor} apply only to Regular API
+     * and have no effect here.
+     *
+     * @param endpoint the endpoint of the server
+     * @param allocatorInitReservation the initial space reservation (obtained from this allocator)
+     * @param allocatorMaxAllocation the maximum amount of space the new child allocator can allocate
+     * @param compressionType the compression type to use for arrow messages
+     * @param rpcOptions the RPC options containing channel and TLS configuration
+     * @return a BulkWriteManager instance
+     */
+    public static BulkWriteManager createWithRpcOptions(
+            Endpoint endpoint,
+            long allocatorInitReservation,
+            long allocatorMaxAllocation,
+            ArrowCompressionType compressionType,
+            RpcOptions rpcOptions) {
+        return createWithRpcOptions(
+                getRootAllocator(),
+                endpoint,
+                allocatorInitReservation,
+                allocatorMaxAllocation,
+                compressionType,
+                rpcOptions);
+    }
+
+    static BulkWriteManager createWithRpcOptions(
+            BufferAllocator parentAllocator,
+            Endpoint endpoint,
+            long allocatorInitReservation,
+            long allocatorMaxAllocation,
+            ArrowCompressionType compressionType,
+            RpcOptions rpcOptions) {
         Location location = Location.forGrpcInsecure(endpoint.getAddr(), endpoint.getPort());
 
         String allocatorName = String.format("BufferAllocator(%s)", location);
         BufferAllocator allocator =
-                getRootAllocator().newChildAllocator(allocatorName, allocatorInitReservation, allocatorMaxAllocation);
+                parentAllocator.newChildAllocator(allocatorName, allocatorInitReservation, allocatorMaxAllocation);
         Ensures.ensureNonNull(
                 allocator,
                 "Failed to create child buffer allocator, initReservation: %s, maxAllocation: %s",
                 allocatorInitReservation,
                 allocatorMaxAllocation);
 
-        BulkFlightClient flightClient = BulkFlightClient.builder()
-                .location(location)
-                .allocator(allocator)
-                .compressionType(compressionType)
-                .tlsOptions(tlsOptions)
-                .build();
-        BulkWriteManager client = new BulkWriteManager(endpoint, flightClient, allocator);
-
-        LOG.info("BulkWriteManager created: {}", client);
-
-        return client;
+        BulkFlightClient flightClient = null;
+        try {
+            flightClient = BulkFlightClient.builder()
+                    .location(location)
+                    .allocator(allocator)
+                    .compressionType(compressionType)
+                    .rpcOptions(rpcOptions)
+                    .build();
+            BulkWriteManager client = new BulkWriteManager(endpoint, flightClient, allocator);
+            LOG.info("BulkWriteManager created: {}", client);
+            return client;
+        } catch (RuntimeException | Error failure) {
+            if (flightClient != null) {
+                try {
+                    flightClient.close();
+                } catch (InterruptedException closeFailure) {
+                    Thread.currentThread().interrupt();
+                    failure.addSuppressed(closeFailure);
+                } catch (RuntimeException | Error closeFailure) {
+                    failure.addSuppressed(closeFailure);
+                }
+            }
+            try {
+                allocator.close();
+            } catch (RuntimeException | Error closeFailure) {
+                failure.addSuppressed(closeFailure);
+            }
+            throw failure;
+        }
     }
 
     /**

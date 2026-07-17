@@ -218,7 +218,10 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         /**
          * Sets the RPC options. In general, the default configuration is fine.
          *
-         * <p>This configuration only applies to Regular API, not to Bulk API.
+         * <p>The channel-related options {@code maxInboundMessageSize}, {@code flowControlWindow},
+         * {@code idleTimeoutSeconds}, {@code keepAliveTimeSeconds}, {@code keepAliveTimeoutSeconds}, and
+         * {@code keepAliveWithoutCalls} apply to both Regular API and Bulk API. {@code useRpcSharedPool},
+         * {@code defaultRpcTimeout}, limiter options, and {@code enableMetricInterceptor} apply only to Regular API.
          *
          * <p>Key parameters include:
          * <ul>
@@ -227,7 +230,8 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
          *   <li>maxInboundMessageSize: Maximum inbound message size (default: 256MB)</li>
          *   <li>flowControlWindow: Flow control window size (default: 256MB)</li>
          *   <li>idleTimeoutSeconds: Idle timeout duration (default: 5 minutes)</li>
-         *   <li>keepAliveTimeSeconds: Keep-alive ping interval (default: disabled)</li>
+         *   <li>keepAliveTimeSeconds: Duration without read activity before sending a keep-alive ping
+         *       (default: 60 seconds)</li>
          *   <li>limitKind: gRPC layer concurrency limit algorithm (default: None)</li>
          * </ul>
          *
@@ -242,6 +246,7 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         /**
          * Set `TlsOptions` to use secure connection between client and server. Set to `null` to use
          * plaintext connection instead.
+         * This configuration applies to both Regular API and Bulk API.
          *
          * <p>Key parameters include:
          * <ul>
@@ -448,6 +453,7 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
             bulkWriteOpts.setAuthInfo(this.authInfo);
             bulkWriteOpts.setAsyncPool(this.asyncPool);
             bulkWriteOpts.setUseZeroCopyWrite(this.useZeroCopyWriteInBulkWrite);
+            bulkWriteOpts.setRpcOptions(this.rpcOptions == null ? null : this.rpcOptions.copy());
             bulkWriteOpts.setTlsOptions(this.tlsOptions);
             return bulkWriteOpts;
         }

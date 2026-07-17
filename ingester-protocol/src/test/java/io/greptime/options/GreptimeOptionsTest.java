@@ -39,6 +39,12 @@ public class GreptimeOptionsTest {
         String[] endpoints = {"127.0.0.1:4001"};
         Executor asyncPool = command -> System.out.println("asyncPool");
         RpcOptions rpcOptions = RpcOptions.newDefault();
+        rpcOptions.setMaxInboundMessageSize(1024);
+        rpcOptions.setFlowControlWindow(2048);
+        rpcOptions.setIdleTimeoutSeconds(30);
+        rpcOptions.setKeepAliveTimeSeconds(40);
+        rpcOptions.setKeepAliveTimeoutSeconds(5);
+        rpcOptions.setKeepAliveWithoutCalls(true);
         int writeMaxRetries = 2;
         int maxInFlightWritePoints = 9990;
         LimitedPolicy limitedPolicy = new LimitedPolicy.DiscardPolicy();
@@ -87,6 +93,30 @@ public class GreptimeOptionsTest {
         Assert.assertEquals(
                 defaultStreamMaxWritePointsPerSecond, writeOptions.getDefaultStreamMaxWritePointsPerSecond());
         Assert.assertEquals(authInfo, writeOptions.getAuthInfo());
+
+        BulkWriteOptions bulkWriteOptions = opts.getBulkWriteOptions();
+        Assert.assertNotSame(rpcOptions, bulkWriteOptions.getRpcOptions());
+        assertChannelOptions(rpcOptions, bulkWriteOptions.getRpcOptions());
+
+        BulkWriteOptions copiedBulkWriteOptions = bulkWriteOptions.copy();
+        Assert.assertNotSame(bulkWriteOptions.getRpcOptions(), copiedBulkWriteOptions.getRpcOptions());
+        assertChannelOptions(bulkWriteOptions.getRpcOptions(), copiedBulkWriteOptions.getRpcOptions());
+    }
+
+    @Test
+    public void testBulkWriteOptionsCopyWithoutRpcOptions() {
+        BulkWriteOptions copied = new BulkWriteOptions().copy();
+
+        Assert.assertNull(copied.getRpcOptions());
+    }
+
+    private void assertChannelOptions(RpcOptions expected, RpcOptions actual) {
+        Assert.assertEquals(expected.getMaxInboundMessageSize(), actual.getMaxInboundMessageSize());
+        Assert.assertEquals(expected.getFlowControlWindow(), actual.getFlowControlWindow());
+        Assert.assertEquals(expected.getIdleTimeoutSeconds(), actual.getIdleTimeoutSeconds());
+        Assert.assertEquals(expected.getKeepAliveTimeSeconds(), actual.getKeepAliveTimeSeconds());
+        Assert.assertEquals(expected.getKeepAliveTimeoutSeconds(), actual.getKeepAliveTimeoutSeconds());
+        Assert.assertEquals(expected.isKeepAliveWithoutCalls(), actual.isKeepAliveWithoutCalls());
     }
 
     private Router<Void, Endpoint> createTestRouter() {
