@@ -59,19 +59,20 @@ GreptimeOptions options = GreptimeOptions.newBuilder(
 
 ### 3. RPC 配置
 
-以下配置只针对 Regular API，不对 Bulk API 生效
-
 #### rpcOptions (RPC 选项)
 - **类型**: `RpcOptions`
 - **默认值**: `RpcOptions.newDefault()`
 - **描述**: RPC 连接相关配置
+- **API 适用范围**:
+  - 通道相关设置 `maxInboundMessageSize`、`flowControlWindow`、`idleTimeoutSeconds`、`keepAliveTimeSeconds`、`keepAliveTimeoutSeconds` 和 `keepAliveWithoutCalls` 对 Regular API 和 Bulk API 均生效
+  - `useRpcSharedPool`、`defaultRpcTimeout`、所有限流器设置和 `enableMetricInterceptor` 仅对 Regular API 生效
 - **主要参数**:
   - `useRpcSharedPool`: 是否使用全局 RPC 共享池，默认 false，即默认只使用 gRPC 内部的 IO 线程来处理所有任务，建议从默认值开始你的应用
   - `defaultRpcTimeout`: RPC 请求超时时间，默认 60000ms（60 秒）
   - `maxInboundMessageSize`: 最大入站消息大小，默认 256 MB
   - `flowControlWindow`: 流控窗口大小，默认 256 MB
   - `idleTimeoutSeconds`: 空闲超时时间，默认 5 分钟
-  - `keepAliveTimeSeconds`: 发送保活 ping 前的无读取活动时间，默认 Long.MAX_VALUE（禁用）
+  - `keepAliveTimeSeconds`: 发送保活 ping 前的无读取活动时间，默认 60 秒
   - `keepAliveTimeoutSeconds`: 保活 ping 后等待读取活动的时间，默认 3 秒
   - `keepAliveWithoutCalls`: 无未完成 RPC 时是否执行保活，默认 false
   - `limitKind`: gRPC 层的并发限制算法，默认 None，没有特殊需求不建议开启，建议使用 SDK 上层的限流机制（可继续阅读该文档，下面会提到）
@@ -89,17 +90,19 @@ GreptimeOptions options = GreptimeOptions.newBuilder(
 
 **示例**:
 ```java
-RpcOptions rpcOpts = RpcOptions.newDefault()
-    .setDefaultRpcTimeout(30000)  // 30 秒超时
-    .setMaxInboundMessageSize(128 * 1024 * 1024)  // 128 MB
-    .setKeepAliveTimeSeconds(30)  // 每 30 秒启用保活
-    .setKeepAliveTimeoutSeconds(5)  // 5 秒保活超时
-    .setKeepAliveWithoutCalls(true)  // 即使没有调用也保活
-    .setLimitKind(RpcOptions.LimitKind.Vegas)  // 使用 Vegas 限流器
-    .setInitialLimit(32)  // 从 32 个并发请求开始
-    .setMaxLimit(512);  // 最大 512 个并发请求
-    
-.rpcOptions(rpcOpts)
+RpcOptions rpcOpts = RpcOptions.newDefault();
+rpcOpts.setDefaultRpcTimeout(30000);  // 30 秒超时
+rpcOpts.setMaxInboundMessageSize(128 * 1024 * 1024);  // 128 MB
+rpcOpts.setKeepAliveTimeSeconds(60);  // 仅在服务端负责人允许时使用更短间隔
+rpcOpts.setKeepAliveTimeoutSeconds(5);  // 5 秒保活超时
+rpcOpts.setKeepAliveWithoutCalls(false);  // 仅在服务端负责人允许时启用空闲保活
+rpcOpts.setLimitKind(RpcOptions.LimitKind.Vegas);  // 使用 Vegas 限流器
+rpcOpts.setInitialLimit(32);  // 从 32 个并发请求开始
+rpcOpts.setMaxLimit(512);  // 最大 512 个并发请求
+
+GreptimeOptions options = GreptimeOptions.newBuilder("127.0.0.1:4001", "public")
+    .rpcOptions(rpcOpts)
+    .build();
 ```
 
 ### 4. TLS 安全配置
@@ -107,7 +110,7 @@ RpcOptions rpcOpts = RpcOptions.newDefault()
 #### tlsOptions (TLS 选项)
 - **类型**: `TlsOptions`
 - **默认值**: null (使用明文连接)
-- **描述**: 启用客户端和服务器之间的安全连接
+- **描述**: 为 Regular API 和 Bulk API 启用客户端和服务器之间的安全连接
 - **主要参数**:
   - `clientCertChain`: 客户端证书链文件
   - `privateKey`: 私钥文件

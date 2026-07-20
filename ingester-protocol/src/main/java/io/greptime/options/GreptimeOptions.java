@@ -110,6 +110,9 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         if (this.writeOptions != null) {
             opts.writeOptions = this.writeOptions.copy();
         }
+        if (this.bulkWriteOptions != null) {
+            opts.bulkWriteOptions = this.bulkWriteOptions.copy();
+        }
         return opts;
     }
 
@@ -161,6 +164,7 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         private RpcOptions rpcOptions = RpcOptions.newDefault();
         // GreptimeDB secure connection options
         private TlsOptions tlsOptions;
+        private boolean tlsOptionsConfigured;
         private int writeMaxRetries = DEFAULT_WRITE_MAX_RETRIES;
         // Write flow limit: maximum number of data points in-flight.
         private int maxInFlightWritePoints = DEFAULT_MAX_IN_FLIGHT_WRITE_POINTS;
@@ -218,7 +222,10 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         /**
          * Sets the RPC options. In general, the default configuration is fine.
          *
-         * <p>This configuration only applies to Regular API, not to Bulk API.
+         * <p>The channel-related options {@code maxInboundMessageSize}, {@code flowControlWindow},
+         * {@code idleTimeoutSeconds}, {@code keepAliveTimeSeconds}, {@code keepAliveTimeoutSeconds}, and
+         * {@code keepAliveWithoutCalls} apply to both Regular API and Bulk API. {@code useRpcSharedPool},
+         * {@code defaultRpcTimeout}, limiter options, and {@code enableMetricInterceptor} apply only to Regular API.
          *
          * <p>Key parameters include:
          * <ul>
@@ -227,7 +234,8 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
          *   <li>maxInboundMessageSize: Maximum inbound message size (default: 256MB)</li>
          *   <li>flowControlWindow: Flow control window size (default: 256MB)</li>
          *   <li>idleTimeoutSeconds: Idle timeout duration (default: 5 minutes)</li>
-         *   <li>keepAliveTimeSeconds: Keep-alive ping interval (default: disabled)</li>
+         *   <li>keepAliveTimeSeconds: Duration without read activity before sending a keep-alive ping
+         *       (default: 60 seconds)</li>
          *   <li>limitKind: gRPC layer concurrency limit algorithm (default: None)</li>
          * </ul>
          *
@@ -242,6 +250,7 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
         /**
          * Set `TlsOptions` to use secure connection between client and server. Set to `null` to use
          * plaintext connection instead.
+         * This configuration applies to both Regular API and Bulk API.
          *
          * <p>Key parameters include:
          * <ul>
@@ -256,6 +265,7 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
          */
         public Builder tlsOptions(TlsOptions tlsOptions) {
             this.tlsOptions = tlsOptions;
+            this.tlsOptionsConfigured = true;
             return this;
         }
 
@@ -407,17 +417,18 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
          * @return nice things
          */
         public GreptimeOptions build() {
-            // Set tls options to rpc options if tls options is not null
-            if (this.tlsOptions != null && this.rpcOptions != null) {
-                this.rpcOptions.setTlsOptions(this.tlsOptions);
+            RpcOptions effectiveRpcOptions = this.rpcOptions;
+            if (this.tlsOptionsConfigured && this.rpcOptions != null) {
+                effectiveRpcOptions = this.rpcOptions.copy();
+                effectiveRpcOptions.setTlsOptions(this.tlsOptions);
             }
             GreptimeOptions opts = new GreptimeOptions();
             opts.setEndpoints(this.endpoints);
-            opts.setRpcOptions(this.rpcOptions);
+            opts.setRpcOptions(effectiveRpcOptions);
             opts.setDatabase(this.database);
             opts.setRouterOptions(routerOptions());
             opts.setWriteOptions(writeOptions());
-            opts.setBulkWriteOptions(bulkWriteOptions());
+            opts.setBulkWriteOptions(bulkWriteOptions(effectiveRpcOptions));
             return GreptimeOptions.checkSelf(opts);
         }
 
@@ -442,12 +453,13 @@ public class GreptimeOptions implements Copiable<GreptimeOptions> {
             return writeOpts;
         }
 
-        private BulkWriteOptions bulkWriteOptions() {
+        private BulkWriteOptions bulkWriteOptions(RpcOptions effectiveRpcOptions) {
             BulkWriteOptions bulkWriteOpts = new BulkWriteOptions();
             bulkWriteOpts.setDatabase(this.database);
             bulkWriteOpts.setAuthInfo(this.authInfo);
             bulkWriteOpts.setAsyncPool(this.asyncPool);
             bulkWriteOpts.setUseZeroCopyWrite(this.useZeroCopyWriteInBulkWrite);
+            bulkWriteOpts.setRpcOptions(effectiveRpcOptions == null ? null : effectiveRpcOptions.copy());
             bulkWriteOpts.setTlsOptions(this.tlsOptions);
             return bulkWriteOpts;
         }

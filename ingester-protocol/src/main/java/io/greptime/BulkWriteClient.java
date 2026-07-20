@@ -35,6 +35,7 @@ import io.greptime.models.Table;
 import io.greptime.models.TableSchema;
 import io.greptime.options.BulkWriteOptions;
 import io.greptime.rpc.Context;
+import io.greptime.rpc.RpcOptions;
 import io.greptime.rpc.TlsOptions;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -118,13 +119,21 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
             int maxRequestsInFlight,
             Context ctx) {
         // Creates the bulk write manager
-        TlsOptions tlsOptions = this.opts.getTlsOptions();
+        RpcOptions rpcOptions = this.opts.getRpcOptions();
+        if (rpcOptions == null) {
+            rpcOptions = RpcOptions.newDefault();
+        }
+        TlsOptions legacyTlsOptions = this.opts.getTlsOptions();
+        if (legacyTlsOptions != null) {
+            rpcOptions = rpcOptions.copy();
+            rpcOptions.setTlsOptions(legacyTlsOptions);
+        }
 
         Schema arrowSchema = ArrowHelper.createSchema(schema);
         ArrowCompressionType compressionType = ArrowHelper.getArrowCompressionType(ctx);
 
-        BulkWriteManager manager = BulkWriteManager.create(
-                endpoint, allocatorInitReservation, allocatorMaxAllocation, compressionType, tlsOptions);
+        BulkWriteManager manager = createBulkWriteManager(
+                endpoint, allocatorInitReservation, allocatorMaxAllocation, compressionType, rpcOptions);
 
         // Creates the bulk write service
         String database = this.opts.getDatabase();
@@ -146,6 +155,16 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
             writer.tryUseZeroCopyWrite();
         }
         return new DefaultBulkStreamWriter(writer, schema, maxRequestsInFlight);
+    }
+
+    BulkWriteManager createBulkWriteManager(
+            Endpoint endpoint,
+            long allocatorInitReservation,
+            long allocatorMaxAllocation,
+            ArrowCompressionType compressionType,
+            RpcOptions rpcOptions) {
+        return BulkWriteManager.createWithRpcOptions(
+                endpoint, allocatorInitReservation, allocatorMaxAllocation, compressionType, rpcOptions);
     }
 
     @Override

@@ -59,19 +59,20 @@ GreptimeOptions options = GreptimeOptions.newBuilder(
 
 ### 3. RPC Configuration
 
-The following configurations only apply to Regular API, not to Bulk API
-
 #### rpcOptions (RPC Options)
 - **Type**: `RpcOptions`
 - **Default**: `RpcOptions.newDefault()`
 - **Description**: RPC connection related configuration
+- **API Scope**:
+  - The channel-related settings `maxInboundMessageSize`, `flowControlWindow`, `idleTimeoutSeconds`, `keepAliveTimeSeconds`, `keepAliveTimeoutSeconds`, and `keepAliveWithoutCalls` apply to both Regular API and Bulk API
+  - `useRpcSharedPool`, `defaultRpcTimeout`, all limiter settings, and `enableMetricInterceptor` apply only to Regular API
 - **Key Parameters**:
   - `useRpcSharedPool`: Whether to use global RPC shared pool, default false. By default, only gRPC internal IO threads are used to handle all tasks. It's recommended to start with the default value for your application
   - `defaultRpcTimeout`: RPC request timeout, default 60000ms (60 seconds)
   - `maxInboundMessageSize`: Maximum inbound message size, default 256MB
   - `flowControlWindow`: Flow control window size, default 256MB
   - `idleTimeoutSeconds`: Idle timeout duration, default 5 minutes
-  - `keepAliveTimeSeconds`: Time without read activity before sending keep-alive ping, default Long.MAX_VALUE (disabled)
+  - `keepAliveTimeSeconds`: Time without read activity before sending keep-alive ping, default 60 seconds
   - `keepAliveTimeoutSeconds`: Time waiting for read activity after keep-alive ping, default 3 seconds
   - `keepAliveWithoutCalls`: Whether to perform keep-alive when no outstanding RPC, default false
   - `limitKind`: gRPC layer concurrency limit algorithm, default None. Not recommended to enable without special requirements, suggest using SDK upper-layer flow control mechanisms (continue reading this document, mentioned below)
@@ -89,17 +90,19 @@ The following configurations only apply to Regular API, not to Bulk API
 
 **Example**:
 ```java
-RpcOptions rpcOpts = RpcOptions.newDefault()
-    .setDefaultRpcTimeout(30000)  // 30 seconds timeout
-    .setMaxInboundMessageSize(128 * 1024 * 1024)  // 128MB
-    .setKeepAliveTimeSeconds(30)  // Enable keep-alive every 30 seconds
-    .setKeepAliveTimeoutSeconds(5)  // 5 seconds keep-alive timeout
-    .setKeepAliveWithoutCalls(true)  // Keep-alive even without calls
-    .setLimitKind(RpcOptions.LimitKind.Vegas)  // Use Vegas flow limiter
-    .setInitialLimit(32)  // Start with 32 concurrent requests
-    .setMaxLimit(512);  // Max 512 concurrent requests
-    
-.rpcOptions(rpcOpts)
+RpcOptions rpcOpts = RpcOptions.newDefault();
+rpcOpts.setDefaultRpcTimeout(30000);  // 30 seconds timeout
+rpcOpts.setMaxInboundMessageSize(128 * 1024 * 1024);  // 128MB
+rpcOpts.setKeepAliveTimeSeconds(60);  // Use shorter intervals only with server-owner approval
+rpcOpts.setKeepAliveTimeoutSeconds(5);  // 5 seconds keep-alive timeout
+rpcOpts.setKeepAliveWithoutCalls(false);  // Enable idle keep-alive only with server-owner approval
+rpcOpts.setLimitKind(RpcOptions.LimitKind.Vegas);  // Use Vegas flow limiter
+rpcOpts.setInitialLimit(32);  // Start with 32 concurrent requests
+rpcOpts.setMaxLimit(512);  // Max 512 concurrent requests
+
+GreptimeOptions options = GreptimeOptions.newBuilder("127.0.0.1:4001", "public")
+    .rpcOptions(rpcOpts)
+    .build();
 ```
 
 ### 4. TLS Security Configuration
@@ -107,7 +110,7 @@ RpcOptions rpcOpts = RpcOptions.newDefault()
 #### tlsOptions (TLS Options)
 - **Type**: `TlsOptions`
 - **Default**: null (uses plaintext connection)
-- **Description**: Enable secure connection between client and server
+- **Description**: Enable secure connections for both Regular API and Bulk API
 - **Key Parameters**:
   - `clientCertChain`: Client certificate chain file
   - `privateKey`: Private key file
@@ -231,4 +234,3 @@ AuthInfo auth = new AuthInfo("username", "password");
 ```java
 .router(customRouter)
 ```
-

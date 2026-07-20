@@ -61,14 +61,14 @@ id=1
 version=0.14.3
 endpoints=[127.0.0.1:4001]
 database=public
-rpcOptions=RpcOptions{useRpcSharedPool=false, defaultRpcTimeout=10000, maxInboundMessageSize=268435456, flowControlWindow=268435456, idleTimeoutSeconds=300, keepAliveTimeSeconds=9223372036854775807, keepAliveTimeoutSeconds=3, keepAliveWithoutCalls=false, limitKind=None, initialLimit=64, maxLimit=1024, longRttWindow=100, smoothing=0.2, blockOnLimit=false, logOnLimitChange=true, enableMetricInterceptor=false, tlsOptions=null}
+rpcOptions=RpcOptions{useRpcSharedPool=false, defaultRpcTimeout=10000, maxInboundMessageSize=268435456, flowControlWindow=268435456, idleTimeoutSeconds=300, keepAliveTimeSeconds=60, keepAliveTimeoutSeconds=3, keepAliveWithoutCalls=false, limitKind=None, initialLimit=64, maxLimit=1024, longRttWindow=100, smoothing=0.2, blockOnLimit=false, logOnLimitChange=true, enableMetricInterceptor=false, tlsOptions=null}
 
 --- RouterClient ---
 opts=RouterOptions{rpcClient=io.greptime.rpc.GrpcClient@55b699ef, endpoints=[127.0.0.1:4001], refreshPeriodSeconds=600, checkHealthTimeoutMs=1000, router=null}
 
 --- GrpcClient ---
 started=true
-opts=RpcOptions{useRpcSharedPool=false, defaultRpcTimeout=10000, maxInboundMessageSize=268435456, flowControlWindow=268435456, idleTimeoutSeconds=300, keepAliveTimeSeconds=9223372036854775807, keepAliveTimeoutSeconds=3, keepAliveWithoutCalls=false, limitKind=None, initialLimit=64, maxLimit=1024, longRttWindow=100, smoothing=0.2, blockOnLimit=false, logOnLimitChange=true, enableMetricInterceptor=false, tlsOptions=null}
+opts=RpcOptions{useRpcSharedPool=false, defaultRpcTimeout=10000, maxInboundMessageSize=268435456, flowControlWindow=268435456, idleTimeoutSeconds=300, keepAliveTimeSeconds=60, keepAliveTimeoutSeconds=3, keepAliveWithoutCalls=false, limitKind=None, initialLimit=64, maxLimit=1024, longRttWindow=100, smoothing=0.2, blockOnLimit=false, logOnLimitChange=true, enableMetricInterceptor=false, tlsOptions=null}
 connectionObservers=[io.greptime.GreptimeDB$RpcConnectionObserver@625d44db]
 asyncPool=DirectExecutor{name='rpc_direct_pool'}
 interceptors=[io.greptime.rpc.interceptors.ContextToHeadersInterceptor@275fd6f4]

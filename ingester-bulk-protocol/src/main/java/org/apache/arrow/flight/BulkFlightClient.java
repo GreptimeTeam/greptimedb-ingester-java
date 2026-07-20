@@ -19,6 +19,7 @@ package org.apache.arrow.flight;
 import com.codahale.metrics.Timer;
 import io.greptime.ArrowCompressionType;
 import io.greptime.common.util.MetricsUtil;
+import io.greptime.rpc.RpcOptions;
 import io.greptime.rpc.TlsOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -88,13 +89,18 @@ public class BulkFlightClient implements AutoCloseable {
         this.channel = channel;
         this.middleware = middleware;
         this.compressionType = compressionType;
-        ClientInterceptor[] interceptors = new ClientInterceptor[] {new ClientInterceptorAdapter(middleware)};
+        try {
+            ClientInterceptor[] interceptors = new ClientInterceptor[] {new ClientInterceptorAdapter(middleware)};
 
-        // Create a channel with interceptors pre-applied for DoGet and DoPut
-        Channel interceptedChannel = ClientInterceptors.intercept(channel, interceptors);
+            // Create a channel with interceptors pre-applied for DoGet and DoPut
+            Channel interceptedChannel = ClientInterceptors.intercept(channel, interceptors);
 
-        this.asyncStub = FlightServiceGrpc.newStub(interceptedChannel);
-        this.doPutDescriptor = FlightBindingService.getDoPutDescriptor(this.allocator);
+            this.asyncStub = FlightServiceGrpc.newStub(interceptedChannel);
+            this.doPutDescriptor = FlightBindingService.getDoPutDescriptor(this.allocator);
+        } catch (RuntimeException | Error failure) {
+            closeAllocator(this.allocator, failure);
+            throw failure;
+        }
     }
 
     /**
@@ -435,8 +441,34 @@ public class BulkFlightClient implements AutoCloseable {
      * Shut down this client.
      */
     public void close() throws InterruptedException {
-        channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
-        allocator.close();
+        Throwable failure = null;
+        try {
+            channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+        } catch (InterruptedException closeFailure) {
+            failure = closeFailure;
+            Thread.currentThread().interrupt();
+        } catch (RuntimeException | Error closeFailure) {
+            failure = closeFailure;
+        }
+
+        try {
+            allocator.close();
+        } catch (RuntimeException | Error closeFailure) {
+            if (failure == null) {
+                throw closeFailure;
+            }
+            failure.addSuppressed(closeFailure);
+        }
+
+        if (failure instanceof InterruptedException) {
+            throw (InterruptedException) failure;
+        }
+        if (failure instanceof RuntimeException) {
+            throw (RuntimeException) failure;
+        }
+        if (failure instanceof Error) {
+            throw (Error) failure;
+        }
     }
 
     /**
@@ -461,9 +493,10 @@ public class BulkFlightClient implements AutoCloseable {
     public static final class Builder {
         private BufferAllocator allocator;
         private Location location;
-        private int maxInboundMessageSize = FlightServer.MAX_GRPC_MESSAGE_SIZE;
+        private Integer maxInboundMessageSize;
         private List<FlightClientMiddleware.Factory> middleware = new ArrayList<>();
         private ArrowCompressionType compressionType = ArrowCompressionType.None;
+        private RpcOptions rpcOptions = RpcOptions.newDefault();
         private TlsOptions tlsOptions;
 
         private Builder() {}
@@ -500,9 +533,54 @@ public class BulkFlightClient implements AutoCloseable {
             return this;
         }
 
+        public Builder rpcOptions(RpcOptions rpcOptions) {
+            this.rpcOptions = Preconditions.checkNotNull(rpcOptions).copy();
+            return this;
+        }
+
         public Builder tlsOptions(TlsOptions tlsOptions) {
             this.tlsOptions = tlsOptions;
             return this;
+        }
+
+        NettyChannelBuilder configureChannel(NettyChannelBuilder builder) {
+            TlsOptions resolvedTlsOptions = this.tlsOptions != null ? this.tlsOptions : this.rpcOptions.getTlsOptions();
+            if (resolvedTlsOptions != null) {
+                builder.useTransportSecurity();
+                try {
+                    SslContextBuilder sslContextBuilder = GrpcSslContexts.forClient();
+                    Optional<File> clientCertChain = resolvedTlsOptions.getClientCertChain();
+                    Optional<File> privateKey = resolvedTlsOptions.getPrivateKey();
+                    Optional<String> privateKeyPassword = resolvedTlsOptions.getPrivateKeyPassword();
+
+                    if (clientCertChain.isPresent() && privateKey.isPresent()) {
+                        if (privateKeyPassword.isPresent()) {
+                            sslContextBuilder.keyManager(
+                                    clientCertChain.get(), privateKey.get(), privateKeyPassword.get());
+                        } else {
+                            sslContextBuilder.keyManager(clientCertChain.get(), privateKey.get());
+                        }
+                    }
+
+                    resolvedTlsOptions.getRootCerts().ifPresent(sslContextBuilder::trustManager);
+                    builder.sslContext(sslContextBuilder.build());
+                } catch (SSLException e) {
+                    throw new RuntimeException("Failed to configure SslContext", e);
+                }
+            } else {
+                builder.usePlaintext();
+            }
+
+            int resolvedMaxInboundMessageSize = this.maxInboundMessageSize != null
+                    ? this.maxInboundMessageSize
+                    : this.rpcOptions.getMaxInboundMessageSize();
+            return builder.maxTraceEvents(MAX_CHANNEL_TRACE_EVENTS)
+                    .maxInboundMessageSize(resolvedMaxInboundMessageSize)
+                    .flowControlWindow(this.rpcOptions.getFlowControlWindow())
+                    .idleTimeout(this.rpcOptions.getIdleTimeoutSeconds(), TimeUnit.SECONDS)
+                    .keepAliveTime(this.rpcOptions.getKeepAliveTimeSeconds(), TimeUnit.SECONDS)
+                    .keepAliveTimeout(this.rpcOptions.getKeepAliveTimeoutSeconds(), TimeUnit.SECONDS)
+                    .keepAliveWithoutCalls(this.rpcOptions.isKeepAliveWithoutCalls());
         }
 
         /**
@@ -523,34 +601,29 @@ public class BulkFlightClient implements AutoCloseable {
                             "Scheme is not supported: " + this.location.getUri().getScheme());
             }
 
-            if (this.tlsOptions != null) {
-                builder.useTransportSecurity();
+            configureChannel(builder);
+            return build(builder.build());
+        }
+
+        BulkFlightClient build(ManagedChannel channel) {
+            try {
+                return new BulkFlightClient(this.allocator, channel, this.middleware, this.compressionType);
+            } catch (RuntimeException | Error failure) {
                 try {
-                    SslContextBuilder sslContextBuilder = GrpcSslContexts.forClient();
-                    Optional<File> clientCertChain = this.tlsOptions.getClientCertChain();
-                    Optional<File> privateKey = this.tlsOptions.getPrivateKey();
-                    Optional<String> privateKeyPassword = this.tlsOptions.getPrivateKeyPassword();
-
-                    if (clientCertChain.isPresent() && privateKey.isPresent()) {
-                        if (privateKeyPassword.isPresent()) {
-                            sslContextBuilder.keyManager(
-                                    clientCertChain.get(), privateKey.get(), privateKeyPassword.get());
-                        } else {
-                            sslContextBuilder.keyManager(clientCertChain.get(), privateKey.get());
-                        }
-                    }
-
-                    this.tlsOptions.getRootCerts().ifPresent(sslContextBuilder::trustManager);
-                    builder.sslContext(sslContextBuilder.build());
-                } catch (SSLException e) {
-                    throw new RuntimeException("Failed to configure SslContext", e);
+                    channel.shutdownNow();
+                } catch (RuntimeException | Error closeFailure) {
+                    failure.addSuppressed(closeFailure);
                 }
-            } else {
-                builder.usePlaintext();
+                throw failure;
             }
+        }
+    }
 
-            builder.maxTraceEvents(MAX_CHANNEL_TRACE_EVENTS).maxInboundMessageSize(this.maxInboundMessageSize);
-            return new BulkFlightClient(this.allocator, builder.build(), this.middleware, this.compressionType);
+    private static void closeAllocator(BufferAllocator allocator, Throwable failure) {
+        try {
+            allocator.close();
+        } catch (RuntimeException | Error closeFailure) {
+            failure.addSuppressed(closeFailure);
         }
     }
 

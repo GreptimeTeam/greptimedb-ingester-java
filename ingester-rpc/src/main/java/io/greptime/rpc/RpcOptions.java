@@ -45,12 +45,12 @@ public class RpcOptions implements Copiable<RpcOptions> {
      */
     private long idleTimeoutSeconds = TimeUnit.MINUTES.toSeconds(5);
 
-    // --- keep-alive options: default will disable keep-alive
+    // --- keep-alive options: default sends a ping after 60 seconds without read activity while an RPC is outstanding
 
     /**
      * Sets the time without read activity before sending a keep-alive ping.
      */
-    private long keepAliveTimeSeconds = Long.MAX_VALUE;
+    private long keepAliveTimeSeconds = 60;
 
     /**
      * Sets the time waiting for read activity after sending a keep-alive ping.
@@ -65,7 +65,7 @@ public class RpcOptions implements Copiable<RpcOptions> {
      */
     private boolean keepAliveWithoutCalls = false;
 
-    // --- keep-alive options: default will disable keep-alive
+    // --- limiter options
 
     private LimitKind limitKind = LimitKind.None;
 
@@ -259,7 +259,9 @@ public class RpcOptions implements Copiable<RpcOptions> {
         opts.blockOnLimit = this.blockOnLimit;
         opts.logOnLimitChange = this.logOnLimitChange;
         opts.enableMetricInterceptor = this.enableMetricInterceptor;
-        opts.tlsOptions = this.tlsOptions;
+        if (this.tlsOptions != null) {
+            opts.tlsOptions = this.tlsOptions.copy();
+        }
         return opts;
     }
 

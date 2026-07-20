@@ -19,6 +19,7 @@ package io.greptime.options;
 import io.greptime.RouterClient;
 import io.greptime.common.Copiable;
 import io.greptime.models.AuthInfo;
+import io.greptime.rpc.RpcOptions;
 import io.greptime.rpc.TlsOptions;
 import java.util.concurrent.Executor;
 
@@ -31,6 +32,7 @@ public class BulkWriteOptions implements Copiable<BulkWriteOptions> {
     private RouterClient routerClient;
     private Executor asyncPool;
     private boolean useZeroCopyWrite;
+    private RpcOptions rpcOptions;
     // GreptimeDB secure connection options
     private TlsOptions tlsOptions;
 
@@ -74,6 +76,14 @@ public class BulkWriteOptions implements Copiable<BulkWriteOptions> {
         this.useZeroCopyWrite = useZeroCopyWrite;
     }
 
+    public RpcOptions getRpcOptions() {
+        return rpcOptions;
+    }
+
+    public void setRpcOptions(RpcOptions rpcOptions) {
+        this.rpcOptions = rpcOptions;
+    }
+
     public TlsOptions getTlsOptions() {
         return tlsOptions;
     }
@@ -90,7 +100,12 @@ public class BulkWriteOptions implements Copiable<BulkWriteOptions> {
         opts.routerClient = this.routerClient;
         opts.asyncPool = this.asyncPool;
         opts.useZeroCopyWrite = this.useZeroCopyWrite;
-        opts.tlsOptions = this.tlsOptions;
+        if (this.rpcOptions != null) {
+            opts.rpcOptions = this.rpcOptions.copy();
+        }
+        if (this.tlsOptions != null) {
+            opts.tlsOptions = this.tlsOptions.copy();
+        }
         return opts;
     }
 
@@ -102,6 +117,7 @@ public class BulkWriteOptions implements Copiable<BulkWriteOptions> {
                 + ", routerClient=" + routerClient
                 + ", asyncPool=" + asyncPool
                 + ", useZeroCopyWrite=" + useZeroCopyWrite
+                + ", rpcOptions=" + rpcOptions
                 + ", tlsOptions=" + tlsOptions
                 + '}';
     }
