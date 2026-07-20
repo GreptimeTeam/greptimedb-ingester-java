@@ -93,9 +93,9 @@ GreptimeOptions options = GreptimeOptions.newBuilder(
 RpcOptions rpcOpts = RpcOptions.newDefault();
 rpcOpts.setDefaultRpcTimeout(30000);  // 30 seconds timeout
 rpcOpts.setMaxInboundMessageSize(128 * 1024 * 1024);  // 128MB
-rpcOpts.setKeepAliveTimeSeconds(30);  // Send keep-alive after 30 seconds without reads
+rpcOpts.setKeepAliveTimeSeconds(60);  // Use shorter intervals only with server-owner approval
 rpcOpts.setKeepAliveTimeoutSeconds(5);  // 5 seconds keep-alive timeout
-rpcOpts.setKeepAliveWithoutCalls(true);  // Keep alive even without calls
+rpcOpts.setKeepAliveWithoutCalls(false);  // Enable idle keep-alive only with server-owner approval
 rpcOpts.setLimitKind(RpcOptions.LimitKind.Vegas);  // Use Vegas flow limiter
 rpcOpts.setInitialLimit(32);  // Start with 32 concurrent requests
 rpcOpts.setMaxLimit(512);  // Max 512 concurrent requests

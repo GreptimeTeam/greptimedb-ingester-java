@@ -93,9 +93,9 @@ GreptimeOptions options = GreptimeOptions.newBuilder(
 RpcOptions rpcOpts = RpcOptions.newDefault();
 rpcOpts.setDefaultRpcTimeout(30000);  // 30 秒超时
 rpcOpts.setMaxInboundMessageSize(128 * 1024 * 1024);  // 128 MB
-rpcOpts.setKeepAliveTimeSeconds(30);  // 无读取活动 30 秒后发送保活 ping
+rpcOpts.setKeepAliveTimeSeconds(60);  // 仅在服务端负责人允许时使用更短间隔
 rpcOpts.setKeepAliveTimeoutSeconds(5);  // 5 秒保活超时
-rpcOpts.setKeepAliveWithoutCalls(true);  // 即使没有调用也保活
+rpcOpts.setKeepAliveWithoutCalls(false);  // 仅在服务端负责人允许时启用空闲保活
 rpcOpts.setLimitKind(RpcOptions.LimitKind.Vegas);  // 使用 Vegas 限流器
 rpcOpts.setInitialLimit(32);  // 从 32 个并发请求开始
 rpcOpts.setMaxLimit(512);  // 最大 512 个并发请求
