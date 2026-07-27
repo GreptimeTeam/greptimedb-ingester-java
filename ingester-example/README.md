@@ -114,3 +114,11 @@ This API is ideal for scenarios such as:
   * Writing large batches of data to a single table
   * Leveraging the adaptive flow control mechanisms
   * Processing write results asynchronously
+
+- [BulkWriteWithRetryQuickStart.java](src/main/java/io/greptime/quickstart/write/BulkWriteWithRetryQuickStart.java)
+
+  This example demonstrates how to recover from transient bulk stream failures. It covers:
+  * Retaining the original batch so it can be replayed
+  * Closing and rebuilding the bulk writer before retrying
+  * Applying bounded exponential backoff with jitter
+  * Handling at-least-once delivery when a response is lost
