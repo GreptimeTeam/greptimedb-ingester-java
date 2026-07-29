@@ -20,8 +20,11 @@ import io.greptime.BulkStreamWriter;
 import io.greptime.BulkWrite;
 import io.greptime.GreptimeDB;
 import io.greptime.models.DataType;
+import io.greptime.models.Err;
+import io.greptime.models.Result;
 import io.greptime.models.Table;
 import io.greptime.models.TableSchema;
+import io.greptime.models.WriteOk;
 import io.greptime.quickstart.TestConnector;
 import io.greptime.rpc.Compression;
 import io.greptime.rpc.Context;
@@ -68,7 +71,16 @@ public class BulkWriteWithRetryQuickStart {
             Table tableToCreate = Table.from(schema);
             tableToCreate.addRow("bootstrap", System.currentTimeMillis(), 0.0);
             tableToCreate.complete();
-            greptimeDB.write(tableToCreate).get();
+            Result<WriteOk, Err> createResult = greptimeDB.write(tableToCreate).get();
+            if (!createResult.isOk()) {
+                Err err = createResult.getErr();
+                throw new IllegalStateException(
+                        "Failed to create the bulk write table, status code: "
+                                + err.getCode()
+                                + ", endpoint: "
+                                + err.getErrTo(),
+                        err.getError());
+            }
 
             BulkWrite.Config config = BulkWrite.Config.newBuilder()
                     .allocatorInitReservation(0)
