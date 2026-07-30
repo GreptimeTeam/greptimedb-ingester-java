@@ -246,7 +246,14 @@ public class BulkWriteService implements AutoCloseable {
         if (this.metadataListener.isCompletedExceptionally()) {
             this.metadataListener.getResult();
         }
-        this.listener.completed();
+        try {
+            this.listener.completed();
+        } catch (RuntimeException e) {
+            if (this.metadataListener.isCompletedExceptionally()) {
+                this.metadataListener.getResult();
+            }
+            throw e;
+        }
     }
 
     /**
@@ -280,10 +287,16 @@ public class BulkWriteService implements AutoCloseable {
     @Override
     public void close() throws Exception {
         LOG.info("Closing BulkWriteService resources");
+        FlightRuntimeException failure = CallStatus.CANCELLED
+                .withDescription("Bulk write stream closed before completion")
+                .toRuntimeException();
         if (!this.metadataListener.isDone()) {
-            abort(CallStatus.CANCELLED
-                    .withDescription("Bulk write stream closed before completion")
-                    .toRuntimeException());
+            this.metadataListener.onError(failure);
+        }
+        try {
+            this.listener.cancel("Bulk write stream closed", failure);
+        } catch (RuntimeException | Error cancelFailure) {
+            failure.addSuppressed(cancelFailure);
         }
         AutoCloseables.close(this.root, this.manager);
     }

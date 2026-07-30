@@ -207,6 +207,32 @@ public class BulkWriteServiceTest {
     }
 
     @Test
+    public void testCompletedReportsFailureFromConcurrentAbort() throws Exception {
+        try (BufferAllocator allocator = new RootAllocator(Long.MAX_VALUE)) {
+            ServiceFixture fixture = newServiceFixture(allocator);
+            FlightRuntimeException timeout =
+                    CallStatus.TIMED_OUT.withDescription("message timed out").toRuntimeException();
+            Mockito.doAnswer(invocation -> {
+                        fixture.metadataListener.onError(timeout);
+                        throw new IllegalStateException("call was cancelled");
+                    })
+                    .when(fixture.stream)
+                    .completed();
+
+            FlightRuntimeException failure = null;
+            try {
+                fixture.service.completed();
+                Assert.fail("Expected completion to report the concurrent abort failure");
+            } catch (FlightRuntimeException e) {
+                failure = e;
+            }
+
+            Assert.assertSame(timeout, failure);
+            fixture.service.close();
+        }
+    }
+
+    @Test
     public void testServerFailureCancelsStream() throws Exception {
         try (BufferAllocator allocator = new RootAllocator(Long.MAX_VALUE)) {
             ServiceFixture fixture = newServiceFixture(allocator);
@@ -258,7 +284,7 @@ public class BulkWriteServiceTest {
 
             Assert.assertTrue(fixture.metadataListener.isCompletedExceptionally());
             Mockito.verify(fixture.stream)
-                    .cancel(Mockito.eq("Bulk write stream aborted"), Mockito.isA(FlightRuntimeException.class));
+                    .cancel(Mockito.eq("Bulk write stream closed"), Mockito.isA(FlightRuntimeException.class));
         }
     }
 
@@ -300,6 +326,8 @@ public class BulkWriteServiceTest {
                 Assert.assertEquals(0, fixture.metadataListener.numInFlight());
                 Assert.assertTrue(fixture.metadataListener.isCompletedExceptionally());
             }
+            Mockito.verify(fixture.stream)
+                    .cancel(Mockito.eq("Bulk write stream closed"), Mockito.isA(FlightRuntimeException.class));
         }
     }
 
