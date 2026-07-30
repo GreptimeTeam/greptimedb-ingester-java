@@ -85,7 +85,8 @@ public interface BulkStreamWriter extends AutoCloseable {
      * Completes the bulk write operation by signaling the end of transmission
      * and waits for the server to finish processing the data. This method
      * must be called to ensure all data is properly written and to receive
-     * any errors that may have occurred during the operation.
+     * any errors that may have occurred during the operation. The wait is
+     * bounded by the configured bulk write timeout.
      *
      * @throws Exception if an error occurs
      */

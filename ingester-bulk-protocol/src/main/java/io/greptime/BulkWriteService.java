@@ -32,7 +32,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.arrow.flight.BulkFlightClient.ClientStreamListener;
 import org.apache.arrow.flight.BulkFlightClient.PutListener;
 import org.apache.arrow.flight.CallOption;
+import org.apache.arrow.flight.CallStatus;
 import org.apache.arrow.flight.FlightDescriptor;
+import org.apache.arrow.flight.FlightRuntimeException;
 import org.apache.arrow.flight.PutResult;
 import org.apache.arrow.flight.grpc.StatusUtils;
 import org.apache.arrow.memory.ArrowBuf;
@@ -91,7 +93,7 @@ public class BulkWriteService implements AutoCloseable {
         this.allocator = allocator;
         this.root = manager.createSchemaRoot(schema);
         this.metadataListener = new AsyncPutListener();
-        this.listener = manager.startPut(descriptor, this.metadataListener, maxRequestsInFlight, options);
+        this.listener = manager.startPut(descriptor, this.metadataListener, maxRequestsInFlight, timeoutMs, options);
         this.tableName = diagnosticName(descriptor);
         this.timeoutMs = timeoutMs;
     }
@@ -167,6 +169,11 @@ public class BulkWriteService implements AutoCloseable {
         // Create future with timeout and attach to listener
         IdentifiableCompletableFuture future =
                 new IdentifiableCompletableFuture(id, this.timeoutMs, this.tableName, totalRowCount, LOG);
+        future.whenComplete((r, t) -> {
+            if (t instanceof TimeoutCompletableFuture.FutureDeadlineExceededException) {
+                abort(newTimeoutFailure("Timed out waiting for a bulk write response", t));
+            }
+        });
         ArrowBuf metadataBuf = null;
         Throwable putFailure = null;
         try {
@@ -246,13 +253,50 @@ public class BulkWriteService implements AutoCloseable {
      */
     public void waitServerCompleted() {
         LOG.info("Waiting for server to complete processing");
-        this.listener.getResult();
+        try {
+            this.metadataListener.getResult(this.timeoutMs, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            FlightRuntimeException timeout = newTimeoutFailure("Timed out waiting for bulk stream completion", e);
+            abort(timeout);
+            throw timeout;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            FlightRuntimeException interrupted = CallStatus.CANCELLED
+                    .withDescription("Interrupted while waiting for bulk stream completion")
+                    .withCause(e)
+                    .toRuntimeException();
+            abort(interrupted);
+            throw interrupted;
+        } catch (ExecutionException e) {
+            throw StatusUtils.fromThrowable(e.getCause());
+        }
     }
 
     @Override
     public void close() throws Exception {
         LOG.info("Closing BulkWriteService resources");
+        if (!this.metadataListener.isDone()) {
+            abort(CallStatus.CANCELLED
+                    .withDescription("Bulk write stream closed before completion")
+                    .toRuntimeException());
+        }
         AutoCloseables.close(this.root, this.manager);
+    }
+
+    void abort(Throwable failure) {
+        this.metadataListener.onError(failure);
+        try {
+            this.listener.cancel("Bulk write stream aborted", failure);
+        } catch (RuntimeException | Error cancelFailure) {
+            failure.addSuppressed(cancelFailure);
+        }
+    }
+
+    private static FlightRuntimeException newTimeoutFailure(String description, Throwable cause) {
+        return CallStatus.TIMED_OUT
+                .withDescription(description)
+                .withCause(cause)
+                .toRuntimeException();
     }
 
     private long nextId() {
@@ -539,11 +583,20 @@ public class BulkWriteService implements AutoCloseable {
             return this.completed.isCompletedExceptionally();
         }
 
+        boolean isDone() {
+            return this.completed.isDone();
+        }
+
+        void getResult(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+            this.completed.get(timeout, unit);
+        }
+
         @Override
         public void getResult() {
             try {
                 this.completed.get();
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 throw StatusUtils.fromThrowable(e);
             } catch (ExecutionException e) {
                 throw StatusUtils.fromThrowable(e.getCause());

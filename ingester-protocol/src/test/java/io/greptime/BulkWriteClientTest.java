@@ -17,6 +17,7 @@
 package io.greptime;
 
 import io.greptime.common.Endpoint;
+import io.greptime.errors.LimitedException;
 import io.greptime.models.DataType;
 import io.greptime.models.TableSchema;
 import io.greptime.options.BulkWriteOptions;
@@ -105,6 +106,29 @@ public class BulkWriteClientTest {
         }
 
         Mockito.verify(stage).logTimeout(timeout, 1, TimeUnit.MILLISECONDS);
+    }
+
+    @Test
+    public void testBulkWriteLimiterUsesConfiguredTimeout() {
+        BulkWriteClient.BulkWriteLimiter limiter = new BulkWriteClient.BulkWriteLimiter(1, 10L);
+        CompletableFuture<Integer> first = new CompletableFuture<>();
+        limiter.acquireAndDo(null, () -> first);
+
+        long startNanos = System.nanoTime();
+        try {
+            limiter.acquireAndDo(null, () -> CompletableFuture.completedFuture(1));
+            Assert.fail("Expected limiter timeout");
+        } catch (LimitedException expected) {
+            long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
+            Assert.assertTrue("Limiter timeout took too long: " + elapsedMillis + "ms", elapsedMillis < 1000L);
+        } finally {
+            first.complete(1);
+        }
+
+        Assert.assertEquals(
+                Integer.valueOf(1),
+                limiter.acquireAndDo(null, () -> CompletableFuture.completedFuture(1))
+                        .join());
     }
 
     private static class CapturingBulkWriteClient extends BulkWriteClient {
