@@ -158,12 +158,6 @@ public class BulkWriteServiceTest {
     public void testWaitServerCompletedUsesConfiguredTimeout() throws Exception {
         try (BufferAllocator allocator = new RootAllocator(Long.MAX_VALUE)) {
             ServiceFixture fixture = newServiceFixture(allocator, 10L);
-            Mockito.doAnswer(invocation -> {
-                        fixture.metadataListener.getResult();
-                        return null;
-                    })
-                    .when(fixture.stream)
-                    .getResult();
             ExecutorService executor = Executors.newSingleThreadExecutor();
             Future<Throwable> wait = executor.submit(() -> {
                 try {
@@ -187,6 +181,48 @@ public class BulkWriteServiceTest {
                 executor.shutdownNow();
                 fixture.service.close();
             }
+        }
+    }
+
+    @Test
+    public void testCompletedAfterAbortReportsOriginalFailure() throws Exception {
+        try (BufferAllocator allocator = new RootAllocator(Long.MAX_VALUE)) {
+            ServiceFixture fixture = newServiceFixture(allocator);
+            FlightRuntimeException timeout =
+                    CallStatus.TIMED_OUT.withDescription("message timed out").toRuntimeException();
+            fixture.service.abort(timeout);
+
+            FlightRuntimeException failure = null;
+            try {
+                fixture.service.completed();
+                Assert.fail("Expected completion to report the abort failure");
+            } catch (FlightRuntimeException e) {
+                failure = e;
+            }
+
+            Assert.assertEquals(FlightStatusCode.TIMED_OUT, failure.status().code());
+            Mockito.verify(fixture.stream, Mockito.never()).completed();
+            fixture.service.close();
+        }
+    }
+
+    @Test
+    public void testServerFailureCancelsStream() throws Exception {
+        try (BufferAllocator allocator = new RootAllocator(Long.MAX_VALUE)) {
+            ServiceFixture fixture = newServiceFixture(allocator);
+            fixture.metadataListener.onError(CallStatus.UNAVAILABLE.toRuntimeException());
+
+            FlightRuntimeException failure = null;
+            try {
+                fixture.service.waitServerCompleted();
+                Assert.fail("Expected server failure");
+            } catch (FlightRuntimeException e) {
+                failure = e;
+            }
+
+            Assert.assertEquals(FlightStatusCode.UNAVAILABLE, failure.status().code());
+            Mockito.verify(fixture.stream).cancel(Mockito.eq("Bulk write stream aborted"), Mockito.same(failure));
+            fixture.service.close();
         }
     }
 

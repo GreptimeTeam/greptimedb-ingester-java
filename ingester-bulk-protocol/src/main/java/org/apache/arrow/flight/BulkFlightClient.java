@@ -393,8 +393,10 @@ public class BulkFlightClient implements AutoCloseable {
                     }
 
                     try {
-                        this.onStreamReadyHandler.await(
-                                Math.min(remainingNanos, TimeUnit.MILLISECONDS.toNanos(10)), TimeUnit.NANOSECONDS);
+                        if (this.onStreamReadyHandler.await(
+                                Math.min(remainingNanos, TimeUnit.MILLISECONDS.toNanos(10)), TimeUnit.NANOSECONDS)) {
+                            break;
+                        }
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                         FlightRuntimeException interrupted = CallStatus.CANCELLED
@@ -494,11 +496,15 @@ public class BulkFlightClient implements AutoCloseable {
         Throwable failure = null;
         try {
             if (!channel.shutdown().awaitTermination(5, TimeUnit.SECONDS)) {
-                channel.shutdownNow();
+                forceShutdownAndAwait();
             }
         } catch (InterruptedException closeFailure) {
-            channel.shutdownNow();
             failure = closeFailure;
+            try {
+                forceShutdownAndAwait();
+            } catch (InterruptedException | RuntimeException | Error forceFailure) {
+                closeFailure.addSuppressed(forceFailure);
+            }
             Thread.currentThread().interrupt();
         } catch (RuntimeException | Error closeFailure) {
             failure = closeFailure;
@@ -522,6 +528,11 @@ public class BulkFlightClient implements AutoCloseable {
         if (failure instanceof Error) {
             throw (Error) failure;
         }
+    }
+
+    private void forceShutdownAndAwait() throws InterruptedException {
+        channel.shutdownNow();
+        channel.awaitTermination(1, TimeUnit.SECONDS);
     }
 
     /**

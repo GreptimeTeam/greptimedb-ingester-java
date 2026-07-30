@@ -34,6 +34,9 @@ import java.util.concurrent.CompletableFuture;
  * errors are properly reported. Additionally, you should call the {@code close()} method to ensure all
  * related resources are properly released, though this happens automatically when using try-with-resources.
  *
+ * <p>A timeout, interruption, or limiter abort permanently terminates this writer and causes all subsequent
+ * operations to fail. To continue writing, close this writer and create a new one.
+ *
  * <p>Example usage:
  * <pre>{@code
  * try (BulkStreamWriter bulkStreamWriter = greptimeDB.bulkStreamWriter(schema)) { // auto close in try-with-resources

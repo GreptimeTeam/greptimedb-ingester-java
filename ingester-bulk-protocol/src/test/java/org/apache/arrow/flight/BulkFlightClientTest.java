@@ -197,6 +197,26 @@ public class BulkFlightClientTest {
     }
 
     @Test
+    public void testReadinessPermitAllowsPipelinedWrite() {
+        @SuppressWarnings("unchecked")
+        ClientCallStreamObserver<ArrowMessage> observer = Mockito.mock(ClientCallStreamObserver.class);
+        Mockito.when(observer.isReady()).thenReturn(false);
+        BulkFlightClient.PutObserver putObserver = new BulkFlightClient.PutObserver(
+                FlightDescriptor.path("metrics"),
+                observer,
+                () -> false,
+                () -> false,
+                () -> {},
+                new BulkFlightClient.OnStreamReadyHandler(1),
+                10L,
+                ArrowCompressionType.None);
+
+        putObserver.waitUntilStreamReady();
+
+        Mockito.verify(observer, Mockito.never()).cancel(Mockito.anyString(), Mockito.any());
+    }
+
+    @Test
     public void testCloseForcesChannelShutdownAfterGracePeriod() throws Exception {
         BufferAllocator parentAllocator = Mockito.mock(BufferAllocator.class);
         BufferAllocator childAllocator = Mockito.mock(BufferAllocator.class);
@@ -212,6 +232,7 @@ public class BulkFlightClientTest {
         client.close();
 
         Mockito.verify(channel).shutdownNow();
+        Mockito.verify(channel).awaitTermination(1, TimeUnit.SECONDS);
         Mockito.verify(childAllocator).close();
     }
 
@@ -240,6 +261,7 @@ public class BulkFlightClientTest {
 
             Assert.assertSame(interruption, failure);
             Mockito.verify(channel).shutdownNow();
+            Mockito.verify(channel).awaitTermination(1, TimeUnit.SECONDS);
             Mockito.verify(childAllocator).close();
             Assert.assertTrue(Thread.currentThread().isInterrupted());
         } finally {

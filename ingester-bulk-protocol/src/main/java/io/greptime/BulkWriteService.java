@@ -243,6 +243,9 @@ public class BulkWriteService implements AutoCloseable {
      */
     public void completed() {
         LOG.info("Completing bulk write operation, signaling end of transmission");
+        if (this.metadataListener.isCompletedExceptionally()) {
+            this.metadataListener.getResult();
+        }
         this.listener.completed();
     }
 
@@ -268,7 +271,9 @@ public class BulkWriteService implements AutoCloseable {
             abort(interrupted);
             throw interrupted;
         } catch (ExecutionException e) {
-            throw StatusUtils.fromThrowable(e.getCause());
+            FlightRuntimeException failure = StatusUtils.fromThrowable(e.getCause());
+            abort(failure);
+            throw failure;
         }
     }
 

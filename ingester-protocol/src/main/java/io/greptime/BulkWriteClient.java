@@ -45,7 +45,9 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import org.apache.arrow.flight.CallStatus;
 import org.apache.arrow.flight.FlightCallHeaders;
+import org.apache.arrow.flight.FlightRuntimeException;
 import org.apache.arrow.flight.HeaderCallOption;
 import org.apache.arrow.vector.types.pojo.Schema;
 import org.slf4j.Logger;
@@ -290,6 +292,15 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
                     return future;
                 });
             } catch (LimitedException e) {
+                if (e.getCause() instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
+                    FlightRuntimeException interrupted = CallStatus.CANCELLED
+                            .withDescription("Interrupted while waiting for a bulk write in-flight slot")
+                            .withCause(e.getCause())
+                            .toRuntimeException();
+                    this.writer.abort(interrupted);
+                    throw interrupted;
+                }
                 this.writer.abort(e);
                 throw e;
             }
