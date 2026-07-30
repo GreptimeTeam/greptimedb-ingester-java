@@ -276,6 +276,32 @@ public class BulkWriteServiceTest {
     }
 
     @Test
+    public void testResponseTimeoutStartsAfterSendCompletes() throws Exception {
+        try (BufferAllocator allocator = new RootAllocator(Long.MAX_VALUE)) {
+            ServiceFixture fixture = newServiceFixture(allocator, 10L);
+            Mockito.doAnswer(invocation -> {
+                        ArrowBuf metadata = invocation.getArgument(0);
+                        metadata.close();
+                        Thread.sleep(50L);
+                        Assert.assertFalse(fixture.metadataListener.isDone());
+                        Mockito.verify(fixture.stream, Mockito.never()).cancel(Mockito.anyString(), Mockito.any());
+                        return null;
+                    })
+                    .when(fixture.stream)
+                    .putNext(Mockito.any());
+
+            try (BulkWriteService service = fixture.service) {
+                BulkWriteService.PutStage stage = service.putNext();
+
+                Assert.assertTrue(
+                        getFailure(stage.future()) instanceof TimeoutCompletableFuture.FutureDeadlineExceededException);
+                Mockito.verify(fixture.stream, Mockito.timeout(1000))
+                        .cancel(Mockito.eq("Bulk write stream aborted"), Mockito.isA(FlightRuntimeException.class));
+            }
+        }
+    }
+
+    @Test
     public void testCloseCancelsActiveStream() throws Exception {
         try (BufferAllocator allocator = new RootAllocator(Long.MAX_VALUE)) {
             ServiceFixture fixture = newServiceFixture(allocator);

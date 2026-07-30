@@ -190,6 +190,7 @@ public class BulkWriteService implements AutoCloseable {
             LOG.debug("Sending data to server [id={}]", id);
             this.listener.putNext(metadataBuf);
             metadataBuf = null; // Ownership transfers to the Flight writer.
+            future.scheduleTimeout();
 
             int inFlightCount = this.metadataListener.numInFlight();
             LOG.debug("Data sent successfully [id={}], in-flight requests: {}", id, inFlightCount);
@@ -500,8 +501,6 @@ public class BulkWriteService implements AutoCloseable {
                     LOG.debug("Put operation succeeded [id={}], affected rows: {}", id, r);
                 }
             });
-
-            future.scheduleTimeout();
 
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Attached future [id={}], current in-flight count: {}", id, this.futuresInFlight.size());
