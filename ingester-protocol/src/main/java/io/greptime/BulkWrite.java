@@ -25,7 +25,9 @@ import io.greptime.rpc.Context;
 public interface BulkWrite {
 
     /**
-     * The default timeout in milliseconds for each bulk write operation.
+     * The default timeout in milliseconds bounding each blocking bulk write wait
+     * (in-flight slot acquisition, stream readiness, per-message response, stream completion).
+     * It is not a single end-to-end operation timeout.
      */
     long DEFAULT_TIMEOUT_MS_PER_MESSAGE = 60000;
 

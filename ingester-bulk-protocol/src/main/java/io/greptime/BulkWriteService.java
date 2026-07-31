@@ -305,6 +305,7 @@ public class BulkWriteService implements AutoCloseable {
             this.listener.cancel("Bulk write stream closed", failure);
         } catch (RuntimeException | Error cancelFailure) {
             failure.addSuppressed(cancelFailure);
+            LOG.warn("Failed to cancel the Flight call while closing the bulk write stream", cancelFailure);
         }
         AutoCloseables.close(this.root, this.manager);
     }
