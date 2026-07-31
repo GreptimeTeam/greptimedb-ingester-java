@@ -251,7 +251,14 @@ public class BulkWriteService implements AutoCloseable {
             this.listener.completed();
         } catch (RuntimeException e) {
             if (this.metadataListener.isCompletedExceptionally()) {
-                this.metadataListener.getResult();
+                try {
+                    this.metadataListener.getResult();
+                } catch (RuntimeException terminalFailure) {
+                    if (terminalFailure != e) {
+                        terminalFailure.addSuppressed(e);
+                    }
+                    throw terminalFailure;
+                }
             }
             throw e;
         }
@@ -302,6 +309,7 @@ public class BulkWriteService implements AutoCloseable {
         AutoCloseables.close(this.root, this.manager);
     }
 
+    // May run on the shared timeout-scheduler thread, so it must never block.
     void abort(Throwable failure) {
         this.metadataListener.onError(failure);
         try {

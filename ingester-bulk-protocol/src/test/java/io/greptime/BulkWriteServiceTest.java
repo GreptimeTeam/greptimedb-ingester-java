@@ -228,6 +228,8 @@ public class BulkWriteServiceTest {
             }
 
             Assert.assertSame(timeout, failure);
+            Assert.assertEquals(1, failure.getSuppressed().length);
+            Assert.assertTrue(failure.getSuppressed()[0] instanceof IllegalStateException);
             fixture.service.close();
         }
     }

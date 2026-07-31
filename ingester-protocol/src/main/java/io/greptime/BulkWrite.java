@@ -104,6 +104,10 @@ public interface BulkWrite {
              * Set the timeout in milliseconds for acquiring an in-flight slot, waiting for stream
              * readiness, receiving a message response, and completing the stream.
              *
+             * <p>The timeout bounds each of these waits independently, so a single blocking call
+             * (e.g. {@code writeNext()}) may take up to a small multiple of this value in the
+             * worst case. Size caller-side deadlines accordingly.
+             *
              * @param timeoutMsPerMessage the timeout in milliseconds
              * @return this builder
              */

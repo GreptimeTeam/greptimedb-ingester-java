@@ -79,6 +79,10 @@ public interface BulkStreamWriter extends AutoCloseable {
     /**
      * Writes current table data to the stream.
      *
+     * <p>When the max in-flight limit is reached, this method blocks waiting for a slot, bounded
+     * by the configured bulk write timeout. It no longer blocks indefinitely: if the wait times
+     * out, this method throws and the writer becomes terminal (see the class-level documentation).
+     *
      * @return a future that completes with the number of rows affected
      * @throws Exception if an error occurs
      */
