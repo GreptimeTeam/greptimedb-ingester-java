@@ -22,8 +22,10 @@ import io.greptime.rpc.Context;
 import io.greptime.v1.Common;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import org.apache.arrow.vector.BigIntVector;
 import org.apache.arrow.vector.BitVector;
 import org.apache.arrow.vector.DateDayVector;
@@ -61,12 +63,34 @@ import org.apache.arrow.vector.types.FloatingPointPrecision;
 import org.apache.arrow.vector.types.TimeUnit;
 import org.apache.arrow.vector.types.pojo.ArrowType;
 import org.apache.arrow.vector.types.pojo.Field;
+import org.apache.arrow.vector.types.pojo.FieldType;
 import org.apache.arrow.vector.types.pojo.Schema;
 
 /**
  * Helper class for Arrow schema creation.
  */
 public class ArrowHelper {
+
+    /**
+     * The Arrow field metadata key that marks a column as the time index.
+     * The value must be "true". Recognized by the GreptimeDB server when
+     * auto-creating tables for bulk insert requests.
+     */
+    public static final String TIME_INDEX_METADATA_KEY = "greptime:time_index";
+
+    /**
+     * The Arrow field metadata key that carries the semantic type of a column.
+     * The value must be "tag" or "field". Recognized by the GreptimeDB server
+     * when auto-creating tables for bulk insert requests.
+     */
+    public static final String SEMANTIC_TYPE_METADATA_KEY = "greptime:semantic_type";
+
+    /**
+     * The Arrow field metadata key that carries the GreptimeDB extended data type
+     * of a column, e.g. "Json". Recognized by the GreptimeDB server when
+     * auto-creating tables for bulk insert requests.
+     */
+    public static final String DATA_TYPE_METADATA_KEY = "greptime:type";
 
     /**
      * Get the Arrow compression type from the context.
@@ -89,6 +113,13 @@ public class ArrowHelper {
 
     /**
      * Create an Arrow schema from a table schema.
+     * <p>
+     * The semantic types of the columns are encoded as Arrow field metadata so that
+     * the GreptimeDB server can auto-create the table for bulk insert requests:
+     * the timestamp column is marked with `greptime:time_index=true` and is
+     * non-nullable, tag and field columns carry `greptime:semantic_type=tag` and
+     * `greptime:semantic_type=field` respectively, and JSON columns carry
+     * `greptime:type=Json`.
      *
      * @param tableSchema the table schema
      * @return the Arrow schema
@@ -101,6 +132,7 @@ public class ArrowHelper {
         List<Field> fields = new ArrayList<>(columnCount);
 
         List<String> columnNames = tableSchema.getColumnNames();
+        List<Common.SemanticType> semanticTypes = tableSchema.getSemanticTypes();
         List<Common.ColumnDataType> dataTypes = tableSchema.getDataTypes();
         List<Common.ColumnDataTypeExtension> dataTypeExtensions = tableSchema.getDataTypeExtensions();
 
@@ -108,8 +140,29 @@ public class ArrowHelper {
             String name = columnNames.get(i);
             ArrowType type = convertToArrowType(dataTypes.get(i), dataTypeExtensions.get(i));
 
-            Field field = Field.nullable(name, type);
-            fields.add(field);
+            Map<String, String> metadata = new HashMap<>(2);
+            boolean nullable = true;
+            switch (semanticTypes.get(i)) {
+                case TIMESTAMP:
+                    metadata.put(TIME_INDEX_METADATA_KEY, "true");
+                    // The time index column is never null in GreptimeDB, and the server
+                    // requires it to be non-nullable when auto-creating the table.
+                    nullable = false;
+                    break;
+                case TAG:
+                    metadata.put(SEMANTIC_TYPE_METADATA_KEY, "tag");
+                    break;
+                case FIELD:
+                    metadata.put(SEMANTIC_TYPE_METADATA_KEY, "field");
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unsupported semantic type: " + semanticTypes.get(i));
+            }
+            if (dataTypes.get(i) == Common.ColumnDataType.JSON) {
+                metadata.put(DATA_TYPE_METADATA_KEY, "Json");
+            }
+
+            fields.add(new Field(name, new FieldType(nullable, type, null, metadata), null));
         }
 
         return new Schema(fields);
