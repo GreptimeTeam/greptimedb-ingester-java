@@ -166,19 +166,16 @@ public class ArrowHelperTest {
         Field tagField = schema.getFields().get(0);
         Assert.assertTrue(tagField.isNullable());
         Assert.assertEquals("tag", tagField.getMetadata().get(ArrowHelper.SEMANTIC_TYPE_METADATA_KEY));
-        Assert.assertFalse(tagField.getMetadata().containsKey(ArrowHelper.TIME_INDEX_METADATA_KEY));
         Assert.assertFalse(tagField.getMetadata().containsKey(ArrowHelper.DATA_TYPE_METADATA_KEY));
 
         Field tsField = schema.getFields().get(1);
         Assert.assertFalse(tsField.isNullable());
-        Assert.assertEquals("true", tsField.getMetadata().get(ArrowHelper.TIME_INDEX_METADATA_KEY));
-        Assert.assertFalse(tsField.getMetadata().containsKey(ArrowHelper.SEMANTIC_TYPE_METADATA_KEY));
+        Assert.assertEquals("timestamp", tsField.getMetadata().get(ArrowHelper.SEMANTIC_TYPE_METADATA_KEY));
         Assert.assertFalse(tsField.getMetadata().containsKey(ArrowHelper.DATA_TYPE_METADATA_KEY));
 
         Field field1 = schema.getFields().get(2);
         Assert.assertTrue(field1.isNullable());
         Assert.assertEquals("field", field1.getMetadata().get(ArrowHelper.SEMANTIC_TYPE_METADATA_KEY));
-        Assert.assertFalse(field1.getMetadata().containsKey(ArrowHelper.TIME_INDEX_METADATA_KEY));
         Assert.assertFalse(field1.getMetadata().containsKey(ArrowHelper.DATA_TYPE_METADATA_KEY));
 
         Field jsonField = schema.getFields().get(3);
