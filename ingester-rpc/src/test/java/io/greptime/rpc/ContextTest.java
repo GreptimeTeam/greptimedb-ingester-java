@@ -52,6 +52,13 @@ public class ContextTest {
     }
 
     @Test
+    public void withAutoCreateTableTest() {
+        Context context = Context.newDefault().withAutoCreateTable(false);
+
+        Assert.assertEquals("auto_create_table=false", context.getHints());
+    }
+
+    @Test
     public void getShouldReturnNullForNonExistingKeyTest() {
         Context context = Context.newDefault();
         Assert.assertNull(context.get("key"));

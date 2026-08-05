@@ -28,6 +28,8 @@ import java.util.Set;
 @SuppressWarnings({"unchecked"})
 public class Context {
 
+    private static final String AUTO_CREATE_TABLE_HINT = "auto_create_table";
+
     private final Map<String, Object> ctx = new HashMap<>();
 
     private Compression compression = Compression.None;
@@ -107,6 +109,17 @@ public class Context {
             });
         }
         return this;
+    }
+
+    /**
+     * Sets whether this request allows the server to auto-create a missing table.
+     * The server-side global auto-create-table option must also be enabled.
+     *
+     * @param enabled whether this request allows automatic table creation
+     * @return this {@link Context}
+     */
+    public Context withAutoCreateTable(boolean enabled) {
+        return withHint(AUTO_CREATE_TABLE_HINT, Boolean.toString(enabled));
     }
 
     /**
