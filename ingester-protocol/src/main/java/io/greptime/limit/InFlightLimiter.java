@@ -44,6 +44,7 @@ public class InFlightLimiter implements Limiter {
         try {
             this.semaphore.acquire(permits);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new LimitedException(e);
         } finally {
             this.acquireTimer.update(Clock.defaultClock().duration(startCall), TimeUnit.MILLISECONDS);
@@ -56,6 +57,7 @@ public class InFlightLimiter implements Limiter {
         try {
             return this.semaphore.tryAcquire(permits, timeout, unit);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new LimitedException(e);
         } finally {
             this.acquireTimer.update(Clock.defaultClock().duration(startCall), TimeUnit.MILLISECONDS);

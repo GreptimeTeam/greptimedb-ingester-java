@@ -22,6 +22,7 @@ import io.greptime.rpc.TlsOptions;
 import io.grpc.ManagedChannel;
 import io.grpc.netty.NegotiationType;
 import io.grpc.netty.NettyChannelBuilder;
+import io.grpc.stub.ClientCallStreamObserver;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -169,6 +170,73 @@ public class BulkFlightClientTest {
     }
 
     @Test
+    public void testReadinessTimeoutCancelsFlightCall() {
+        @SuppressWarnings("unchecked")
+        ClientCallStreamObserver<ArrowMessage> observer = Mockito.mock(ClientCallStreamObserver.class);
+        Mockito.when(observer.isReady()).thenReturn(false);
+        BulkFlightClient.PutObserver putObserver = new BulkFlightClient.PutObserver(
+                FlightDescriptor.path("metrics"),
+                observer,
+                () -> false,
+                () -> false,
+                () -> {},
+                new BulkFlightClient.OnStreamReadyHandler(0),
+                10L,
+                ArrowCompressionType.None);
+
+        FlightRuntimeException failure = null;
+        try {
+            putObserver.waitUntilStreamReady();
+            Assert.fail("Expected readiness timeout");
+        } catch (FlightRuntimeException e) {
+            failure = e;
+        }
+
+        Assert.assertEquals(FlightStatusCode.TIMED_OUT, failure.status().code());
+        Mockito.verify(observer).cancel(Mockito.eq("Bulk write stream readiness timed out"), Mockito.same(failure));
+    }
+
+    @Test
+    public void testReadinessPermitAllowsPipelinedWrite() {
+        @SuppressWarnings("unchecked")
+        ClientCallStreamObserver<ArrowMessage> observer = Mockito.mock(ClientCallStreamObserver.class);
+        Mockito.when(observer.isReady()).thenReturn(false);
+        BulkFlightClient.PutObserver putObserver = new BulkFlightClient.PutObserver(
+                FlightDescriptor.path("metrics"),
+                observer,
+                () -> false,
+                () -> false,
+                () -> {},
+                new BulkFlightClient.OnStreamReadyHandler(1),
+                10L,
+                ArrowCompressionType.None);
+
+        putObserver.waitUntilStreamReady();
+
+        Mockito.verify(observer, Mockito.never()).cancel(Mockito.anyString(), Mockito.any());
+    }
+
+    @Test
+    public void testCloseForcesChannelShutdownAfterGracePeriod() throws Exception {
+        BufferAllocator parentAllocator = Mockito.mock(BufferAllocator.class);
+        BufferAllocator childAllocator = Mockito.mock(BufferAllocator.class);
+        Mockito.when(parentAllocator.newChildAllocator("bulk-flight-client", 0, Long.MAX_VALUE))
+                .thenReturn(childAllocator);
+        ManagedChannel channel = Mockito.mock(ManagedChannel.class);
+        Mockito.when(channel.shutdown()).thenReturn(channel);
+        Mockito.when(channel.awaitTermination(5, TimeUnit.SECONDS)).thenReturn(false);
+        Mockito.when(channel.shutdownNow()).thenReturn(channel);
+        BulkFlightClient client =
+                new BulkFlightClient(parentAllocator, channel, Collections.emptyList(), ArrowCompressionType.None);
+
+        client.close();
+
+        Mockito.verify(channel).shutdownNow();
+        Mockito.verify(channel).awaitTermination(1, TimeUnit.SECONDS);
+        Mockito.verify(childAllocator).close();
+    }
+
+    @Test
     public void testCloseClosesChildAllocatorWhenChannelShutdownIsInterrupted() throws Exception {
         Thread.interrupted();
         try {
@@ -192,6 +260,8 @@ public class BulkFlightClientTest {
             }
 
             Assert.assertSame(interruption, failure);
+            Mockito.verify(channel).shutdownNow();
+            Mockito.verify(channel).awaitTermination(1, TimeUnit.SECONDS);
             Mockito.verify(childAllocator).close();
             Assert.assertTrue(Thread.currentThread().isInterrupted());
         } finally {

@@ -34,6 +34,9 @@ import java.util.concurrent.CompletableFuture;
  * errors are properly reported. Additionally, you should call the {@code close()} method to ensure all
  * related resources are properly released, though this happens automatically when using try-with-resources.
  *
+ * <p>A timeout, interruption, or limiter abort permanently terminates this writer and causes all subsequent
+ * operations to fail. To continue writing, close this writer and create a new one.
+ *
  * <p>Example usage:
  * <pre>{@code
  * try (BulkStreamWriter bulkStreamWriter = greptimeDB.bulkStreamWriter(schema)) { // auto close in try-with-resources
@@ -76,6 +79,10 @@ public interface BulkStreamWriter extends AutoCloseable {
     /**
      * Writes current table data to the stream.
      *
+     * <p>When the max in-flight limit is reached, this method blocks waiting for a slot, bounded
+     * by the configured bulk write timeout. It no longer blocks indefinitely: if the wait times
+     * out, this method throws and the writer becomes terminal (see the class-level documentation).
+     *
      * @return a future that completes with the number of rows affected
      * @throws Exception if an error occurs
      */
@@ -85,7 +92,8 @@ public interface BulkStreamWriter extends AutoCloseable {
      * Completes the bulk write operation by signaling the end of transmission
      * and waits for the server to finish processing the data. This method
      * must be called to ensure all data is properly written and to receive
-     * any errors that may have occurred during the operation.
+     * any errors that may have occurred during the operation. The wait is
+     * bounded by the configured bulk write timeout.
      *
      * @throws Exception if an error occurs
      */

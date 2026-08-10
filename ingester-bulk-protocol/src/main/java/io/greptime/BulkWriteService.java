@@ -32,7 +32,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.arrow.flight.BulkFlightClient.ClientStreamListener;
 import org.apache.arrow.flight.BulkFlightClient.PutListener;
 import org.apache.arrow.flight.CallOption;
+import org.apache.arrow.flight.CallStatus;
 import org.apache.arrow.flight.FlightDescriptor;
+import org.apache.arrow.flight.FlightRuntimeException;
 import org.apache.arrow.flight.PutResult;
 import org.apache.arrow.flight.grpc.StatusUtils;
 import org.apache.arrow.memory.ArrowBuf;
@@ -91,7 +93,7 @@ public class BulkWriteService implements AutoCloseable {
         this.allocator = allocator;
         this.root = manager.createSchemaRoot(schema);
         this.metadataListener = new AsyncPutListener();
-        this.listener = manager.startPut(descriptor, this.metadataListener, maxRequestsInFlight, options);
+        this.listener = manager.startPut(descriptor, this.metadataListener, maxRequestsInFlight, timeoutMs, options);
         this.tableName = diagnosticName(descriptor);
         this.timeoutMs = timeoutMs;
     }
@@ -167,6 +169,11 @@ public class BulkWriteService implements AutoCloseable {
         // Create future with timeout and attach to listener
         IdentifiableCompletableFuture future =
                 new IdentifiableCompletableFuture(id, this.timeoutMs, this.tableName, totalRowCount, LOG);
+        future.whenComplete((r, t) -> {
+            if (t instanceof TimeoutCompletableFuture.FutureDeadlineExceededException) {
+                abort(newTimeoutFailure("Timed out waiting for a bulk write response", t));
+            }
+        });
         ArrowBuf metadataBuf = null;
         Throwable putFailure = null;
         try {
@@ -183,6 +190,7 @@ public class BulkWriteService implements AutoCloseable {
             LOG.debug("Sending data to server [id={}]", id);
             this.listener.putNext(metadataBuf);
             metadataBuf = null; // Ownership transfers to the Flight writer.
+            future.scheduleTimeout();
 
             int inFlightCount = this.metadataListener.numInFlight();
             LOG.debug("Data sent successfully [id={}], in-flight requests: {}", id, inFlightCount);
@@ -236,7 +244,24 @@ public class BulkWriteService implements AutoCloseable {
      */
     public void completed() {
         LOG.info("Completing bulk write operation, signaling end of transmission");
-        this.listener.completed();
+        if (this.metadataListener.isCompletedExceptionally()) {
+            this.metadataListener.getResult();
+        }
+        try {
+            this.listener.completed();
+        } catch (RuntimeException e) {
+            if (this.metadataListener.isCompletedExceptionally()) {
+                try {
+                    this.metadataListener.getResult();
+                } catch (RuntimeException terminalFailure) {
+                    if (terminalFailure != e) {
+                        terminalFailure.addSuppressed(e);
+                    }
+                    throw terminalFailure;
+                }
+            }
+            throw e;
+        }
     }
 
     /**
@@ -246,13 +271,60 @@ public class BulkWriteService implements AutoCloseable {
      */
     public void waitServerCompleted() {
         LOG.info("Waiting for server to complete processing");
-        this.listener.getResult();
+        try {
+            this.metadataListener.getResult(this.timeoutMs, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            FlightRuntimeException timeout = newTimeoutFailure("Timed out waiting for bulk stream completion", e);
+            abort(timeout);
+            throw timeout;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            FlightRuntimeException interrupted = CallStatus.CANCELLED
+                    .withDescription("Interrupted while waiting for bulk stream completion")
+                    .withCause(e)
+                    .toRuntimeException();
+            abort(interrupted);
+            throw interrupted;
+        } catch (ExecutionException e) {
+            FlightRuntimeException failure = StatusUtils.fromThrowable(e.getCause());
+            abort(failure);
+            throw failure;
+        }
     }
 
     @Override
     public void close() throws Exception {
         LOG.info("Closing BulkWriteService resources");
+        FlightRuntimeException failure = CallStatus.CANCELLED
+                .withDescription("Bulk write stream closed before completion")
+                .toRuntimeException();
+        if (!this.metadataListener.isDone()) {
+            this.metadataListener.onError(failure);
+        }
+        try {
+            this.listener.cancel("Bulk write stream closed", failure);
+        } catch (RuntimeException | Error cancelFailure) {
+            failure.addSuppressed(cancelFailure);
+            LOG.warn("Failed to cancel the Flight call while closing the bulk write stream", cancelFailure);
+        }
         AutoCloseables.close(this.root, this.manager);
+    }
+
+    // May run on the shared timeout-scheduler thread, so it must never block.
+    void abort(Throwable failure) {
+        this.metadataListener.onError(failure);
+        try {
+            this.listener.cancel("Bulk write stream aborted", failure);
+        } catch (RuntimeException | Error cancelFailure) {
+            failure.addSuppressed(cancelFailure);
+        }
+    }
+
+    private static FlightRuntimeException newTimeoutFailure(String description, Throwable cause) {
+        return CallStatus.TIMED_OUT
+                .withDescription(description)
+                .withCause(cause)
+                .toRuntimeException();
     }
 
     private long nextId() {
@@ -439,8 +511,6 @@ public class BulkWriteService implements AutoCloseable {
                 }
             });
 
-            future.scheduleTimeout();
-
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Attached future [id={}], current in-flight count: {}", id, this.futuresInFlight.size());
             }
@@ -539,11 +609,20 @@ public class BulkWriteService implements AutoCloseable {
             return this.completed.isCompletedExceptionally();
         }
 
+        boolean isDone() {
+            return this.completed.isDone();
+        }
+
+        void getResult(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+            this.completed.get(timeout, unit);
+        }
+
         @Override
         public void getResult() {
             try {
                 this.completed.get();
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 throw StatusUtils.fromThrowable(e);
             } catch (ExecutionException e) {
                 throw StatusUtils.fromThrowable(e.getCause());

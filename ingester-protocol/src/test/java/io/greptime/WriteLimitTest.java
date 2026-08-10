@@ -28,6 +28,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Assert;
 import org.junit.Test;
@@ -90,12 +91,14 @@ public class WriteLimitTest {
 
         CountDownLatch acquiring = new CountDownLatch(1);
         AtomicReference<Throwable> failure = new AtomicReference<>();
+        AtomicBoolean interrupted = new AtomicBoolean();
         final Thread t = new Thread(() -> {
             acquiring.countDown();
             try {
                 limiter.acquireAndDo(rows, this::emptyOk);
             } catch (Throwable err) {
                 failure.set(err);
+                interrupted.set(Thread.currentThread().isInterrupted());
             }
         });
         t.start();
@@ -107,6 +110,7 @@ public class WriteLimitTest {
         Assert.assertFalse("Limiter thread did not stop after interruption", t.isAlive());
         Assert.assertTrue(failure.get() instanceof LimitedException);
         Assert.assertTrue(failure.get().getCause() instanceof InterruptedException);
+        Assert.assertTrue(interrupted.get());
     }
 
     @Test

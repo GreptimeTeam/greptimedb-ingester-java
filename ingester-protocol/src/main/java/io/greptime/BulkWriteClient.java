@@ -27,6 +27,7 @@ import io.greptime.common.util.Ensures;
 import io.greptime.common.util.MetricExecutor;
 import io.greptime.common.util.MetricsUtil;
 import io.greptime.common.util.SerializingExecutor;
+import io.greptime.errors.LimitedException;
 import io.greptime.limit.AbstractLimiter;
 import io.greptime.limit.LimitedPolicy;
 import io.greptime.models.ArrowHelper;
@@ -44,7 +45,9 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import org.apache.arrow.flight.CallStatus;
 import org.apache.arrow.flight.FlightCallHeaders;
+import org.apache.arrow.flight.FlightRuntimeException;
 import org.apache.arrow.flight.HeaderCallOption;
 import org.apache.arrow.vector.types.pojo.Schema;
 import org.slf4j.Logger;
@@ -154,7 +157,7 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
         if (this.opts.isUseZeroCopyWrite()) {
             writer.tryUseZeroCopyWrite();
         }
-        return new DefaultBulkStreamWriter(writer, schema, maxRequestsInFlight);
+        return new DefaultBulkStreamWriter(writer, schema, maxRequestsInFlight, timeoutMsPerMessage);
     }
 
     BulkWriteManager createBulkWriteManager(
@@ -220,10 +223,11 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
         private final TableSchema tableSchema;
         private final AtomicReference<Table.TableBufferRoot> current = new AtomicReference<>();
 
-        public DefaultBulkStreamWriter(BulkWriteService writer, TableSchema tableSchema, int maxRequestsInFlight) {
+        public DefaultBulkStreamWriter(
+                BulkWriteService writer, TableSchema tableSchema, int maxRequestsInFlight, long timeoutMsPerMessage) {
             this.writer = writer;
             this.tableSchema = tableSchema;
-            this.pipelineWriteLimiter = new BulkWriteLimiter(maxRequestsInFlight);
+            this.pipelineWriteLimiter = new BulkWriteLimiter(maxRequestsInFlight, timeoutMsPerMessage);
         }
 
         @Override
@@ -258,33 +262,48 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
             }
 
             AtomicReference<BulkWriteService.PutStage> putStage = new AtomicReference<>();
-            CompletableFuture<Integer> result = this.pipelineWriteLimiter.acquireAndDo(null, () -> {
-                Clock clock = Clock.defaultClock();
+            CompletableFuture<Integer> result;
+            try {
+                result = this.pipelineWriteLimiter.acquireAndDo(null, () -> {
+                    Clock clock = Clock.defaultClock();
 
-                long startPut = clock.getTick();
-                BulkWriteService.PutStage stage = this.writer.putNext();
-                putStage.set(stage);
-                InnerMetricHelper.prepareTime().update(clock.duration(startPut), TimeUnit.MILLISECONDS);
+                    long startPut = clock.getTick();
+                    BulkWriteService.PutStage stage = this.writer.putNext();
+                    putStage.set(stage);
+                    InnerMetricHelper.prepareTime().update(clock.duration(startPut), TimeUnit.MILLISECONDS);
 
-                long startCall = clock.getTick();
-                int inFlight = stage.numInFlight();
-                CompletableFuture<Integer> future = stage.future();
-                future.whenComplete((r, t) -> {
-                    long duration = clock.duration(startCall);
-                    InnerMetricHelper.putTime().update(duration, TimeUnit.MILLISECONDS);
-                    if (Util.isBulkWriteLogging()) {
-                        LOG.info(
-                                "Bulk write completed - table={}, rows={}, bytes={}, duration={}ms, in-flight={} requests",
-                                tableName,
-                                rows,
-                                bytes,
-                                duration,
-                                inFlight);
-                    }
+                    long startCall = clock.getTick();
+                    int inFlight = stage.numInFlight();
+                    CompletableFuture<Integer> future = stage.future();
+                    future.whenComplete((r, t) -> {
+                        long duration = clock.duration(startCall);
+                        InnerMetricHelper.putTime().update(duration, TimeUnit.MILLISECONDS);
+                        if (Util.isBulkWriteLogging()) {
+                            LOG.info(
+                                    "Bulk write completed - table={}, rows={}, bytes={}, duration={}ms, in-flight={} requests",
+                                    tableName,
+                                    rows,
+                                    bytes,
+                                    duration,
+                                    inFlight);
+                        }
+                    });
+
+                    return future;
                 });
-
-                return future;
-            });
+            } catch (LimitedException e) {
+                if (e.getCause() instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
+                    FlightRuntimeException interrupted = CallStatus.CANCELLED
+                            .withDescription("Interrupted while waiting for a bulk write in-flight slot")
+                            .withCause(e.getCause())
+                            .toRuntimeException();
+                    this.writer.abort(interrupted);
+                    throw interrupted;
+                }
+                this.writer.abort(e);
+                throw e;
+            }
             return new TimeoutLoggingFuture(result, putStage.get());
         }
 
@@ -334,12 +353,15 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
 
     /**
      * Limiter that controls the number of concurrent bulk write operations.
-     * Uses a blocking policy to ensure the maximum number of in-flight requests is not exceeded.
+     * Uses a bounded blocking policy to ensure the maximum number of in-flight requests is not exceeded.
      */
     static class BulkWriteLimiter extends AbstractLimiter<Void, Integer> {
 
-        public BulkWriteLimiter(int maxInFlight) {
-            super(maxInFlight, new LimitedPolicy.BlockingPolicy(), "bulk_write_limiter_acquire");
+        public BulkWriteLimiter(int maxInFlight, long timeoutMs) {
+            super(
+                    maxInFlight,
+                    new LimitedPolicy.AbortOnBlockingTimeoutPolicy(timeoutMs, TimeUnit.MILLISECONDS),
+                    "bulk_write_limiter_acquire");
         }
 
         @Override
@@ -349,7 +371,7 @@ public class BulkWriteClient implements BulkWrite, Health, Lifecycle<BulkWriteOp
 
         @Override
         public Integer rejected(Void in, RejectedState state) {
-            throw new IllegalStateException("A blocking limiter should never get here");
+            throw new IllegalStateException("A timeout-aborting limiter should never get here");
         }
     }
 }

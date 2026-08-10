@@ -17,6 +17,8 @@
 package io.greptime;
 
 import io.greptime.common.Endpoint;
+import io.greptime.errors.LimitedException;
+import io.greptime.models.ArrowHelper;
 import io.greptime.models.DataType;
 import io.greptime.models.TableSchema;
 import io.greptime.options.BulkWriteOptions;
@@ -25,8 +27,16 @@ import io.greptime.rpc.RpcOptions;
 import io.greptime.rpc.TlsOptions;
 import java.io.File;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import org.apache.arrow.flight.FlightRuntimeException;
+import org.apache.arrow.flight.FlightStatusCode;
+import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.memory.RootAllocator;
+import org.apache.arrow.vector.VectorSchemaRoot;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -105,6 +115,78 @@ public class BulkWriteClientTest {
         }
 
         Mockito.verify(stage).logTimeout(timeout, 1, TimeUnit.MILLISECONDS);
+    }
+
+    @Test
+    public void testBulkWriteLimiterUsesConfiguredTimeout() {
+        BulkWriteClient.BulkWriteLimiter limiter = new BulkWriteClient.BulkWriteLimiter(1, 10L);
+        CompletableFuture<Integer> first = new CompletableFuture<>();
+        limiter.acquireAndDo(null, () -> first);
+
+        long startNanos = System.nanoTime();
+        try {
+            limiter.acquireAndDo(null, () -> CompletableFuture.completedFuture(1));
+            Assert.fail("Expected limiter timeout");
+        } catch (LimitedException expected) {
+            long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
+            Assert.assertTrue("Limiter timeout took too long: " + elapsedMillis + "ms", elapsedMillis < 1000L);
+        } finally {
+            first.complete(1);
+        }
+
+        Assert.assertEquals(
+                Integer.valueOf(1),
+                limiter.acquireAndDo(null, () -> CompletableFuture.completedFuture(1))
+                        .join());
+    }
+
+    @Test
+    public void testInterruptedLimiterWaitCancelsStream() throws Exception {
+        Thread.interrupted();
+        try (BufferAllocator allocator = new RootAllocator(Long.MAX_VALUE)) {
+            TableSchema schema = TableSchema.newBuilder("test_table")
+                    .addField("value", DataType.Int64)
+                    .build();
+            try (VectorSchemaRoot root = VectorSchemaRoot.create(ArrowHelper.createSchema(schema), allocator)) {
+                BulkWriteService service = Mockito.mock(BulkWriteService.class);
+                Mockito.when(service.getRoot()).thenReturn(root);
+                CompletableFuture<Integer> first = new CompletableFuture<>();
+                Mockito.when(service.putNext()).thenReturn(new BulkWriteService.PutStage(first, 1));
+                BulkWriteClient.DefaultBulkStreamWriter writer =
+                        new BulkWriteClient.DefaultBulkStreamWriter(service, schema, 1, 60_000L);
+                writer.tableBufferRoot(8);
+                writer.writeNext();
+
+                CountDownLatch started = new CountDownLatch(1);
+                AtomicReference<Throwable> failure = new AtomicReference<>();
+                AtomicBoolean interrupted = new AtomicBoolean();
+                Thread thread = new Thread(() -> {
+                    try {
+                        writer.tableBufferRoot(8);
+                        started.countDown();
+                        writer.writeNext();
+                    } catch (Throwable t) {
+                        failure.set(t);
+                        interrupted.set(Thread.currentThread().isInterrupted());
+                    }
+                });
+                thread.start();
+                Assert.assertTrue(started.await(1, TimeUnit.SECONDS));
+                thread.interrupt();
+                thread.join(TimeUnit.SECONDS.toMillis(1));
+                first.complete(1);
+
+                Assert.assertFalse("Limiter thread did not stop after interruption", thread.isAlive());
+                Assert.assertTrue(failure.get() instanceof FlightRuntimeException);
+                Assert.assertEquals(
+                        FlightStatusCode.CANCELLED,
+                        ((FlightRuntimeException) failure.get()).status().code());
+                Assert.assertTrue(interrupted.get());
+                Mockito.verify(service).abort(Mockito.same(failure.get()));
+            }
+        } finally {
+            Thread.interrupted();
+        }
     }
 
     private static class CapturingBulkWriteClient extends BulkWriteClient {

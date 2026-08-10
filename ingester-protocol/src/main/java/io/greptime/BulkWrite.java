@@ -25,7 +25,9 @@ import io.greptime.rpc.Context;
 public interface BulkWrite {
 
     /**
-     * The default timeout in milliseconds for each message.
+     * The default timeout in milliseconds bounding each blocking bulk write wait
+     * (in-flight slot acquisition, stream readiness, per-message response, stream completion).
+     * It is not a single end-to-end operation timeout.
      */
     long DEFAULT_TIMEOUT_MS_PER_MESSAGE = 60000;
 
@@ -101,7 +103,12 @@ public interface BulkWrite {
             }
 
             /**
-             * Set the timeout in milliseconds for each message.
+             * Set the timeout in milliseconds for acquiring an in-flight slot, waiting for stream
+             * readiness, receiving a message response, and completing the stream.
+             *
+             * <p>The timeout bounds each of these waits independently, so a single blocking call
+             * (e.g. {@code writeNext()}) may take up to a small multiple of this value in the
+             * worst case. Size caller-side deadlines accordingly.
              *
              * @param timeoutMsPerMessage the timeout in milliseconds
              * @return this builder
@@ -155,7 +162,7 @@ public interface BulkWrite {
      * @param schema the schema of the table
      * @param allocatorInitReservation the initial space reservation (obtained from this allocator)
      * @param allocatorMaxAllocation the maximum amount of space the new child allocator can allocate
-     * @param timeoutMsPerMessage the timeout in milliseconds for each message
+     * @param timeoutMsPerMessage the timeout in milliseconds for each blocking bulk write operation
      * @param maxRequestsInFlight the max in-flight requests in the stream
      * @param ctx invoke context
      * @return a bulk stream writer instance

@@ -173,6 +173,25 @@ public class BulkFlightClient implements AutoCloseable {
             PutListener metadataListener,
             long maxRequestsInFlight,
             CallOption... options) {
+        return startPut(descriptor, metadataListener, maxRequestsInFlight, Long.MAX_VALUE, options);
+    }
+
+    /**
+     * Create a DoPut stream with a bounded wait for outbound stream readiness.
+     *
+     * @param descriptor The descriptor for the stream.
+     * @param metadataListener A handler for metadata messages from the server.
+     * @param maxRequestsInFlight The maximum number of in-flight requests.
+     * @param timeoutMs The maximum time to wait for stream readiness.
+     * @param options RPC-layer hints for this call.
+     * @return A client stream listener that controls the upload.
+     */
+    public ClientStreamListener startPut(
+            FlightDescriptor descriptor,
+            PutListener metadataListener,
+            long maxRequestsInFlight,
+            long timeoutMs,
+            CallOption... options) {
         Preconditions.checkNotNull(descriptor, "descriptor must not be null");
         Preconditions.checkNotNull(metadataListener, "metadataListener must not be null");
 
@@ -190,6 +209,7 @@ public class BulkFlightClient implements AutoCloseable {
                     metadataListener::isCompletedExceptionally,
                     metadataListener::getResult,
                     onStreamReadyHandler,
+                    timeoutMs,
                     this.compressionType);
         } catch (StatusRuntimeException sre) {
             throw StatusUtils.fromGrpcRuntimeException(sre);
@@ -200,7 +220,7 @@ public class BulkFlightClient implements AutoCloseable {
         return new MapDictionaryProvider();
     }
 
-    private static class OnStreamReadyHandler implements Runnable {
+    static class OnStreamReadyHandler implements Runnable {
         private final int maxRequestsInFlight;
         private final Semaphore semaphore;
 
@@ -278,6 +298,8 @@ public class BulkFlightClient implements AutoCloseable {
         private final BooleanSupplier isCompletedExceptionally;
         private final Runnable getResult;
         private final OnStreamReadyHandler onStreamReadyHandler;
+        private final ClientCallStreamObserver<ArrowMessage> observer;
+        private final long timeoutNanos;
         private final ArrowCompressionType compressionType;
 
         /**
@@ -297,6 +319,7 @@ public class BulkFlightClient implements AutoCloseable {
                 BooleanSupplier isCompletedExceptionally,
                 Runnable getResult,
                 OnStreamReadyHandler onStreamReadyHandler,
+                long timeoutMs,
                 ArrowCompressionType compressionType) {
             super(descriptor, observer);
             Preconditions.checkNotNull(descriptor, "descriptor must be provided");
@@ -307,6 +330,8 @@ public class BulkFlightClient implements AutoCloseable {
             this.isCompletedExceptionally = isCompletedExceptionally;
             this.getResult = getResult;
             this.onStreamReadyHandler = onStreamReadyHandler;
+            this.observer = observer;
+            this.timeoutNanos = TimeUnit.MILLISECONDS.toNanos(timeoutMs);
             this.compressionType = compressionType;
             this.unloader = null;
         }
@@ -349,25 +374,37 @@ public class BulkFlightClient implements AutoCloseable {
         protected void waitUntilStreamReady() {
             Timer.Context timerCtx = MetricsUtil.timer("bulk_flight_client.wait_until_stream_ready")
                     .time();
+            long startNanos = System.nanoTime();
             try {
-                // Check isCancelled as well to avoid inadvertently blocking forever
-                // (so long as PutListener properly implements it)
-                while (!super.responseObserver.isReady() && !this.isCancelled.getAsBoolean()) {
-                    if (this.isCompletedExceptionally.getAsBoolean()) {
+                while (!super.responseObserver.isReady()) {
+                    if (this.isCancelled.getAsBoolean() || this.isCompletedExceptionally.getAsBoolean()) {
                         // Will throw the error immediately
                         getResult();
                     }
 
-                    // If the stream is not ready, wait for a short time to avoid busy waiting
-                    // This helps reduce CPU usage while still being responsive
+                    long elapsedNanos = System.nanoTime() - startNanos;
+                    long remainingNanos = this.timeoutNanos - elapsedNanos;
+                    if (remainingNanos <= 0) {
+                        FlightRuntimeException timeout = CallStatus.TIMED_OUT
+                                .withDescription("Timed out waiting for the bulk write stream to become ready")
+                                .toRuntimeException();
+                        cancel("Bulk write stream readiness timed out", timeout);
+                        throw timeout;
+                    }
+
                     try {
-                        if (this.onStreamReadyHandler.await(10, TimeUnit.MILLISECONDS)) {
-                            // Allow some in-flight requests to be sent
+                        if (this.onStreamReadyHandler.await(
+                                Math.min(remainingNanos, TimeUnit.MILLISECONDS.toNanos(10)), TimeUnit.NANOSECONDS)) {
                             break;
                         }
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
-                        throw new RuntimeException("Interrupted while waiting for stream to be ready", e);
+                        FlightRuntimeException interrupted = CallStatus.CANCELLED
+                                .withDescription("Interrupted while waiting for the bulk write stream to become ready")
+                                .withCause(e)
+                                .toRuntimeException();
+                        cancel("Bulk write stream readiness interrupted", interrupted);
+                        throw interrupted;
                     }
                 }
             } finally {
@@ -378,6 +415,11 @@ public class BulkFlightClient implements AutoCloseable {
         @Override
         public void getResult() {
             this.getResult.run();
+        }
+
+        @Override
+        public void cancel(String message, Throwable cause) {
+            this.observer.cancel(message, cause);
         }
     }
 
@@ -391,6 +433,16 @@ public class BulkFlightClient implements AutoCloseable {
          * happened during the upload.
          */
         void getResult();
+
+        /**
+         * Cancel the underlying Flight call.
+         *
+         * @param message cancellation description
+         * @param cause cancellation cause
+         */
+        default void cancel(String message, Throwable cause) {
+            error(cause);
+        }
     }
 
     /**
@@ -443,9 +495,16 @@ public class BulkFlightClient implements AutoCloseable {
     public void close() throws InterruptedException {
         Throwable failure = null;
         try {
-            channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+            if (!channel.shutdown().awaitTermination(5, TimeUnit.SECONDS)) {
+                forceShutdownAndAwait();
+            }
         } catch (InterruptedException closeFailure) {
             failure = closeFailure;
+            try {
+                forceShutdownAndAwait();
+            } catch (InterruptedException | RuntimeException | Error forceFailure) {
+                closeFailure.addSuppressed(forceFailure);
+            }
             Thread.currentThread().interrupt();
         } catch (RuntimeException | Error closeFailure) {
             failure = closeFailure;
@@ -469,6 +528,11 @@ public class BulkFlightClient implements AutoCloseable {
         if (failure instanceof Error) {
             throw (Error) failure;
         }
+    }
+
+    private void forceShutdownAndAwait() throws InterruptedException {
+        channel.shutdownNow();
+        channel.awaitTermination(1, TimeUnit.SECONDS);
     }
 
     /**

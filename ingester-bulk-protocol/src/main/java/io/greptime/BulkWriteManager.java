@@ -215,8 +215,9 @@ public class BulkWriteManager implements AutoCloseable {
             FlightDescriptor descriptor,
             PutListener metadataListener,
             long maxRequestsInFlight,
+            long timeoutMs,
             CallOption... options) {
-        return this.flightClient.startPut(descriptor, metadataListener, maxRequestsInFlight, options);
+        return this.flightClient.startPut(descriptor, metadataListener, maxRequestsInFlight, timeoutMs, options);
     }
 
     DictionaryProvider newDefaultDictionaryProvider() {

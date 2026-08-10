@@ -16,6 +16,7 @@
 
 package io.greptime;
 
+import io.greptime.common.TimeoutCompletableFuture;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -154,6 +155,168 @@ public class BulkWriteServiceTest {
     }
 
     @Test
+    public void testWaitServerCompletedUsesConfiguredTimeout() throws Exception {
+        try (BufferAllocator allocator = new RootAllocator(Long.MAX_VALUE)) {
+            ServiceFixture fixture = newServiceFixture(allocator, 10L);
+            ExecutorService executor = Executors.newSingleThreadExecutor();
+            Future<Throwable> wait = executor.submit(() -> {
+                try {
+                    fixture.service.waitServerCompleted();
+                    return null;
+                } catch (Throwable t) {
+                    return t;
+                }
+            });
+
+            try {
+                Throwable failure = wait.get(1, TimeUnit.SECONDS);
+                Assert.assertTrue(failure instanceof FlightRuntimeException);
+                Assert.assertEquals(
+                        FlightStatusCode.TIMED_OUT,
+                        ((FlightRuntimeException) failure).status().code());
+                Mockito.verify(fixture.stream, Mockito.timeout(1000))
+                        .cancel(Mockito.eq("Bulk write stream aborted"), Mockito.isA(FlightRuntimeException.class));
+            } finally {
+                wait.cancel(true);
+                executor.shutdownNow();
+                fixture.service.close();
+            }
+        }
+    }
+
+    @Test
+    public void testCompletedAfterAbortReportsOriginalFailure() throws Exception {
+        try (BufferAllocator allocator = new RootAllocator(Long.MAX_VALUE)) {
+            ServiceFixture fixture = newServiceFixture(allocator);
+            FlightRuntimeException timeout =
+                    CallStatus.TIMED_OUT.withDescription("message timed out").toRuntimeException();
+            fixture.service.abort(timeout);
+
+            FlightRuntimeException failure = null;
+            try {
+                fixture.service.completed();
+                Assert.fail("Expected completion to report the abort failure");
+            } catch (FlightRuntimeException e) {
+                failure = e;
+            }
+
+            Assert.assertEquals(FlightStatusCode.TIMED_OUT, failure.status().code());
+            Mockito.verify(fixture.stream, Mockito.never()).completed();
+            fixture.service.close();
+        }
+    }
+
+    @Test
+    public void testCompletedReportsFailureFromConcurrentAbort() throws Exception {
+        try (BufferAllocator allocator = new RootAllocator(Long.MAX_VALUE)) {
+            ServiceFixture fixture = newServiceFixture(allocator);
+            FlightRuntimeException timeout =
+                    CallStatus.TIMED_OUT.withDescription("message timed out").toRuntimeException();
+            Mockito.doAnswer(invocation -> {
+                        fixture.metadataListener.onError(timeout);
+                        throw new IllegalStateException("call was cancelled");
+                    })
+                    .when(fixture.stream)
+                    .completed();
+
+            FlightRuntimeException failure = null;
+            try {
+                fixture.service.completed();
+                Assert.fail("Expected completion to report the concurrent abort failure");
+            } catch (FlightRuntimeException e) {
+                failure = e;
+            }
+
+            Assert.assertSame(timeout, failure);
+            Assert.assertEquals(1, failure.getSuppressed().length);
+            Assert.assertTrue(failure.getSuppressed()[0] instanceof IllegalStateException);
+            fixture.service.close();
+        }
+    }
+
+    @Test
+    public void testServerFailureCancelsStream() throws Exception {
+        try (BufferAllocator allocator = new RootAllocator(Long.MAX_VALUE)) {
+            ServiceFixture fixture = newServiceFixture(allocator);
+            fixture.metadataListener.onError(CallStatus.UNAVAILABLE.toRuntimeException());
+
+            FlightRuntimeException failure = null;
+            try {
+                fixture.service.waitServerCompleted();
+                Assert.fail("Expected server failure");
+            } catch (FlightRuntimeException e) {
+                failure = e;
+            }
+
+            Assert.assertEquals(FlightStatusCode.UNAVAILABLE, failure.status().code());
+            Mockito.verify(fixture.stream).cancel(Mockito.eq("Bulk write stream aborted"), Mockito.same(failure));
+            fixture.service.close();
+        }
+    }
+
+    @Test
+    public void testMessageTimeoutCancelsStream() throws Exception {
+        try (BufferAllocator allocator = new RootAllocator(Long.MAX_VALUE)) {
+            ServiceFixture fixture = newServiceFixture(allocator, 10L);
+            Mockito.doAnswer(invocation -> {
+                        ArrowBuf metadata = invocation.getArgument(0);
+                        metadata.close();
+                        return null;
+                    })
+                    .when(fixture.stream)
+                    .putNext(Mockito.any());
+            try (BulkWriteService service = fixture.service) {
+                BulkWriteService.PutStage stage = service.putNext();
+
+                Assert.assertTrue(
+                        getFailure(stage.future()) instanceof TimeoutCompletableFuture.FutureDeadlineExceededException);
+                Assert.assertTrue(fixture.metadataListener.isCompletedExceptionally());
+                Mockito.verify(fixture.stream, Mockito.timeout(1000))
+                        .cancel(Mockito.eq("Bulk write stream aborted"), Mockito.isA(FlightRuntimeException.class));
+            }
+        }
+    }
+
+    @Test
+    public void testResponseTimeoutStartsAfterSendCompletes() throws Exception {
+        try (BufferAllocator allocator = new RootAllocator(Long.MAX_VALUE)) {
+            ServiceFixture fixture = newServiceFixture(allocator, 10L);
+            Mockito.doAnswer(invocation -> {
+                        ArrowBuf metadata = invocation.getArgument(0);
+                        metadata.close();
+                        Thread.sleep(50L);
+                        Assert.assertFalse(fixture.metadataListener.isDone());
+                        Mockito.verify(fixture.stream, Mockito.never()).cancel(Mockito.anyString(), Mockito.any());
+                        return null;
+                    })
+                    .when(fixture.stream)
+                    .putNext(Mockito.any());
+
+            try (BulkWriteService service = fixture.service) {
+                BulkWriteService.PutStage stage = service.putNext();
+
+                Assert.assertTrue(
+                        getFailure(stage.future()) instanceof TimeoutCompletableFuture.FutureDeadlineExceededException);
+                Mockito.verify(fixture.stream, Mockito.timeout(1000))
+                        .cancel(Mockito.eq("Bulk write stream aborted"), Mockito.isA(FlightRuntimeException.class));
+            }
+        }
+    }
+
+    @Test
+    public void testCloseCancelsActiveStream() throws Exception {
+        try (BufferAllocator allocator = new RootAllocator(Long.MAX_VALUE)) {
+            ServiceFixture fixture = newServiceFixture(allocator);
+
+            fixture.service.close();
+
+            Assert.assertTrue(fixture.metadataListener.isCompletedExceptionally());
+            Mockito.verify(fixture.stream)
+                    .cancel(Mockito.eq("Bulk write stream closed"), Mockito.isA(FlightRuntimeException.class));
+        }
+    }
+
+    @Test
     public void testPutNextDoesNotSendAfterStreamTermination() throws Exception {
         try (BufferAllocator allocator = new RootAllocator(Long.MAX_VALUE)) {
             ServiceFixture fixture = newServiceFixture(allocator);
@@ -191,6 +354,8 @@ public class BulkWriteServiceTest {
                 Assert.assertEquals(0, fixture.metadataListener.numInFlight());
                 Assert.assertTrue(fixture.metadataListener.isCompletedExceptionally());
             }
+            Mockito.verify(fixture.stream)
+                    .cancel(Mockito.eq("Bulk write stream closed"), Mockito.isA(FlightRuntimeException.class));
         }
     }
 
@@ -210,6 +375,7 @@ public class BulkWriteServiceTest {
                             Mockito.eq(descriptor),
                             Mockito.any(PutListener.class),
                             Mockito.eq(1L),
+                            Mockito.eq(60000L),
                             Mockito.<CallOption[]>any()))
                     .thenReturn(stream);
             Mockito.doThrow(sendFailure).when(stream).putNext(Mockito.any());
@@ -325,6 +491,10 @@ public class BulkWriteServiceTest {
     }
 
     private static ServiceFixture newServiceFixture(BufferAllocator allocator) {
+        return newServiceFixture(allocator, 60000L);
+    }
+
+    private static ServiceFixture newServiceFixture(BufferAllocator allocator, long timeoutMs) {
         BulkWriteManager manager = Mockito.mock(BulkWriteManager.class);
         ClientStreamListener stream = Mockito.mock(ClientStreamListener.class);
         Schema schema = new Schema(Collections.emptyList());
@@ -337,10 +507,11 @@ public class BulkWriteServiceTest {
                         Mockito.eq(descriptor),
                         metadataListener.capture(),
                         Mockito.eq(1L),
+                        Mockito.eq(timeoutMs),
                         Mockito.<CallOption[]>any()))
                 .thenReturn(stream);
 
-        BulkWriteService service = new BulkWriteService(manager, allocator, schema, descriptor, 60000L, 1);
+        BulkWriteService service = new BulkWriteService(manager, allocator, schema, descriptor, timeoutMs, 1);
         return new ServiceFixture(service, stream, (BulkWriteService.AsyncPutListener) metadataListener.getValue());
     }
 
