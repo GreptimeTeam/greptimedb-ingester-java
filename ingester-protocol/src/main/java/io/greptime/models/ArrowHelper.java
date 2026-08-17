@@ -132,7 +132,8 @@ public class ArrowHelper {
             String name = columnNames.get(i);
             ArrowType type = convertToArrowType(dataTypes.get(i), dataTypeExtensions.get(i));
 
-            Map<String, String> metadata = new HashMap<>(2);
+            // JSON columns carry a second metadata entry (greptime:type=Json)
+            Map<String, String> metadata = new HashMap<>(4);
             boolean nullable = true;
             switch (semanticTypes.get(i)) {
                 case TIMESTAMP:
