@@ -92,6 +92,10 @@ public class Context {
 
     /**
      * Adds a hint to the context.
+     * <p>
+     * Repeated calls append entries rather than overwriting: calling this twice
+     * with the same key produces a hint string like {@code key=value1,key=value2},
+     * and which value takes effect is up to server-side parsing.
      *
      * @param key the key
      * @param value the value
