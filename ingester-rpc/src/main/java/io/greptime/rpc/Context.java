@@ -117,7 +117,19 @@ public class Context {
 
     /**
      * Sets whether this request allows the server to auto-create a missing table.
-     * The server-side global auto-create-table option must also be enabled.
+     * <p>
+     * The hint travels with any write that uses this {@link Context}: it is sent
+     * on bulk writes (Flight) as well as on row-based writes, where it is carried
+     * as a gRPC header by {@code ContextToHeadersInterceptor}.
+     * <p>
+     * Note the asymmetry: {@code false} always disables auto-creation for this
+     * request, while {@code true} cannot override a server whose global
+     * auto-create-table option is disabled.
+     * <p>
+     * Like {@link #withHint}, repeated calls append instead of overwriting, so
+     * calling this twice on a reused {@link Context} yields duplicate
+     * {@code auto_create_table} hints. Use a fresh {@link Context} (or
+     * {@link #remove(String)} on the hints key) to change the value.
      *
      * @param enabled whether this request allows automatic table creation
      * @return this {@link Context}
