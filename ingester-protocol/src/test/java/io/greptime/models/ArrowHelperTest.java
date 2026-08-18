@@ -20,6 +20,7 @@ import org.apache.arrow.vector.types.DateUnit;
 import org.apache.arrow.vector.types.FloatingPointPrecision;
 import org.apache.arrow.vector.types.TimeUnit;
 import org.apache.arrow.vector.types.pojo.ArrowType;
+import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.arrow.vector.types.pojo.Schema;
 import org.junit.Assert;
 import org.junit.Test;
@@ -149,5 +150,37 @@ public class ArrowHelperTest {
         Assert.assertEquals(
                 new ArrowType.Binary().getTypeID(),
                 schema.getFields().get(22).getType().getTypeID());
+    }
+
+    @Test
+    public void testCreateSchemaWithSemanticTypeMetadata() {
+        TableSchema tableSchema = TableSchema.newBuilder("my_table")
+                .addTag("tag1", DataType.String)
+                .addTimestamp("ts", DataType.TimestampMillisecond)
+                .addField("field1", DataType.Float64)
+                .addField("field2", DataType.Json)
+                .build();
+
+        Schema schema = ArrowHelper.createSchema(tableSchema);
+
+        Field tagField = schema.getFields().get(0);
+        Assert.assertTrue(tagField.isNullable());
+        Assert.assertEquals("tag", tagField.getMetadata().get(ArrowHelper.SEMANTIC_TYPE_METADATA_KEY));
+        Assert.assertFalse(tagField.getMetadata().containsKey(ArrowHelper.DATA_TYPE_METADATA_KEY));
+
+        Field tsField = schema.getFields().get(1);
+        Assert.assertFalse(tsField.isNullable());
+        Assert.assertEquals("timestamp", tsField.getMetadata().get(ArrowHelper.SEMANTIC_TYPE_METADATA_KEY));
+        Assert.assertFalse(tsField.getMetadata().containsKey(ArrowHelper.DATA_TYPE_METADATA_KEY));
+
+        Field field1 = schema.getFields().get(2);
+        Assert.assertTrue(field1.isNullable());
+        Assert.assertEquals("field", field1.getMetadata().get(ArrowHelper.SEMANTIC_TYPE_METADATA_KEY));
+        Assert.assertFalse(field1.getMetadata().containsKey(ArrowHelper.DATA_TYPE_METADATA_KEY));
+
+        Field jsonField = schema.getFields().get(3);
+        Assert.assertTrue(jsonField.isNullable());
+        Assert.assertEquals("field", jsonField.getMetadata().get(ArrowHelper.SEMANTIC_TYPE_METADATA_KEY));
+        Assert.assertEquals("Json", jsonField.getMetadata().get(ArrowHelper.DATA_TYPE_METADATA_KEY));
     }
 }

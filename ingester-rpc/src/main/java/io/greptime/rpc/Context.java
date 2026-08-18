@@ -28,6 +28,8 @@ import java.util.Set;
 @SuppressWarnings({"unchecked"})
 public class Context {
 
+    private static final String AUTO_CREATE_TABLE_HINT = "auto_create_table";
+
     private final Map<String, Object> ctx = new HashMap<>();
 
     private Compression compression = Compression.None;
@@ -90,6 +92,10 @@ public class Context {
 
     /**
      * Adds a hint to the context.
+     * <p>
+     * Repeated calls append entries rather than overwriting: calling this twice
+     * with the same key produces a hint string like {@code key=value1,key=value2},
+     * and which value takes effect is up to server-side parsing.
      *
      * @param key the key
      * @param value the value
@@ -107,6 +113,29 @@ public class Context {
             });
         }
         return this;
+    }
+
+    /**
+     * Sets whether this request allows the server to auto-create a missing table.
+     * <p>
+     * The hint travels with any write that uses this {@link Context}: it is sent
+     * on bulk writes (Flight) as well as on row-based writes, where it is carried
+     * as a gRPC header by {@code ContextToHeadersInterceptor}.
+     * <p>
+     * Note the asymmetry: {@code false} always disables auto-creation for this
+     * request, while {@code true} cannot override a server whose global
+     * auto-create-table option is disabled.
+     * <p>
+     * Like {@link #withHint}, repeated calls append instead of overwriting, so
+     * calling this twice on a reused {@link Context} yields duplicate
+     * {@code auto_create_table} hints. Use a fresh {@link Context} (or
+     * {@link #remove(String)} on the hints key) to change the value.
+     *
+     * @param enabled whether this request allows automatic table creation
+     * @return this {@link Context}
+     */
+    public Context withAutoCreateTable(boolean enabled) {
+        return withHint(AUTO_CREATE_TABLE_HINT, Boolean.toString(enabled));
     }
 
     /**
