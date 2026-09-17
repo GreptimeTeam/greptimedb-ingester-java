@@ -18,13 +18,18 @@ package io.greptime;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import com.google.gson.JsonParser;
 import io.greptime.models.DataType;
 import io.greptime.models.Err;
 import io.greptime.models.Result;
 import io.greptime.models.Table;
 import io.greptime.models.TableSchema;
 import io.greptime.models.WriteOk;
+import io.greptime.rpc.Context;
 import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.Collections;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -103,6 +108,47 @@ public class RegularWriteIT {
         ITHelper.verifyRow(jdbcConn, tableName, "host_0", 0.0, 0.0);
         ITHelper.verifyRow(jdbcConn, tableName, "host_5", 0.5, 0.25);
         ITHelper.verifyRow(jdbcConn, tableName, "host_9", 0.9, 0.45);
+    }
+
+    @Test
+    public void testJson2Write() throws Exception {
+        TableSchema jsonSchema = TableSchema.newBuilder(tableName)
+                .addTimestamp("ts", DataType.TimestampMillisecond)
+                .addField("payload", DataType.Json2)
+                .build();
+        String[] payloads = {
+            "null",
+            "{\"nested\":{\"items\":[1,\"two\",null,{\"ok\":false}]},\"value\":42}",
+            "{\"nested\":{\"other\":true},\"value\":\"changed\"}",
+            "{}",
+            "{\"value\":null}"
+        };
+        // A NULL-only first request must still auto-create a JSON2 column.
+        for (int i = 0; i < payloads.length; i++) {
+            Table table = Table.from(jsonSchema).addRow((long) i, payloads[i]).complete();
+            Context ctx = Context.newDefault();
+            if (i == 0) {
+                ctx.withHint("append_mode", "true");
+            }
+            Result<WriteOk, Err> result = client.write(Collections.singletonList(table), WriteOp.Insert, ctx)
+                    .get();
+            assertTrue("JSON2 write should succeed: " + result, result.isOk());
+            assertEquals(1, result.getOk().getSuccess());
+        }
+        try (Statement stmt = jdbcConn.createStatement();
+                ResultSet rs = stmt.executeQuery("SELECT payload FROM " + tableName + " ORDER BY ts")) {
+            for (String payload : payloads) {
+                assertTrue(rs.next());
+                String actual = rs.getString(1);
+                assertEquals(JsonParser.parseString(payload), JsonParser.parseString(actual == null ? "null" : actual));
+            }
+            assertTrue(!rs.next());
+        }
+        try (Statement stmt = jdbcConn.createStatement();
+                ResultSet rs = stmt.executeQuery("SHOW CREATE TABLE " + tableName)) {
+            assertTrue(rs.next());
+            assertTrue(rs.getString(2).contains("JSON2"));
+        }
     }
 
     @Test

@@ -108,6 +108,10 @@ public final class RowHelper {
                 valueBuilder.setDecimal128Value(ValueUtil.getDecimal128Value(dataTypeExtension, value));
                 break;
             case JSON:
+                if (dataTypeExtension != null && dataTypeExtension.hasJsonNativeType()) {
+                    builder.addValues(ValueUtil.getJson2Value(value));
+                    return;
+                }
                 valueBuilder.setStringValue(ValueUtil.getJsonString(value));
                 break;
             default:

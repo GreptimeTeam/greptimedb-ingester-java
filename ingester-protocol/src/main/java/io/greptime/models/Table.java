@@ -248,6 +248,14 @@ public interface Table {
                 Common.ColumnDataTypeExtension ext = dataTypeExtensions.get(i);
                 if (ext != null) {
                     builder.setDatatypeExtension(ext);
+                    if (ext.hasJsonNativeType()) {
+                        builder.setOptions(
+                                Common.ColumnOptions.newBuilder()
+                                        .putOptions("ARROW:extension:name", "greptime.json2")
+                                        .putOptions(
+                                                "ARROW:extension:metadata",
+                                                "{\"json_settings\":{\"type_hints\":[],\"max_auto_expanded_paths\":100},\"layout_version\":2}"));
+                    }
                 }
                 table.columnSchemas.add(builder.build());
             }

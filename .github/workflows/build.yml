@@ -107,9 +107,9 @@ jobs:
             -p 4002:4002 \
             -p 4003:4003 \
             --name greptimedb \
-            greptime/greptimedb:v1.0.0-beta.4 standalone start \
+            greptime/greptimedb:v1.2.1 standalone start \
             --http-addr 0.0.0.0:4000 \
-            --rpc-bind-addr 0.0.0.0:4001 \
+            --grpc-bind-addr 0.0.0.0:4001 \
             --mysql-addr 0.0.0.0:4002 \
             --postgres-addr 0.0.0.0:4003
       - name: Wait for GreptimeDB

@@ -175,6 +175,9 @@ public class TableSchema {
             Ensures.ensureNonNull(name, "Null column name");
             Ensures.ensureNonNull(semanticType, "Null semantic type");
             Ensures.ensureNonNull(dataType, "Null data type");
+            Ensures.ensure(
+                    decimalTypeExtension == null || dataType == DataType.Decimal128,
+                    "Only decimal type can have decimal type extension");
 
             if (semanticType == SemanticType.Timestamp) {
                 Ensures.ensure(
@@ -183,6 +186,10 @@ public class TableSchema {
                         dataType);
             }
 
+            Ensures.ensure(
+                    dataType != DataType.Json2 || semanticType == SemanticType.Field,
+                    "JSON2 is only supported for fields");
+
             // Trim leading and trailing spaces
             name = name.trim();
 
@@ -190,7 +197,12 @@ public class TableSchema {
             this.semanticTypes.add(semanticType.toProtoValue());
             this.dataTypes.add(dataType.toProtoValue());
 
-            if (dataType == DataType.Json) {
+            if (dataType == DataType.Json2) {
+                this.dataTypeExtensions.add(Common.ColumnDataTypeExtension.newBuilder()
+                        .setJsonNativeType(
+                                Common.JsonNativeTypeExtension.newBuilder().setDatatype(Common.ColumnDataType.JSON))
+                        .build());
+            } else if (dataType == DataType.Json) {
                 Common.ColumnDataTypeExtension ext = Common.ColumnDataTypeExtension.newBuilder()
                         .setJsonType(Common.JsonTypeExtension.JSON_BINARY)
                         .build();
@@ -204,7 +216,6 @@ public class TableSchema {
                         .build();
                 this.dataTypeExtensions.add(ext);
             } else {
-                Ensures.ensure(decimalTypeExtension == null, "Only decimal type can have decimal type extension");
                 this.dataTypeExtensions.add(null);
             }
             return this;
