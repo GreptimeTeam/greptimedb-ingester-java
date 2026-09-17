@@ -53,7 +53,12 @@ jobs:
           fi
 
       - name: Build with Maven
-        run: mvn clean deploy --batch-mode -DskipTests -P release -B -U -e
+        run: |
+          publish_args=()
+          if [[ "$GITHUB_EVENT_NAME" == "release" ]]; then
+            publish_args=(-DautoPublish=true -DwaitUntil=published)
+          fi
+          mvn clean deploy --batch-mode -DskipTests -P release -B -U -e "${publish_args[@]}"
         env:
           MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
           MAVEN_CENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}
