@@ -49,6 +49,8 @@ public enum DataType {
     TimeNanoSecond,
     Decimal128,
     Json,
+    /** JSON objects encoded as native Protobuf values; supported by row writes only. */
+    Json2,
     ;
 
     public boolean isTimestamp() {
@@ -110,6 +112,7 @@ public enum DataType {
             case Decimal128:
                 return Common.ColumnDataType.DECIMAL128;
             case Json:
+            case Json2:
                 return Common.ColumnDataType.JSON;
             default:
                 return null;

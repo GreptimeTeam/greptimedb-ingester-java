@@ -167,6 +167,9 @@ public class ArrowHelper {
             Common.ColumnDataType dataType,
             Common.ColumnDataTypeExtension dataTypeExtension,
             Iterator<Object> values) {
+        Ensures.ensure(
+                dataTypeExtension == null || !dataTypeExtension.hasJsonNativeType(),
+                "JSON2 is not supported by bulk writes; use Table.from(schema) and row writes");
         switch (dataType) {
             case INT8:
                 while (values.hasNext()) {
@@ -442,6 +445,9 @@ public class ArrowHelper {
 
     static ArrowType convertToArrowType(
             Common.ColumnDataType dataType, Common.ColumnDataTypeExtension dataTypeExtension) {
+        Ensures.ensure(
+                dataTypeExtension == null || !dataTypeExtension.hasJsonNativeType(),
+                "JSON2 is not supported by bulk writes; use Table.from(schema) and row writes");
         switch (dataType) {
             case INT8:
                 return new ArrowType.Int(8, true);

@@ -98,11 +98,19 @@ public class TableSchemaTest {
                 .addTag("col2", DataType.String)
                 .addField("col3", DataType.Int32);
 
-        try {
-            builder.addColumn("col4", SemanticType.Field, DataType.Float64, new DataType.DecimalTypeExtension(39, 9));
-            Assert.fail();
-        } catch (Exception e) {
+        for (DataType dataType : DataType.values()) {
+            if (dataType == DataType.Decimal128) {
+                continue;
+            }
+            IllegalArgumentException e = Assert.assertThrows(
+                    IllegalArgumentException.class,
+                    () -> builder.addColumn(
+                            "col4", SemanticType.Field, dataType, new DataType.DecimalTypeExtension(39, 9)));
             Assert.assertTrue(e.getMessage().contains("Only decimal type can have decimal type extension"));
         }
+        Table table = Table.from(builder.addField("col4", DataType.Float64).build());
+        Assert.assertEquals(4, table.columnCount());
+        table.addRow("1", "11", 111, 1.0);
+        Assert.assertEquals(1, table.rowCount());
     }
 }

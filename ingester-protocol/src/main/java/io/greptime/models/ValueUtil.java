@@ -17,14 +17,22 @@
 package io.greptime.models;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import io.greptime.common.util.Ensures;
 import io.greptime.v1.Common;
+import io.greptime.v1.RowData;
+import java.io.IOException;
+import java.io.StringReader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Date;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -196,6 +204,63 @@ public class ValueUtil {
 
     // Gson's instances are Thread-safe we can reuse them freely across multiple threads.
     private static final Gson GSON = new Gson();
+
+    // Read through the adapter: Gson.fromJson/JsonParser enable lenient parsing in Gson 2.9.
+    static RowData.Value getJson2Value(Object value) {
+        try (JsonReader reader = new JsonReader(new StringReader(getJsonString(value)))) {
+            reader.setLenient(false);
+            JsonElement json = GSON.getAdapter(JsonElement.class).read(reader);
+            if (reader.peek() != JsonToken.END_DOCUMENT || (!json.isJsonObject() && !json.isJsonNull())) {
+                throw new IllegalArgumentException("Invalid JSON2 value: expected a JSON object or null");
+            }
+            return json.isJsonNull()
+                    ? RowData.Value.getDefaultInstance()
+                    : RowData.Value.newBuilder().setJsonValue(encodeJson2(json)).build();
+        } catch (IOException | NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid JSON2 value", e);
+        }
+    }
+
+    private static RowData.JsonValue encodeJson2(JsonElement json) {
+        RowData.JsonValue.Builder builder = RowData.JsonValue.newBuilder();
+        if (json.isJsonObject()) {
+            RowData.JsonObject.Builder object = RowData.JsonObject.newBuilder();
+            for (Map.Entry<String, JsonElement> entry : json.getAsJsonObject().entrySet()) {
+                object.addEntries(RowData.JsonObject.Entry.newBuilder()
+                        .setKey(entry.getKey())
+                        .setValue(encodeJson2(entry.getValue())));
+            }
+            builder.setObject(object);
+        } else if (json.isJsonArray()) {
+            RowData.JsonList.Builder array = RowData.JsonList.newBuilder();
+            for (JsonElement item : json.getAsJsonArray()) {
+                array.addItems(encodeJson2(item));
+            }
+            builder.setArray(array);
+        } else if (!json.isJsonNull()) {
+            JsonPrimitive primitive = json.getAsJsonPrimitive();
+            if (primitive.isBoolean()) {
+                builder.setBoolean(primitive.getAsBoolean());
+            } else if (primitive.isString()) {
+                builder.setStr(primitive.getAsString());
+            } else {
+                String number = primitive.getAsString();
+                if (number.indexOf('.') < 0 && number.indexOf('e') < 0 && number.indexOf('E') < 0) {
+                    BigInteger integer = new BigInteger(number);
+                    if (integer.signum() >= 0 && integer.bitLength() <= 64) {
+                        return builder.setUint(integer.longValue()).build();
+                    }
+                    if (integer.signum() < 0 && integer.bitLength() <= 63) {
+                        return builder.setInt(integer.longValue()).build();
+                    }
+                }
+                double numberValue = primitive.getAsDouble();
+                Ensures.ensure(Double.isFinite(numberValue), "Invalid JSON2 value: number is out of range");
+                builder.setFloat(numberValue);
+            }
+        }
+        return builder.build();
+    }
 
     static String getJsonString(Object value) {
         if (value instanceof String) {
