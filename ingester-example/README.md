@@ -85,7 +85,22 @@ The Bulk Write API provides a high-performance, memory-efficient mechanism for i
 > 1. **Manual Table Creation Required**: Bulk API does **not** create tables automatically. You must create the table beforehand using either:
 >    - Insert API (which supports auto table creation), or
 >    - SQL DDL statements (CREATE TABLE)
-> 2. **Schema Matching**: The table template in bulk API must exactly match the existing table schema.
+> 2. **Schema Compatibility**: Columns are matched by name, so the bulk write schema may use a different column order from the existing table. Row values must still follow the client-side `TableSchema` order.
+>    - Existing columns must use matching data types (including timestamp precision). Values must satisfy the table's nullability constraints.
+>    - New scalar columns can be added automatically before the stream's first batch is written, provided the server's `auto_create_table` setting is enabled and the request hint does not disable it. Otherwise, all provided columns must already exist. New columns from the Java bulk schema are inferred as fields; create tag columns explicitly with SQL DDL.
+>    - The TIME INDEX column and any columns needed for partition routing must be provided.
+>    - Other columns may be omitted if they are nullable or have a default value. The server fills omitted columns with their defaults, or `NULL` if they are nullable and have no explicit default. Non-nullable columns without defaults are required.
+
+Server version requirements for these schema behaviors:
+
+| Behavior | GreptimeDB server version |
+| --- | --- |
+| Match columns by name, allowing a different column order | Available since [v0.15.0](https://github.com/GreptimeTeam/greptimedb/releases/tag/v0.15.0). Pre-created tables, the TIME INDEX column, and columns needed for partition routing have been required since that release. |
+| Fill omitted columns with defaults or `NULL` | Introduced in [v1.1.0](https://github.com/GreptimeTeam/greptimedb/releases/tag/v1.1.0) ([#8222](https://github.com/GreptimeTeam/greptimedb/pull/8222)); use **v1.2.0 or later**, which includes the fix for WAL recovery after filling missing columns ([#8808](https://github.com/GreptimeTeam/greptimedb/pull/8808)). |
+| Automatically add new scalar field columns, subject to the configuration and hint above | **v1.3.0 or later** ([#9285](https://github.com/GreptimeTeam/greptimedb/pull/9285)). On earlier versions, create the columns before writing. |
+| Validate column types, timestamp precision, nullability, duplicate names, and unknown columns before persistence | **v1.3.0 or later** ([#9698](https://github.com/GreptimeTeam/greptimedb/pull/9698)). Earlier versions have incomplete validation; clients must still provide valid data. |
+
+GitHub marks v1.1.0 as a pre-release; v1.1.1 is the first non-pre-release containing the omitted-column handling. The v1.2.0 minimum above includes its WAL recovery fix. Use **v1.3.0 or later** for all schema behaviors described here.
 
 **Important Note**:
 - This API is designed around streaming connections, which means each stream establishes a connection to only one database node. Unlike the regular write API, it lacks automatic load balancing for individual requests. However, if your use case involves multiple clients establishing multiple streams to the database, this limitation is not a concern.
