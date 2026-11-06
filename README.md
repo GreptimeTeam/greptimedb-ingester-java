@@ -267,13 +267,6 @@ The Bulk Write API provides a high-performance, memory-efficient mechanism for i
 >    - The TIME INDEX column and any columns needed for partition routing must be provided.
 >    - Other columns may be omitted if they are nullable or have a default value. The server fills omitted columns with their defaults, or `NULL` if they are nullable and have no explicit default. Non-nullable columns without defaults are required.
 
-| Behavior | Server version |
-| --- | --- |
-| Column-name matching | v0.15.0+ |
-| Filling omitted columns | v1.1.0+; use **v1.2.0+** |
-| Automatic column addition | v1.3.0+ |
-| Strict schema validation | v1.3.0+ |
-
 This API supports writing to one table per stream and handles large data volumes (up to 200MB per write) with adaptive flow control. Performance advantages include:
 - Off-heap memory management with Arrow buffers
 - Efficient binary serialization and data transfer
