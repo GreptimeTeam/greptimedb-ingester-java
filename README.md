@@ -261,7 +261,7 @@ The Bulk Write API provides a high-performance, memory-efficient mechanism for i
 > 1. **Manual Table Creation Required**: Bulk API does **not** create tables automatically. You must create the table beforehand using either:
 >    - Insert API (which supports auto table creation), or
 >    - SQL DDL statements (CREATE TABLE)
-> 2. **Schema Compatibility**: Columns are matched by name, so the bulk write schema may use a different column order from the existing table. Row values must still follow the client-side `TableSchema` order.
+> 2. **Schema Compatibility**: `TableSchema` describes the columns being sent; it need not include every table column. Columns are matched by name, while row values must follow the `TableSchema` order.
 >    - Existing columns must use matching data types (including timestamp precision). Values must satisfy the table's nullability constraints.
 >    - New scalar columns can be added automatically before the stream's first batch is written, provided the server's `auto_create_table` setting is enabled and the request hint does not disable it. Otherwise, all provided columns must already exist. New columns from the Java bulk schema are inferred as fields; create tag columns explicitly with SQL DDL.
 >    - The TIME INDEX column and any columns needed for partition routing must be provided.
