@@ -267,16 +267,12 @@ The Bulk Write API provides a high-performance, memory-efficient mechanism for i
 >    - The TIME INDEX column and any columns needed for partition routing must be provided.
 >    - Other columns may be omitted if they are nullable or have a default value. The server fills omitted columns with their defaults, or `NULL` if they are nullable and have no explicit default. Non-nullable columns without defaults are required.
 
-Server version requirements for these schema behaviors:
-
-| Behavior | GreptimeDB server version |
+| Behavior | Server version |
 | --- | --- |
-| Match columns by name, allowing a different column order | Available since [v0.15.0](https://github.com/GreptimeTeam/greptimedb/releases/tag/v0.15.0). Pre-created tables, the TIME INDEX column, and columns needed for partition routing have been required since that release. |
-| Fill omitted columns with defaults or `NULL` | Introduced in [v1.1.0](https://github.com/GreptimeTeam/greptimedb/releases/tag/v1.1.0) ([#8222](https://github.com/GreptimeTeam/greptimedb/pull/8222)); use **v1.2.0 or later**, which includes the fix for WAL recovery after filling missing columns ([#8808](https://github.com/GreptimeTeam/greptimedb/pull/8808)). |
-| Automatically add new scalar field columns, subject to the configuration and hint above | **v1.3.0 or later** ([#9285](https://github.com/GreptimeTeam/greptimedb/pull/9285)). On earlier versions, create the columns before writing. |
-| Validate column types, timestamp precision, nullability, duplicate names, and unknown columns before persistence | **v1.3.0 or later** ([#9698](https://github.com/GreptimeTeam/greptimedb/pull/9698)). Earlier versions have incomplete validation; clients must still provide valid data. |
-
-GitHub marks v1.1.0 as a pre-release; v1.1.1 is the first non-pre-release containing the omitted-column handling. The v1.2.0 minimum above includes its WAL recovery fix. Use **v1.3.0 or later** for all schema behaviors described here.
+| Column-name matching | v0.15.0+ |
+| Filling omitted columns | v1.1.0+; use **v1.2.0+** |
+| Automatic column addition | v1.3.0+ |
+| Strict schema validation | v1.3.0+ |
 
 This API supports writing to one table per stream and handles large data volumes (up to 200MB per write) with adaptive flow control. Performance advantages include:
 - Off-heap memory management with Arrow buffers
