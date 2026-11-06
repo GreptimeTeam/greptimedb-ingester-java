@@ -85,7 +85,24 @@ The Bulk Write API provides a high-performance, memory-efficient mechanism for i
 > 1. **Manual Table Creation Required**: Bulk API does **not** create tables automatically. You must create the table beforehand using either:
 >    - Insert API (which supports auto table creation), or
 >    - SQL DDL statements (CREATE TABLE)
-> 2. **Schema Matching**: The table template in bulk API must exactly match the existing table schema.
+> 2. **Schema Compatibility**: `TableSchema` describes the columns being sent; it need not include every table column. Columns are matched by name, while row values must follow the `TableSchema` order.
+>    - Existing columns must use matching data types (including timestamp precision). Values must satisfy the table's nullability constraints.
+>    - New scalar columns can be added automatically before the stream's first batch is written, provided the server's `auto_create_table` setting is enabled and the request hint does not disable it. Otherwise, all provided columns must already exist. New columns from the Java bulk schema are inferred as fields; create tag columns explicitly with SQL DDL.
+>    - The TIME INDEX column and any columns needed for partition routing must be provided.
+>    - Other columns may be omitted if they are nullable or have a default value. The server fills omitted columns with their defaults, or `NULL` if they are nullable and have no explicit default. Non-nullable columns without defaults are required.
+
+Java follows the server's `auto_create_table` setting by default. To disable automatic column addition, pass this context to `bulkStreamWriter(schema, cfg, ctx)`:
+
+```java
+Context ctx = Context.newDefault().withAutoCreateTable(false);
+```
+
+| Behavior | Server version |
+| --- | --- |
+| Column-name matching | v0.15.0+ |
+| Filling omitted columns | v1.1.0+; use **v1.2.0+** |
+| Automatic column addition | v1.3.0+ |
+| Strict schema validation | v1.3.0+ |
 
 **Important Note**:
 - This API is designed around streaming connections, which means each stream establishes a connection to only one database node. Unlike the regular write API, it lacks automatic load balancing for individual requests. However, if your use case involves multiple clients establishing multiple streams to the database, this limitation is not a concern.
